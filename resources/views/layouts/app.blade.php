@@ -317,11 +317,11 @@
     <!-- MAIN CONTENT AREA -->
     <div class="flex-1 flex flex-col overflow-hidden bg-[#f8faf8]">
         
-        <!-- TOPBAR (Clean Solid White ala SPBU & IQOS - NO GRADIENT) -->
-        <header class="h-16 bg-white border-b border-[#edf0ee] px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shrink-0 shadow-xs">
-            <!-- Left Section: Sidebar Toggle & Breadcrumb (Persis SPBU & IQOS) -->
+        <!-- TOPBAR (Identik & Serasi dengan SIR-IQOS & SPBU) -->
+        <header class="h-16 bg-white border-b border-slate-200/90 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shrink-0 shadow-xs">
+            <!-- Left Section: Sidebar Toggle & Breadcrumb -->
             <div class="flex items-center gap-3 sm:gap-4 min-w-0">
-                <!-- Toggle Mobile (Mobile Only ala SPBU & IQOS) -->
+                <!-- Toggle Mobile (Mobile Only) -->
                 <button
                     type="button"
                     onclick="toggleSidebar()"
@@ -336,21 +336,20 @@
                     </svg>
                 </button>
 
-                <!-- Toggle Desktop Collapse (Desktop Only ala SPBU & IQOS) -->
+                <!-- Toggle Desktop Collapse (Desktop Only) -->
                 <button
                     type="button"
                     onclick="toggleSidebar()"
                     class="hidden lg:flex p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors"
                     title="Toggle Sidebar (Ctrl+B)"
                 >
-                    <!-- Signature panel-left sidebar toggle icon persis SPBU & IQOS -->
                     <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <rect width="18" height="18" x="3" y="3" rx="2" />
                         <path d="M9 3v18" />
                     </svg>
                 </button>
 
-                <!-- Breadcrumb Navigation ala SPBU & IQOS -->
+                <!-- Breadcrumb Navigation ala SIR-IQOS -->
                 <nav class="flex items-center gap-1 sm:gap-1.5 text-xs text-slate-500 font-medium whitespace-nowrap min-w-0">
                     <span class="hidden sm:inline">Mekarjaya Group</span>
                     <span class="inline sm:hidden font-semibold">MJG</span>
@@ -363,38 +362,93 @@
                 </nav>
             </div>
 
-            <!-- Right Controls: Status & Period Selector & User Avatar -->
-            <div class="flex items-center gap-2 sm:gap-3">
-                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-[#ebf8c8] text-[#3f6212] border border-[#d9f99d]">
-                    <span class="w-1.5 h-1.5 rounded-full bg-[#10e58f]"></span>
-                    <span class="hidden sm:inline">Live Data</span>
-                </span>
+            <!-- Right Section: Date Display & Profile Dropdown (Persis SIR-IQOS) -->
+            @php
+                $userName = auth()->user()->name ?? 'Executive';
+                $nameParts = explode(' ', trim($userName));
+                $userInitials = count($nameParts) >= 2 
+                    ? strtoupper(substr($nameParts[0], 0, 1) . substr($nameParts[1], 0, 1))
+                    : strtoupper(substr($userName, 0, 2));
+                $userRole = auth()->user()->role ?? 'HOLDING FINANCE';
+            @endphp
+            <div class="flex items-center gap-2 sm:gap-4 shrink-0">
+                <!-- Date Display (Desktop only ala SIR-IQOS) -->
+                <div class="hidden lg:block text-xs font-medium text-slate-600 select-none">
+                    {{ \Carbon\Carbon::now()->locale('id')->translatedFormat('l, d F Y') }}
+                </div>
 
-                @if(isset($availablePeriods) && count($availablePeriods) > 0)
-                <form action="{{ url()->current() }}" method="GET" class="flex items-center gap-2">
-                    @if(request('business_unit'))
-                        <input type="hidden" name="business_unit" value="{{ request('business_unit') }}">
-                    @endif
-                    @if(request('entity'))
-                        <input type="hidden" name="entity" value="{{ request('entity') }}">
-                    @endif
-                    <div class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-white border border-[#edf0ee] rounded-xl transition-all">
-                        <i data-lucide="calendar" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
-                        <span class="text-xs font-semibold text-slate-500 hidden md:inline">Period:</span>
-                        <select name="period" id="period" onchange="this.form.submit()" class="text-xs font-bold font-mono bg-transparent text-slate-800 focus:outline-none cursor-pointer">
-                            @foreach($availablePeriods as $p)
-                                <option value="{{ $p }}" {{ (isset($selectedPeriod) && $selectedPeriod === $p) ? 'selected' : '' }}>
-                                    {{ \Carbon\Carbon::parse($p)->translatedFormat('F Y') }}
-                                </option>
-                            @endforeach
-                        </select>
+                <!-- Vertical Divider -->
+                <div class="hidden lg:block h-5 w-px bg-slate-200"></div>
+
+                <!-- Profile Dropdown Component (Identik SIR-IQOS) -->
+                <div class="relative user-profile-dropdown" id="userProfileDropdown">
+                    <button
+                        type="button"
+                        onclick="toggleProfileDropdown()"
+                        class="flex items-center gap-2.5 hover:bg-slate-100/90 p-1 sm:px-2 sm:py-1 rounded-xl transition-all cursor-pointer select-none border border-transparent hover:border-slate-200"
+                    >
+                        <!-- Avatar Circle -->
+                        <div class="relative shrink-0">
+                            <div class="w-8 h-8 rounded-full bg-[#10e58f] text-slate-950 font-bold text-xs flex items-center justify-center shadow-xs">
+                                {{ $userInitials }}
+                            </div>
+                        </div>
+
+                        <!-- Nama & Role (Desktop Only, Hidden on Mobile) -->
+                        <div class="hidden sm:flex flex-col text-left">
+                            <div class="flex items-center gap-1">
+                                <span class="text-xs font-bold text-slate-900 leading-tight">{{ $userName }}</span>
+                                <svg id="profileChevron" class="w-3.5 h-3.5 text-slate-400 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="m6 9 6 6 6-6" />
+                                </svg>
+                            </div>
+                            <span class="text-[10px] text-slate-500 font-semibold uppercase">{{ $userRole }}</span>
+                        </div>
+                    </button>
+
+                    <!-- Dropdown Menu Box -->
+                    <div
+                        id="profileDropdownMenu"
+                        class="hidden absolute right-0 mt-2 w-52 bg-white border border-slate-200/90 rounded-2xl shadow-xl p-1.5 z-50 transition-all duration-200 overflow-hidden"
+                    >
+                        <!-- Header Info (Mobile Only) -->
+                        <div class="block sm:hidden px-3.5 py-2 mb-1 border-b border-slate-100 bg-slate-50/70 rounded-xl">
+                            <p class="text-xs font-bold text-slate-900">{{ $userName }}</p>
+                            <p class="text-[10px] text-slate-500 font-medium mt-0.5 uppercase">{{ $userRole }}</p>
+                        </div>
+
+                        <!-- Portal Link -->
+                        <a
+                            href="http://localhost:8000/port"
+                            target="_blank"
+                            class="flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-[#10e58f] active:bg-slate-100 rounded-xl transition-all cursor-pointer group"
+                        >
+                            <svg class="w-4 h-4 text-slate-500 group-hover:text-[#10e58f] shrink-0 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z" />
+                                <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65" />
+                                <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65" />
+                            </svg>
+                            <span>Super App Portal</span>
+                        </a>
+
+                        <div class="border-t border-slate-100 my-1 mx-1"></div>
+
+                        <!-- Logout Link -->
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button
+                                type="submit"
+                                class="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 active:bg-rose-100 rounded-xl transition-all cursor-pointer"
+                            >
+                                <svg class="w-4 h-4 text-rose-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                                    <polyline points="16 17 21 12 16 7" />
+                                    <line x1="21" y1="3" x2="9" y2="12" />
+                                </svg>
+                                <span>Logout</span>
+                            </button>
+                        </form>
                     </div>
-                </form>
-                @endif
-
-                <!-- Circular profile badge -->
-                <div class="w-9 h-9 rounded-full bg-white border border-slate-200 text-slate-800 flex items-center justify-center font-bold text-xs shrink-0 cursor-pointer shadow-xs" title="{{ auth()->user()->name ?? 'Administrator' }}">
-                    {{ substr(auth()->user()->name ?? 'A', 0, 1) }}
                 </div>
             </div>
         </header>
@@ -469,6 +523,31 @@
                 input.focus();
             }
         }
+
+        // User Profile Dropdown Functions (Identik SIR-IQOS)
+        function toggleProfileDropdown() {
+            const menu = document.getElementById('profileDropdownMenu');
+            const chevron = document.getElementById('profileChevron');
+            if (!menu) return;
+            const isHidden = menu.classList.contains('hidden');
+            if (isHidden) {
+                menu.classList.remove('hidden');
+                if (chevron) chevron.classList.add('rotate-180');
+            } else {
+                menu.classList.add('hidden');
+                if (chevron) chevron.classList.remove('rotate-180');
+            }
+        }
+
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('userProfileDropdown');
+            const menu = document.getElementById('profileDropdownMenu');
+            const chevron = document.getElementById('profileChevron');
+            if (dropdown && !dropdown.contains(e.target)) {
+                if (menu) menu.classList.add('hidden');
+                if (chevron) chevron.classList.remove('rotate-180');
+            }
+        });
 
         // Sidebar Toggle Functions
         function toggleSidebar() {
