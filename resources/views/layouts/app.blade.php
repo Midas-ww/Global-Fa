@@ -209,9 +209,9 @@
                 <div class="sidebar-group">
                     <div class="px-3 mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 sidebar-label">OPERASIONAL & SYNC</div>
                     <nav class="space-y-1.5">
-                        <!-- Data Ingestion Hub Link -->
+                        <!-- Riwayat & Import Data Link (Persis IQOS) -->
                         <a href="{{ route('finance.sync') }}"
-                           title="Data Ingestion Hub"
+                           title="Riwayat & Import Data"
                            class="sidebar-item flex items-center text-xs transition-all duration-300 ease-in-out group relative cursor-pointer rounded-tl-[1.2rem] rounded-br-[1.2rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1.2rem] hover:rounded-bl-[1.2rem] hover:rounded-tl-none hover:rounded-br-none {{ request()->routeIs('finance.sync') ? 'bg-[#ebf8c8] text-[#3f6212] font-bold shadow-2xs' : 'text-slate-600 hover:bg-[#ebf8c8]/60 hover:text-[#3f6212] font-semibold' }} w-full px-3.5 py-2.5 justify-start gap-3">
                             <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('finance.sync') ? 'text-[#3f6212]' : 'text-slate-500 group-hover:text-[#3f6212]' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
@@ -219,7 +219,7 @@
                                 <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
                                 <path d="M8 16H3v5" />
                             </svg>
-                            <span class="truncate flex-1 sidebar-label">Data Ingestion Hub</span>
+                            <span class="truncate flex-1 sidebar-label">Riwayat & Import Data</span>
                         </a>
 
                         <!-- Super App Portal Link -->

@@ -1,9 +1,21 @@
 @extends('layouts.app')
 
-@section('title', 'Data Ingestion Hub')
+@section('title', 'Riwayat & Import Data')
 
 @section('content')
 <div class="space-y-6 pb-12">
+
+    <!-- PAGE HEADER WITH QUICK JUMP -->
+    <div class="flex items-center justify-between flex-wrap gap-3">
+        <div>
+            <h2 class="text-lg font-black text-slate-900 tracking-tight">Pusat Integrasi & Riwayat Import Data</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Sinkronisasi database live antar unit usaha & upload laporan berkas Excel konsolidasi</p>
+        </div>
+        <a href="#riwayat-import" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-bold transition shadow-2xs">
+            <i data-lucide="history" class="w-4 h-4 text-emerald-600"></i>
+            <span>Lihat Riwayat & Hapus Data Import ({{ count($logs) }} Riwayat)</span>
+        </a>
+    </div>
 
     <!-- OVERVIEW STATS -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
@@ -377,7 +389,7 @@
     </div>
 
     <!-- INGESTION & SYNC AUDIT LOG TABLE -->
-    <div class="bg-white rounded-2xl border border-[#edf0ee] shadow-xs overflow-hidden">
+    <div id="riwayat-import" class="bg-white rounded-2xl border border-[#edf0ee] shadow-xs overflow-hidden scroll-mt-6">
         <div class="p-5 border-b border-[#edf0ee] flex items-center justify-between bg-white">
             <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-xl bg-[#f5f9ed] text-[#3f6212] flex items-center justify-center border border-[#d9f99d]">
