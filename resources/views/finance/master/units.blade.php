@@ -174,14 +174,11 @@
                     </button>
 
                     @if($unit->records_count == 0)
-                    <form action="{{ route('finance.master.units.destroy', $unit->id) }}" method="POST" class="inline"
-                        onsubmit="return confirm('Apakah Anda yakin ingin menghapus unit usaha {{ $unit->name }}?');">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer" title="Hapus Unit Usaha">
-                            <i data-lucide="trash-2" class="w-4 h-4"></i>
-                        </button>
-                    </form>
+                    <button type="button" 
+                        onclick="openDeleteMasterModal('unit', {{ $unit->id }}, '{{ addslashes($unit->name) }}', '{{ $unit->code }}', 'Unit Bisnis')"
+                        class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer" title="Hapus Unit Usaha">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
                     @endif
                 </div>
             </div>
@@ -217,14 +214,11 @@
                         </div>
 
                         @if($unit->entities->count() > 1)
-                        <form action="{{ route('finance.master.entities.destroy', $entity->id) }}" method="POST"
-                            onsubmit="return confirm('Hapus cabang {{ $entity->name }} ({{ $entity->code }})?');">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="p-1 text-slate-300 hover:text-rose-600 rounded transition cursor-pointer" title="Hapus Cabang">
-                                <i data-lucide="trash" class="w-3.5 h-3.5"></i>
-                            </button>
-                        </form>
+                        <button type="button" 
+                            onclick="openDeleteMasterModal('entity', {{ $entity->id }}, '{{ addslashes($entity->name) }}', '{{ $entity->code }}', '{{ addslashes($unit->name) }}')"
+                            class="p-1 text-slate-300 hover:text-rose-600 rounded transition cursor-pointer" title="Hapus Cabang">
+                            <i data-lucide="trash" class="w-3.5 h-3.5"></i>
+                        </button>
                         @endif
                     </div>
                     @empty
@@ -460,6 +454,73 @@
     </div>
 </div>
 
+<!-- MODAL KONFIRMASI HAPUS MASTER (UNIT / CABANG) ALA IQOS -->
+<div id="modalDeleteMasterConfirm" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150">
+        <!-- Modal Header -->
+        <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-rose-50/50">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center border border-rose-200 shrink-0">
+                    <i data-lucide="alert-triangle" class="w-5 h-5 text-rose-600"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-900 text-sm" id="deleteMasterModalTitle">Konfirmasi Hapus</h3>
+                    <p class="text-[11px] text-slate-500" id="deleteMasterModalSubtitle">Peringatan penghapusan master data</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeDeleteMasterModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <form id="deleteMasterForm" method="POST" class="p-5 space-y-4">
+            @csrf
+            @method('DELETE')
+
+            <!-- Warning Box -->
+            <div class="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 leading-relaxed flex items-start gap-2.5">
+                <i data-lucide="alert-circle" class="w-4 h-4 text-rose-600 shrink-0 mt-0.5"></i>
+                <p id="deleteMasterModalWarningText">
+                    PERINGATAN: Tindakan ini permanen. Pastikan cabang/unit ini sudah tidak memiliki transaksi finansial terkait sebelum dihapus.
+                </p>
+            </div>
+
+            <!-- Target Detail Card -->
+            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-slate-400 text-[11px]">Tipe Master:</span>
+                    <span class="font-bold text-slate-700" id="deleteMasterTargetType">Cabang</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-slate-400 text-[11px]">Nama:</span>
+                    <span class="font-bold text-slate-900" id="deleteMasterTargetName">-</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-slate-400 text-[11px]">Kode:</span>
+                    <span class="font-mono font-bold px-1.5 py-0.5 rounded bg-slate-200 text-slate-800 text-[10px]" id="deleteMasterTargetCode">-</span>
+                </div>
+                <div class="flex items-center justify-between" id="deleteMasterParentRow">
+                    <span class="text-slate-400 text-[11px]">Unit Bisnis:</span>
+                    <span class="font-semibold text-slate-700" id="deleteMasterTargetParent">-</span>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
+                <button type="button" onclick="closeDeleteMasterModal()"
+                    class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer">
+                    Batal
+                </button>
+                <button type="submit" id="deleteMasterSubmitBtn"
+                    class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition shadow-sm flex items-center gap-1.5 cursor-pointer">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    <span id="deleteMasterSubmitBtnText">Ya, Hapus Sekarang</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
     function openEditUnitModal(id, name, desc, color, icon, dataSource, isActive) {
         const form = document.getElementById('formEditUnit');
@@ -478,6 +539,51 @@
         form.action = `/master/units/${unitId}/entities`;
         document.getElementById('entityModalUnitTitle').innerText = 'Untuk Unit: ' + unitName;
         document.getElementById('modalAddEntity').classList.remove('hidden');
+    }
+
+    function openDeleteMasterModal(type, id, name, code, parentName) {
+        const modal = document.getElementById('modalDeleteMasterConfirm');
+        const form = document.getElementById('deleteMasterForm');
+        const title = document.getElementById('deleteMasterModalTitle');
+        const subtitle = document.getElementById('deleteMasterModalSubtitle');
+        const warning = document.getElementById('deleteMasterModalWarningText');
+        const typeEl = document.getElementById('deleteMasterTargetType');
+        const nameEl = document.getElementById('deleteMasterTargetName');
+        const codeEl = document.getElementById('deleteMasterTargetCode');
+        const parentRow = document.getElementById('deleteMasterParentRow');
+        const parentEl = document.getElementById('deleteMasterTargetParent');
+        const btnText = document.getElementById('deleteMasterSubmitBtnText');
+
+        if (type === 'entity') {
+            form.action = `/master/entities/${id}`;
+            title.innerText = 'Konfirmasi Hapus Cabang / Entitas';
+            subtitle.innerText = 'Peringatan penghapusan master cabang holding';
+            warning.innerText = 'PERINGATAN: Menghapus cabang ini bersifat permanen. Cabang hanya bisa dihapus jika transaksi keuangannya sudah kosong.';
+            typeEl.innerText = 'Cabang / Entitas';
+            nameEl.innerText = name;
+            codeEl.innerText = code;
+            parentRow.classList.remove('hidden');
+            parentEl.innerText = parentName;
+            btnText.innerText = 'Ya, Hapus Cabang Ini';
+        } else {
+            form.action = `/master/units/${id}`;
+            title.innerText = 'Konfirmasi Hapus Unit Usaha';
+            subtitle.innerText = 'Peringatan penghapusan master unit usaha holding';
+            warning.innerText = 'PERINGATAN: Menghapus unit usaha akan menghapus unit dan cabangnya secara permanen. Hanya bisa dilakukan jika tidak memiliki data finansial.';
+            typeEl.innerText = 'Unit Usaha Holding';
+            nameEl.innerText = name;
+            codeEl.innerText = code;
+            parentRow.classList.add('hidden');
+            btnText.innerText = 'Ya, Hapus Unit Usaha';
+        }
+
+        modal.classList.remove('hidden');
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    function closeDeleteMasterModal() {
+        const modal = document.getElementById('modalDeleteMasterConfirm');
+        if (modal) modal.classList.add('hidden');
     }
 </script>
 @endsection
