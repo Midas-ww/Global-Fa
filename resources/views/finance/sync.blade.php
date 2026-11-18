@@ -512,14 +512,6 @@
             </table>
         </div>
     </div>
-                            Belum ada riwayat aktivitas sinkronisasi atau upload file.
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
 
 </div>
 
