@@ -304,7 +304,7 @@
         <!-- Sidebar Footer / User Profile & Logout (Persis SPBU & IQOS) -->
         <div class="p-3 border-t border-[#edf0ee] shrink-0 bg-slate-50/50 flex items-center transition-all mt-auto justify-between sidebar-footer">
             <div class="flex items-center gap-2.5 overflow-hidden">
-                <div class="w-8 h-8 rounded-full bg-[#7c3aed] text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs" title="{{ $userName }}">
+                <div class="w-8 h-8 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs" title="{{ $userName }}">
                     {{ $userInitials }}
                 </div>
                 <div class="flex flex-col truncate min-w-0 sidebar-label">
@@ -393,7 +393,7 @@
                     >
                         <!-- Avatar Circle -->
                         <div class="relative shrink-0">
-                            <div class="w-8 h-8 rounded-full bg-[#7c3aed] text-white font-bold text-xs flex items-center justify-center shadow-xs">
+                            <div class="w-8 h-8 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shadow-xs">
                                 {{ $userInitials }}
                             </div>
                         </div>
