@@ -348,11 +348,6 @@
                 </h3>
                 <p class="text-xs text-slate-400">Periode berakhir per {{ $pnl['period_label'] }} (Mata Uang: IDR Rupiah)</p>
             </div>
-            <div class="flex items-center gap-2">
-                <button onclick="window.print()" class="px-3.5 py-2 rounded-xl border border-[#edf0ee] bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer">
-                    <i data-lucide="printer" class="w-3.5 h-3.5 text-slate-500"></i> Cetak Laporan
-                </button>
-            </div>
         </div>
 
         <div class="overflow-x-auto">
