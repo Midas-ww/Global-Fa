@@ -1124,6 +1124,21 @@ class ExcelIngestionService
     {
         $totalRecords = 0;
 
+        // Pastikan entitas MJS (Holding/Pusat FMCG) terdaftar di master
+        $fmcgBu = GlobalBusinessUnit::where('code', 'fmcg')->first();
+        if ($fmcgBu) {
+            GlobalEntity::firstOrCreate(
+                ['code' => 'MJS'],
+                [
+                    'business_unit_id' => $fmcgBu->id,
+                    'name' => 'CV Mekar Jaya Sentosa (Pusat)',
+                    'location' => 'Pekalongan / Jawa Tengah',
+                    'sort_order' => 0,
+                    'is_active' => true,
+                ]
+            );
+        }
+
         // 1. SHEET PL (Laba Rugi CV Mekar Jaya Sentosa)
         $plSheet = $spreadsheet->getSheetByName('PL');
         if ($plSheet) {

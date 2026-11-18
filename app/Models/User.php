@@ -42,20 +42,22 @@ class User extends Authenticatable
      */
     public function getRoleAttribute(): string
     {
-        // 1. Ambil role resmi dari mekarjaya_db (Portal Superapp) jika terhubung
-        try {
-            $portalRole = DB::connection('mysql')
-                ->table('mekarjaya_db.users as u')
-                ->join('mekarjaya_db.model_has_roles as mhr', 'u.id', '=', 'mhr.model_id')
-                ->join('mekarjaya_db.roles as r', 'mhr.role_id', '=', 'r.id')
-                ->where('u.email', $this->email)
-                ->value('r.name');
+        // 1. Ambil role resmi dari mekarjaya_db (Portal Superapp) jika terhubung (hanya di non-testing)
+        if (! app()->environment('testing')) {
+            try {
+                $portalRole = DB::connection('mysql')
+                    ->table('mekarjaya_db.users as u')
+                    ->join('mekarjaya_db.model_has_roles as mhr', 'u.id', '=', 'mhr.model_id')
+                    ->join('mekarjaya_db.roles as r', 'mhr.role_id', '=', 'r.id')
+                    ->where('u.email', $this->email)
+                    ->value('r.name');
 
-            if ($portalRole) {
-                return strtoupper(str_replace(['_', '-'], ' ', $portalRole));
+                if ($portalRole) {
+                    return strtoupper(str_replace(['_', '-'], ' ', $portalRole));
+                }
+            } catch (\Throwable) {
+                // Fallback jika mekarjaya_db tidak dapat diakses
             }
-        } catch (\Throwable) {
-            // Fallback jika mekarjaya_db tidak dapat diakses
         }
 
         // 2. Fallback berdasarkan email dan nama akun
