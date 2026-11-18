@@ -87,18 +87,23 @@ class ExcelIngestionService
             ];
         }
 
-        // 3. Deteksi FMCG (CV Mekar Jaya Sentosa - 9 Depo)
-        if (
-            str_contains($upperHeader, 'MEKAR JAYA SENTOSA') ||
-            str_contains($upperHeader, 'CV MEKAR JAYA SENTOSA') ||
-            str_contains($upperHeader, 'CV. MEKAR JAYA SENTOSA') ||
-            str_contains($upperHeader, 'MJS') ||
-            $hasDepoSheets ||
-            (in_array('PL', $upperSheets) && in_array('BS', $upperSheets) && ! in_array('BS DET.', $upperSheets))
-        ) {
+        // 3. Deteksi FMCG (CV Mekar Jaya Sentosa - 9 Depo Cabang)
+        if ($hasDepoSheets) {
             return [
                 'type' => 'fmcg',
-                'label' => 'Distribusi FMCG (CV Mekar Jaya Sentosa / 9 Depo Cabang)',
+                'label' => 'Distribusi FMCG (9 Depo Cabang)',
+                'sheets' => $sheetNames,
+            ];
+        }
+
+        // 4. Deteksi Laporan Rekap CV MJS Pusat (Hanya sheet PL & BS, tidak ada perincian 9 Depo)
+        if (
+            (in_array('PL', $upperSheets) && (in_array('BS', $upperSheets) || in_array('BS DET.', $upperSheets))) &&
+            (str_contains($upperHeader, 'MEKAR JAYA SENTOSA') || str_contains($upperHeader, 'MJS'))
+        ) {
+            return [
+                'type' => 'mjs_summary',
+                'label' => 'Laporan Rekap CV MJS Pusat (Sheet PL & BS Tanpa Rincian Depo)',
                 'sheets' => $sheetNames,
             ];
         }
@@ -154,32 +159,45 @@ class ExcelIngestionService
         }
 
         $selectedLabel = match ($selectedType) {
-            'fmcg' => 'Distribusi FMCG (9 Depo Cabang / CV Mekar Jaya Sentosa)',
+            'fmcg' => 'Distribusi FMCG (9 Depo Cabang)',
             'xtrans' => 'Ekspedisi (PT Mekar Jaya Xtrans Jaya)',
             'ccod' => 'MJS Multikarya (CCOD - 12 Cabang)',
             default => strtoupper($selectedType),
         };
 
-        // Jika terdeteksi jelas sebagai unit bisnis yang berbeda
+        // Jika terdeteksi jelas sebagai unit bisnis yang berbeda atau rekap pusat
         if ($detected['type'] !== 'unknown' && $detected['type'] !== $selectedType) {
+            if ($detected['type'] === 'mjs_summary' && $selectedType === 'fmcg') {
+                throw new \InvalidArgumentException(
+                    "Validasi Format Gagal: File ini terdeteksi sebagai {$detected['label']}. ".
+                    "Unit 'Distribusi FMCG' mewajibkan file Laporan 9 Depo Cabang (yang memiliki sheet: BMG, PWT, PML GT, PML MT, WLR, RDK, PWJ, KBM, PKL seperti 'PL Depo Persentase MJP Jan 24 - Dec 26.xlsx'). ".
+                    'File rekapitulasi pusat tidak dapat diimpor langsung ke unit FMCG karena tidak memuat rincian cabang depo.'
+                );
+            }
+
             throw new \InvalidArgumentException(
                 "Validasi Format Gagal: File ini terdeteksi sebagai {$detected['label']}, bukan untuk {$selectedLabel}. ".
                 "Mohon pastikan Anda mengunggah file pada kotak {$detected['label']}."
             );
         }
 
+        // Cek kriteria lembar kerja untuk FMCG
+        $upperSheets = array_map('strtoupper', $detected['sheets']);
+        $fmcgDepoKnown = ['BMG', 'PWT', 'PML GT', 'PML MT', 'WLR', 'RDK', 'PWJ', 'KBM', 'PKL'];
+        $hasDepoSheets = count(array_intersect($upperSheets, $fmcgDepoKnown)) > 0;
+
+        if ($selectedType === 'fmcg' && ! $hasDepoSheets) {
+            throw new \InvalidArgumentException(
+                'Validasi Format Gagal: File ini tidak memiliki lembar kerja cabang 9 Depo FMCG (BMG, PWT, PML GT, PML MT, WLR, RDK, PWJ, KBM, PKL). '.
+                'Pastikan Anda mengunggah file laporan resmi per-depo FMCG atau menggunakan Template Universal Holding.'
+            );
+        }
+
         // Jika format tidak dikenali secara umum, cek kriteria lembar kerja minimal
         if ($detected['type'] === 'unknown') {
-            $upperSheets = array_map('strtoupper', $detected['sheets']);
             if ($selectedType === 'xtrans' && ! in_array('PL', $upperSheets) && ! in_array('BS DET.', $upperSheets)) {
                 throw new \InvalidArgumentException(
                     "Validasi Format Gagal: File tidak memiliki sheet 'PL' atau 'BS Det.'. Format tidak sesuai dengan laporan resmi PT Mekar Jaya Xtrans Jaya."
-                );
-            }
-            $fmcgDepoKnown = ['BMG', 'PWT', 'PML GT', 'PML MT', 'WLR', 'RDK', 'PWJ', 'KBM', 'PKL', 'TGL', 'KDS', 'CRB', 'KNG', 'PL', 'BS'];
-            if ($selectedType === 'fmcg' && empty(array_intersect($upperSheets, $fmcgDepoKnown))) {
-                throw new \InvalidArgumentException(
-                    'Validasi Format Gagal: Format file tidak dikenali sebagai laporan Distribusi FMCG (tidak ditemukan sheet cabang depo maupun sheet laporan resmi MJS).'
                 );
             }
         }
@@ -213,7 +231,11 @@ class ExcelIngestionService
         $isTypeMatch = ($detectedType === 'universal_template' || $detectedType === $targetType);
         $matchError = null;
         if (! $isTypeMatch && $detectedType !== 'unknown') {
-            $matchError = "File ini terdeteksi sebagai '{$detectedLabel}', yang tidak cocok untuk diimpor ke unit '{$targetLabel}'.";
+            if ($detectedType === 'mjs_summary' && $targetType === 'fmcg') {
+                $matchError = "File ini adalah Laporan Rekap CV MJS Pusat (hanya sheet PL & BS). Unit 'Distribusi FMCG' mewajibkan file Laporan 9 Depo Cabang (memiliki sheet BMG, PWT, PML GT, dll).";
+            } else {
+                $matchError = "File ini terdeteksi sebagai '{$detectedLabel}', yang tidak cocok untuk diimpor ke unit '{$targetLabel}'.";
+            }
         } elseif ($detectedType === 'unknown') {
             $matchError = 'Format file tidak dapat dikenali secara otomatis. Pastikan menggunakan format template resmi holding.';
         }
@@ -553,12 +575,14 @@ class ExcelIngestionService
             }
         }
 
-        // Jika file berformat laporan resmi CV Mekar Jaya Sentosa (Sheet PL & BS)
+        // Validasi keberadaan sheet 9 depo cabang FMCG
         $fmcgDepoKnown = ['BMG', 'PWT', 'PML GT', 'PML MT', 'WLR', 'RDK', 'PWJ', 'KBM', 'PKL'];
         $hasDepoSheets = count(array_intersect($upperSheets, $fmcgDepoKnown)) > 0;
 
-        if (! $hasDepoSheets && in_array('PL', $upperSheets) && (in_array('BS', $upperSheets) || in_array('BS DET.', $upperSheets))) {
-            return $this->ingestMjsSummaryFile($spreadsheet, $filename);
+        if (! $hasDepoSheets) {
+            throw new \InvalidArgumentException(
+                'Validasi Format Gagal: File ini tidak memiliki lembar kerja (sheet) cabang 9 Depo FMCG (BMG, PWT, PML GT, PML MT, WLR, RDK, PWJ, KBM, PKL). Import dibatalkan.'
+            );
         }
 
         $totalRecords = 0;

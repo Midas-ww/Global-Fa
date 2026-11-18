@@ -35,7 +35,7 @@ class ExcelIngestionValidationTest extends TestCase
     public function test_it_detects_fmcg_file_properly(): void
     {
         $service = new ExcelIngestionService;
-        $fmcgFile = 'D:/BKU MJS/MJS SEPT 26.xlsx';
+        $fmcgFile = 'D:/BKU MJS/PL Depo Persentase MJP Jan 24 - Dec 26.xlsx';
 
         if (file_exists($fmcgFile)) {
             $detected = $service->detectFileType($fmcgFile);
@@ -45,6 +45,62 @@ class ExcelIngestionValidationTest extends TestCase
             $this->expectException(\InvalidArgumentException::class);
             $this->expectExceptionMessage('Validasi Format Gagal: File ini terdeteksi sebagai Distribusi FMCG');
             $service->validateBusinessUnit($fmcgFile, 'xtrans');
+        } else {
+            $this->markTestSkipped('Sample file not found');
+        }
+    }
+
+    public function test_it_rejects_mjs_summary_file_for_fmcg(): void
+    {
+        $service = new ExcelIngestionService;
+        $summaryFile = 'D:/BKU MJS/MJS SEPT 26.xlsx';
+
+        if (file_exists($summaryFile)) {
+            $detected = $service->detectFileType($summaryFile);
+            $this->assertEquals('mjs_summary', $detected['type']);
+
+            // Harus melempar exception jika dipaksa validasi ke FMCG 9 Depo
+            $this->expectException(\InvalidArgumentException::class);
+            $this->expectExceptionMessage('Validasi Format Gagal: File ini terdeteksi sebagai Laporan Rekap CV MJS Pusat');
+            $service->validateBusinessUnit($summaryFile, 'fmcg');
+        } else {
+            $this->markTestSkipped('Sample file not found');
+        }
+    }
+
+    public function test_it_disallows_import_of_mjs_summary_file_in_preview(): void
+    {
+        $user = User::first() ?? User::factory()->create();
+
+        GlobalBusinessUnit::firstOrCreate(['code' => 'fmcg'], [
+            'name' => 'FMCG',
+            'data_source' => 'excel',
+        ]);
+
+        $summaryFile = 'D:/BKU MJS/MJS SEPT 26.xlsx';
+        if (file_exists($summaryFile)) {
+            $uploadedFile = new UploadedFile(
+                $summaryFile,
+                'MJS SEPT 26.xlsx',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                null,
+                true
+            );
+
+            $response = $this->actingAs($user)->postJson(route('finance.sync.preview'), [
+                'file' => $uploadedFile,
+                'type' => 'fmcg',
+            ]);
+
+            $response->assertOk();
+            $response->assertJson([
+                'success' => true,
+                'detected_type' => 'mjs_summary',
+                'target_type' => 'fmcg',
+                'is_type_match' => false,
+                'can_import' => false,
+            ]);
+            $this->assertStringContainsString('Laporan Rekap CV MJS Pusat', $response->json('match_error'));
         } else {
             $this->markTestSkipped('Sample file not found');
         }
@@ -91,11 +147,11 @@ class ExcelIngestionValidationTest extends TestCase
             'data_source' => 'excel',
         ]);
 
-        $fmcgFile = 'D:/BKU MJS/MJS SEPT 26.xlsx';
+        $fmcgFile = 'D:/BKU MJS/PL Depo Persentase MJP Jan 24 - Dec 26.xlsx';
         if (file_exists($fmcgFile)) {
             $uploadedFile = new UploadedFile(
                 $fmcgFile,
-                'MJS SEPT 26.xlsx',
+                'PL Depo Persentase MJP Jan 24 - Dec 26.xlsx',
                 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                 null,
                 true
@@ -138,7 +194,7 @@ class ExcelIngestionValidationTest extends TestCase
             'details' => json_encode(['file_hash' => 'hash_xyz']),
         ]);
 
-        $fmcgFile = 'D:/BKU MJS/MJS SEPT 26.xlsx';
+        $fmcgFile = 'D:/BKU MJS/PL Depo Persentase MJP Jan 24 - Dec 26.xlsx';
         if (file_exists($fmcgFile)) {
             $uploadedFile = new UploadedFile(
                 $fmcgFile,
