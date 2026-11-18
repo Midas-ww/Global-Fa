@@ -307,7 +307,7 @@
 
             <form action="{{ route('logout') }}" method="POST" class="sidebar-label">
                 @csrf
-                <button type="submit" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer shrink-0" title="Keluar">
+                <button type="submit" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer shrink-0" title="Keluar ke SuperApp">
                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                         <polyline points="16 17 21 12 16 7" />
@@ -432,7 +432,7 @@
                                 <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65" />
                                 <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65" />
                             </svg>
-                            <span>Super App Portal</span>
+                            <span>Portal</span>
                         </a>
 
                         <div class="border-t border-slate-100 my-1 mx-1"></div>
@@ -447,7 +447,7 @@
                                 <svg class="w-4 h-4 text-rose-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                                     <polyline points="16 17 21 12 16 7" />
-                                    <line x1="21" y1="3" x2="9" y2="12" />
+                                    <line x1="21" y1="12" x2="9" y2="12" />
                                 </svg>
                                 <span>Logout</span>
                             </button>
