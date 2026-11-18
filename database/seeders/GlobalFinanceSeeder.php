@@ -88,7 +88,7 @@ class GlobalFinanceSeeder extends Seeder
                 'name' => 'MJS Multikarya (CCOD)',
                 'description' => 'PT Mekar Jaya Sentosa Multikarya - Jasa dan distribusi Cash Collection on Delivery (CCOD) 12 cabang.',
                 'icon' => 'shopping-bag',
-                'color' => '#f59e0b',
+                'color' => '#6366f1',
                 'data_source' => 'excel',
                 'sort_order' => 5,
                 'is_active' => true,

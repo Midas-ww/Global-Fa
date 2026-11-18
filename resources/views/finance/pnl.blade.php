@@ -63,18 +63,33 @@
         @php
             $activeBu = collect($businessUnits)->firstWhere('code', $selectedBu);
             $entities = $activeBu['entities'] ?? [];
-            $depoEntities = collect($entities)->filter(fn($e) => !str_starts_with($e['code'], 'CCOD'));
-            $ccodEntities = collect($entities)->filter(fn($e) => str_starts_with($e['code'], 'CCOD'));
+            $entityLabel = match($selectedBu) {
+                'fmcg' => 'Depo FMCG',
+                'ccod' => 'Cabang CCOD',
+                'xtrans' => 'Divisi / Rute',
+                'spbu' => 'Unit SPBU',
+                'iqos' => 'Outlet IQOS',
+                default => 'Cabang / Entitas',
+            };
         @endphp
         @if(count($entities) > 0)
         <div class="pt-3 border-t border-[#edf0ee] space-y-2">
             <div class="flex items-center justify-between flex-wrap gap-2">
                 <div class="flex items-center gap-1.5 flex-wrap">
-                    <span class="text-xs font-bold text-slate-500 mr-1">Filter Cabang:</span>
+                    <span class="text-xs font-bold text-slate-700 mr-1 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full shrink-0" style="background-color: {{ $activeBu['color'] ?? '#10e58f' }}"></span>
+                        <span>{{ $entityLabel }} ({{ count($entities) }}):</span>
+                    </span>
                     <a href="{{ route('finance.pnl', ['period' => $selectedPeriod, 'business_unit' => $selectedBu]) }}"
-                       class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all {{ empty($selectedEntity) ? 'bg-white text-slate-900 border border-slate-300 shadow-2xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200' }}">
+                       class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all {{ empty($selectedEntity) ? 'bg-[#ebf8c8] text-[#3f6212] border border-[#d9f99d] shadow-2xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200' }}">
                         Semua Cabang
                     </a>
+                    @foreach($entities as $e)
+                    <a href="{{ route('finance.pnl', ['period' => $selectedPeriod, 'business_unit' => $selectedBu, 'entity' => $e['code']]) }}"
+                       class="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all {{ $selectedEntity === $e['code'] ? 'bg-[#ebf8c8] text-[#3f6212] font-bold border border-[#d9f99d] shadow-2xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200' }}">
+                        {{ $e['name'] }}
+                    </a>
+                    @endforeach
                 </div>
                 @if($selectedEntity)
                 <a href="{{ route('finance.pnl', ['period' => $selectedPeriod, 'business_unit' => $selectedBu]) }}" class="text-xs text-rose-600 hover:text-rose-800 font-bold flex items-center gap-1">
@@ -82,36 +97,6 @@
                 </a>
                 @endif
             </div>
-
-            @if($depoEntities->count() > 0)
-            <div class="flex items-center gap-2 flex-wrap text-xs">
-                <span class="text-[11px] font-bold text-slate-400 shrink-0">
-                    {{ $selectedBu === 'fmcg' ? 'Depo FMCG (' . $depoEntities->count() . '):' : 'Entitas/Cabang (' . $depoEntities->count() . '):' }}
-                </span>
-                <div class="flex items-center gap-1.5 flex-wrap">
-                    @foreach($depoEntities as $e)
-                    <a href="{{ route('finance.pnl', ['period' => $selectedPeriod, 'business_unit' => $selectedBu, 'entity' => $e['code']]) }}"
-                       class="px-2 py-0.5 rounded text-[11px] font-semibold transition-all {{ $selectedEntity === $e['code'] ? 'bg-[#ebf8c8] text-[#3f6212] font-bold border border-[#d9f99d]' : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200' }}">
-                        {{ $e['name'] }}
-                    </a>
-                    @endforeach
-                </div>
-            </div>
-            @endif
-
-            @if($ccodEntities->count() > 0)
-            <div class="flex items-center gap-2 flex-wrap text-xs pt-1 border-t border-slate-100">
-                <span class="text-[11px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 shrink-0">Cabang CCOD ({{ $ccodEntities->count() }}):</span>
-                <div class="flex items-center gap-1.5 flex-wrap">
-                    @foreach($ccodEntities as $e)
-                    <a href="{{ route('finance.pnl', ['period' => $selectedPeriod, 'business_unit' => $selectedBu, 'entity' => $e['code']]) }}"
-                       class="px-2 py-0.5 rounded text-[11px] font-semibold transition-all {{ $selectedEntity === $e['code'] ? 'bg-amber-100 text-amber-900 font-bold border border-amber-300' : 'bg-amber-50/50 hover:bg-amber-50 text-slate-700 border border-amber-200/60' }}">
-                        {{ $e['name'] }}
-                    </a>
-                    @endforeach
-                </div>
-            </div>
-            @endif
         </div>
         @endif
         @endif
@@ -191,7 +176,7 @@
             <span class="text-xs text-slate-400">Klik unit untuk melihat rincian buku besar</span>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             @foreach($pnl['by_business_unit'] as $buItem)
             <div class="bg-white rounded-2xl border border-[#edf0ee] p-4 shadow-xs space-y-3 hover:border-slate-300 transition">
                 <div class="flex items-center justify-between">
@@ -288,7 +273,7 @@
                         <tr class="hover:bg-slate-50/80 transition-colors">
                             <td class="p-3 pl-6 font-sans">
                                 <div class="flex items-center gap-2">
-                                    <span class="w-2 h-2 rounded-full {{ $entItem['group'] === 'ccod' ? 'bg-amber-500' : 'bg-sky-500' }}"></span>
+                                    <span class="w-2 h-2 rounded-full shrink-0" style="background-color: {{ $entItem['color'] ?? ($activeBu['color'] ?? '#10e58f') }}"></span>
                                     <div>
                                         <div class="font-bold text-slate-900">{{ $entItem['name'] }}</div>
                                         <div class="text-[10px] text-slate-400 font-mono uppercase">{{ $entItem['code'] }} &bull; {{ $entItem['location'] }}</div>
@@ -404,8 +389,9 @@
                                     <span class="px-1.5 py-0.2 rounded text-[10px] font-bold uppercase tracking-wider
                                         @if(str_contains(strtolower($item['business_unit_code']), 'spbu')) bg-rose-50 text-rose-700 border border-rose-200
                                         @elseif(str_contains(strtolower($item['business_unit_code']), 'iqos') || str_contains(strtolower($item['business_unit_code']), 'retail')) bg-[#ebf8c8] text-[#3f6212] border border-[#d9f99d]
-                                        @elseif(str_contains(strtolower($item['business_unit_code']), 'fmcg')) bg-emerald-50 text-emerald-700 border border-emerald-200
+                                        @elseif(str_contains(strtolower($item['business_unit_code']), 'fmcg')) bg-sky-50 text-sky-700 border border-sky-200
                                         @elseif(str_contains(strtolower($item['business_unit_code']), 'xtrans')) bg-amber-50 text-amber-700 border border-amber-200
+                                        @elseif(str_contains(strtolower($item['business_unit_code']), 'ccod')) bg-indigo-50 text-indigo-700 border border-indigo-200
                                         @else bg-slate-100 text-slate-700 border border-slate-200 @endif">
                                         {{ $item['business_unit_code'] }}
                                     </span>

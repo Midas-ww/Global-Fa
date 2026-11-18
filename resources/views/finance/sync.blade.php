@@ -21,8 +21,8 @@
         <div class="bg-white rounded-2xl p-5 border border-[#edf0ee] shadow-xs flex items-center justify-between hover:border-slate-300 transition-all">
             <div>
                 <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Unit Bisnis Aktif</span>
-                <h4 class="text-2xl font-black text-slate-900 mt-1">{{ $stats['total_business_units'] ?? 4 }} Unit Bisnis</h4>
-                <p class="text-xs text-slate-400 mt-0.5">{{ $stats['total_entities'] ?? 12 }} Cabang & Entitas Hukum</p>
+                <h4 class="text-2xl font-black text-slate-900 mt-1">{{ $stats['total_business_units'] ?? count($businessUnits) }} Unit Bisnis</h4>
+                <p class="text-xs text-slate-400 mt-0.5">{{ $stats['total_entities'] ?? 24 }} Cabang & Entitas Hukum</p>
             </div>
             <div class="w-11 h-11 rounded-xl bg-[#ebf8c8] text-[#3f6212] flex items-center justify-center">
                 <i data-lucide="building-2" class="w-5 h-5"></i>
@@ -191,15 +191,15 @@
             </div>
 
             <!-- FMCG 9 DEPO UPLOAD BOX -->
-            <div class="p-4 rounded-xl border border-dashed border-[#10e58f] bg-[#fbfdfa] hover:bg-white transition">
+            <div class="p-4 rounded-xl border border-dashed border-sky-300 bg-[#fbfdfa] hover:bg-white transition">
                 <div class="flex items-center justify-between mb-2">
                     <div class="flex items-center gap-2">
-                        <div class="w-8 h-8 rounded-lg bg-[#ebf8c8] text-[#3f6212] font-black text-xs flex items-center justify-center">
+                        <div class="w-8 h-8 rounded-lg bg-sky-50 text-sky-700 border border-sky-200 font-black text-xs flex items-center justify-center">
                             MJS
                         </div>
                         <div>
                             <h4 class="text-sm font-bold text-slate-900">MJS (FMCG) - 9 Depo Cabang / CV Mekar Jaya Sentosa</h4>
-                            <p class="text-[11px] text-slate-400">Kuningan, Cirebon, Majalengka, Indramayu, Subang, Purwakarta, Karawang, Bekasi, Cikarang & Laporan Resmi MJS</p>
+                            <p class="text-[11px] text-slate-400">Pekalongan, Bumiayu, Purwokerto, Pemalang, Weleri, Randudongkal, Purworejo, Kebumen & Laporan Resmi MJS</p>
                         </div>
                     </div>
                 </div>
@@ -207,22 +207,22 @@
                 <form id="formFmcgUpload" action="{{ route('finance.sync.excel') }}" method="POST" enctype="multipart/form-data" class="mt-3 space-y-3" onsubmit="return handleExcelImportSubmit(event, this)">
                     @csrf
                     <input type="hidden" name="type" value="fmcg">
-                    <div class="relative flex items-center justify-center border-2 border-dashed border-slate-200 hover:border-[#10e58f] rounded-xl p-3 bg-white transition cursor-pointer group">
+                    <div class="relative flex items-center justify-center border-2 border-dashed border-slate-200 hover:border-sky-400 rounded-xl p-3 bg-white transition cursor-pointer group">
                         <input type="file" name="file" accept=".xlsx,.xls,.csv" required class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" onchange="this.nextElementSibling.innerText = this.files[0]?.name || 'Pilih file Excel MJS / FMCG...'">
-                        <div class="text-center text-xs text-slate-500 flex items-center gap-2 pointer-events-none group-hover:text-emerald-700">
-                            <i data-lucide="upload-cloud" class="w-4 h-4 text-[#10e58f]"></i>
+                        <div class="text-center text-xs text-slate-500 flex items-center gap-2 pointer-events-none group-hover:text-sky-700">
+                            <i data-lucide="upload-cloud" class="w-4 h-4 text-sky-500"></i>
                             <span class="font-medium text-slate-600">Pilih file Excel MJS / FMCG (.xlsx / .xls)</span>
                         </div>
                     </div>
                     <div class="flex items-center justify-between flex-wrap gap-2 pt-1">
                         <div class="flex items-center gap-2">
-                            <input type="checkbox" name="overwrite" id="overwriteFmcg" value="1" class="w-4 h-4 rounded border-slate-300 text-[#10e58f] focus:ring-[#10e58f] cursor-pointer">
+                            <input type="checkbox" name="overwrite" id="overwriteFmcg" value="1" class="w-4 h-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500 cursor-pointer">
                             <label for="overwriteFmcg" class="text-xs text-slate-600 font-medium cursor-pointer select-none">
                                 Timpa data jika file sudah ada (<span class="font-mono text-slate-400">Overwrite</span>)
                             </label>
                         </div>
                         <button type="submit" class="px-4 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer">
-                            <i data-lucide="search-check" class="w-3.5 h-3.5 text-emerald-600"></i>
+                            <i data-lucide="search-check" class="w-3.5 h-3.5 text-sky-600"></i>
                             Cek & Import MJS (FMCG)
                         </button>
                     </div>
@@ -230,10 +230,10 @@
             </div>
 
             <!-- XTRANS EKSPEDISI UPLOAD BOX -->
-            <div class="p-4 rounded-xl border border-dashed border-[#ffd800] bg-[#fbfdfa] hover:bg-white transition">
+            <div class="p-4 rounded-xl border border-dashed border-amber-300 bg-[#fbfdfa] hover:bg-white transition">
                 <div class="flex items-center justify-between mb-2">
                     <div class="flex items-center gap-2">
-                        <div class="w-8 h-8 rounded-lg bg-[#fef9c3] text-[#854d0e] font-black text-xs flex items-center justify-center">
+                        <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 font-black text-xs flex items-center justify-center">
                             MJX
                         </div>
                         <div>
@@ -246,7 +246,7 @@
                 <form id="formXtransUpload" action="{{ route('finance.sync.excel') }}" method="POST" enctype="multipart/form-data" class="mt-3 space-y-3" onsubmit="return handleExcelImportSubmit(event, this)">
                     @csrf
                     <input type="hidden" name="type" value="xtrans">
-                    <div class="relative flex items-center justify-center border-2 border-dashed border-slate-200 hover:border-[#ffd800] rounded-xl p-3 bg-white transition cursor-pointer group">
+                    <div class="relative flex items-center justify-center border-2 border-dashed border-slate-200 hover:border-amber-400 rounded-xl p-3 bg-white transition cursor-pointer group">
                         <input type="file" name="file" accept=".xlsx,.xls,.csv" required class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" onchange="this.nextElementSibling.innerText = this.files[0]?.name || 'Pilih file Excel Ekspedisi...'">
                         <div class="text-center text-xs text-slate-500 flex items-center gap-2 pointer-events-none group-hover:text-amber-700">
                             <i data-lucide="upload-cloud" class="w-4 h-4 text-amber-500"></i>
@@ -255,13 +255,13 @@
                     </div>
                     <div class="flex items-center justify-between flex-wrap gap-2 pt-1">
                         <div class="flex items-center gap-2">
-                            <input type="checkbox" name="overwrite" id="overwriteXtrans" value="1" class="w-4 h-4 rounded border-slate-300 text-[#ffd800] focus:ring-[#ffd800] cursor-pointer">
+                            <input type="checkbox" name="overwrite" id="overwriteXtrans" value="1" class="w-4 h-4 rounded border-slate-300 text-amber-500 focus:ring-amber-500 cursor-pointer">
                             <label for="overwriteXtrans" class="text-xs text-slate-600 font-medium cursor-pointer select-none">
                                 Timpa data jika file sudah ada (<span class="font-mono text-slate-400">Overwrite</span>)
                             </label>
                         </div>
                         <button type="submit" class="px-4 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer">
-                            <i data-lucide="search-check" class="w-3.5 h-3.5 text-amber-500"></i>
+                            <i data-lucide="search-check" class="w-3.5 h-3.5 text-amber-600"></i>
                             Cek & Import MJX (Ekspedisi)
                         </button>
                     </div>
@@ -269,10 +269,10 @@
             </div>
 
             <!-- CCOD (PT MEKAR JAYA SENTOSA MULTIKARYA) UPLOAD BOX -->
-            <div class="p-4 rounded-xl border border-dashed border-[#f59e0b] bg-[#fbfdfa] hover:bg-white transition">
+            <div class="p-4 rounded-xl border border-dashed border-indigo-300 bg-[#fbfdfa] hover:bg-white transition">
                 <div class="flex items-center justify-between mb-2">
                     <div class="flex items-center gap-2">
-                        <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 font-black text-xs flex items-center justify-center">
+                        <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 font-black text-xs flex items-center justify-center">
                             CCOD
                         </div>
                         <div>
@@ -285,22 +285,22 @@
                 <form id="formCcodUpload" action="{{ route('finance.sync.excel') }}" method="POST" enctype="multipart/form-data" class="mt-3 space-y-3" onsubmit="return handleExcelImportSubmit(event, this)">
                     @csrf
                     <input type="hidden" name="type" value="ccod">
-                    <div class="relative flex items-center justify-center border-2 border-dashed border-slate-200 hover:border-[#f59e0b] rounded-xl p-3 bg-white transition cursor-pointer group">
+                    <div class="relative flex items-center justify-center border-2 border-dashed border-slate-200 hover:border-indigo-400 rounded-xl p-3 bg-white transition cursor-pointer group">
                         <input type="file" name="file" accept=".xlsx,.xls,.csv" required class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" onchange="this.nextElementSibling.innerText = this.files[0]?.name || 'Pilih file Excel CCOD Multikarya...'">
-                        <div class="text-center text-xs text-slate-500 flex items-center gap-2 pointer-events-none group-hover:text-amber-700">
-                            <i data-lucide="upload-cloud" class="w-4 h-4 text-amber-500"></i>
+                        <div class="text-center text-xs text-slate-500 flex items-center gap-2 pointer-events-none group-hover:text-indigo-700">
+                            <i data-lucide="upload-cloud" class="w-4 h-4 text-indigo-500"></i>
                             <span class="font-medium text-slate-600">Pilih file Excel CCOD (.xlsx / .xls)</span>
                         </div>
                     </div>
                     <div class="flex items-center justify-between flex-wrap gap-2 pt-1">
                         <div class="flex items-center gap-2">
-                            <input type="checkbox" name="overwrite" id="overwriteCcod" value="1" class="w-4 h-4 rounded border-slate-300 text-amber-500 focus:ring-amber-500 cursor-pointer">
+                            <input type="checkbox" name="overwrite" id="overwriteCcod" value="1" class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
                             <label for="overwriteCcod" class="text-xs text-slate-600 font-medium cursor-pointer select-none">
                                 Timpa data jika file sudah ada (<span class="font-mono text-slate-400">Overwrite</span>)
                             </label>
                         </div>
                         <button type="submit" class="px-4 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer">
-                            <i data-lucide="search-check" class="w-3.5 h-3.5 text-amber-600"></i>
+                            <i data-lucide="search-check" class="w-3.5 h-3.5 text-indigo-600"></i>
                             Cek & Import CCOD
                         </button>
                     </div>
@@ -412,10 +412,11 @@
                         </td>
                         <td class="py-3 px-5 font-bold uppercase text-slate-800">
                             <span class="px-2 py-0.5 rounded text-[11px] 
-                                @if(str_contains(strtolower($log->business_unit_code), 'fmcg')) bg-emerald-50 text-emerald-700 border border-emerald-200
-                                @elseif(str_contains(strtolower($log->business_unit_code), 'spbu')) bg-rose-50 text-rose-700 border border-rose-200
+                                @if(str_contains(strtolower($log->business_unit_code), 'spbu')) bg-rose-50 text-rose-700 border border-rose-200
                                 @elseif(str_contains(strtolower($log->business_unit_code), 'iqos') || str_contains(strtolower($log->business_unit_code), 'retail')) bg-[#ebf8c8] text-[#3f6212] border border-[#d9f99d]
+                                @elseif(str_contains(strtolower($log->business_unit_code), 'fmcg')) bg-sky-50 text-sky-700 border border-sky-200
                                 @elseif(str_contains(strtolower($log->business_unit_code), 'xtrans')) bg-amber-50 text-amber-700 border border-amber-200
+                                @elseif(str_contains(strtolower($log->business_unit_code), 'ccod')) bg-indigo-50 text-indigo-700 border border-indigo-200
                                 @else bg-slate-100 text-slate-700 border border-slate-200 @endif">
                                 {{ $log->business_unit_code }}
                             </span>

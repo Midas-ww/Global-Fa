@@ -76,19 +76,30 @@
         @php
             $activeBu = collect($businessUnits)->firstWhere('code', $selectedBu);
             $entities = $activeBu['entities'] ?? [];
+            $entityLabel = match($selectedBu) {
+                'fmcg' => 'Depo FMCG',
+                'ccod' => 'Cabang CCOD',
+                'xtrans' => 'Divisi / Rute',
+                'spbu' => 'Unit SPBU',
+                'iqos' => 'Outlet IQOS',
+                default => 'Cabang / Entitas',
+            };
         @endphp
         @if(count($entities) > 0)
         <div class="pt-3 border-t border-[#edf0ee] flex items-center justify-between flex-wrap gap-3">
-            <div class="flex items-center gap-2 flex-wrap">
-                <span class="text-xs font-bold text-slate-500">Filter Cabang/Depo:</span>
+            <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="text-xs font-bold text-slate-700 mr-1 flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full shrink-0" style="background-color: {{ $activeBu['color'] ?? '#10e58f' }}"></span>
+                    <span>{{ $entityLabel }} ({{ count($entities) }}):</span>
+                </span>
                 <div class="flex items-center gap-1.5 flex-wrap">
                     <a href="{{ route('finance.balance-sheet', ['period' => $selectedPeriod, 'business_unit' => $selectedBu]) }}"
-                       class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all {{ empty($selectedEntity) ? 'bg-white text-slate-900 border border-slate-300 shadow-2xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200' }}">
+                       class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all {{ empty($selectedEntity) ? 'bg-[#ebf8c8] text-[#3f6212] border border-[#d9f99d] shadow-2xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200' }}">
                         Semua Cabang
                     </a>
                     @foreach($entities as $e)
                     <a href="{{ route('finance.balance-sheet', ['period' => $selectedPeriod, 'business_unit' => $selectedBu, 'entity' => $e['code']]) }}"
-                       class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all {{ $selectedEntity === $e['code'] ? 'bg-[#ebf8c8] text-[#3f6212] border border-[#d9f99d]' : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200' }}">
+                       class="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all {{ $selectedEntity === $e['code'] ? 'bg-[#ebf8c8] text-[#3f6212] font-bold border border-[#d9f99d] shadow-2xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200' }}">
                         {{ $e['name'] }}
                     </a>
                     @endforeach

@@ -293,24 +293,15 @@
                         </div>
                     </div>
 
-                    <!-- Breakdown List (1 Warna dengan Komposisi Gradasi Kedalaman Berbeda) -->
-                    @php
-                        $emeraldTones = [
-                            'fmcg' => '#064e3b',   // 1. Deepest Forest Emerald
-                            'spbu' => '#047857',   // 2. Deep Emerald
-                            'iqos' => '#059669',   // 3. Medium Emerald
-                            'xtrans' => '#34d399', // 4. Light Mint Emerald
-                            'ccod' => '#f59e0b',   // 5. Amber/Gold CCOD
-                        ];
-                    @endphp
+                    <!-- Breakdown List Per Unit Bisnis -->
                     <div class="sm:col-span-6 space-y-2 max-h-64 overflow-y-auto pr-1 no-scrollbar">
                         @foreach($summary['by_business_unit'] as $bu)
                         @php
                             $totalRev = $summary['kpis']['revenue'] ?? 1;
                             $pct = $totalRev > 0 ? round(($bu['revenue'] / $totalRev) * 100, 1) : 0;
-                            $buTone = $emeraldTones[$bu['code']] ?? '#059669';
+                            $buTone = $bu['color'] ?: '#10e58f';
                         @endphp
-                        <div class="p-2.5 rounded-xl border border-[#edf0ee] hover:border-emerald-300 transition-colors bg-[#fbfdfa] flex items-center justify-between">
+                        <div class="p-2.5 rounded-xl border border-[#edf0ee] hover:border-slate-300 transition-colors bg-[#fbfdfa] flex items-center justify-between">
                             <div class="flex items-center gap-2 min-w-0">
                                 <span class="w-3 h-3 rounded-full shrink-0" style="background-color: {{ $buTone }}"></span>
                                 <div class="truncate">
@@ -367,7 +358,7 @@
                 @php
                     $totalRev = $summary['kpis']['revenue'] ?? 1;
                     $pct = $totalRev > 0 ? round(($bu['revenue'] / $totalRev) * 100, 1) : 0;
-                    $toneColor = $emeraldTones[$bu['code']] ?? '#059669';
+                    $toneColor = $bu['color'] ?: '#10e58f';
                 @endphp
                 <div class="bg-white p-3.5 rounded-xl border border-[#edf0ee]">
                     <div class="flex items-center justify-between text-xs mb-2">
@@ -401,7 +392,7 @@
                 </thead>
                 <tbody class="divide-y divide-[#edf0ee] font-medium text-slate-700">
                     @foreach($summary['by_business_unit'] as $bu)
-                    @php $tableTone = $emeraldTones[$bu['code']] ?? '#059669'; @endphp
+                    @php $tableTone = $bu['color'] ?: '#10e58f'; @endphp
                     <tr class="hover:bg-[#fbfdfa] transition-colors">
                         <td class="p-4 pl-6 font-bold text-slate-900 flex items-center gap-2.5">
                             <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color: {{ $tableTone }}"></span>
@@ -695,13 +686,7 @@
 
         const labels = buList.map(b => b.name);
         const data = buList.map(b => Number(b.revenue || 0));
-        const toneMap = {
-            'fmcg': '#064e3b',   // 1. Emerald 900 (Deep Forest)
-            'spbu': '#047857',   // 2. Emerald 700 (Deep Emerald)
-            'iqos': '#059669',   // 3. Emerald 600 (Primary Emerald)
-            'xtrans': '#34d399', // 4. Emerald 400 (Mint Light)
-        };
-        const colors = buList.map(b => toneMap[b.code] || '#059669');
+        const colors = buList.map(b => b.color || '#10e58f');
 
         new Chart(ctx, {
             type: 'doughnut',
