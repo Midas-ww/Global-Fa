@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Dashboard Overview') - Global FA Mekar Jaya Group</title>
     
+    <!-- Favicon & Icons persis SIR-IQOS & SPBU -->
+    <link rel="icon" type="image/png" href="/assets/images/logo.png">
+    <link rel="apple-touch-icon" href="/assets/images/logo.png">
+
     <!-- Fonts: Instrument Sans (Identik 100% dengan SIR-IQOS & API-SPBU) -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700" rel="stylesheet" />
@@ -107,13 +111,13 @@
     <!-- SIDEBAR (Flat Clean Modern Style ala SPBU & IQOS - NO GRADIENT) -->
     <aside id="mainSidebar" class="w-64 bg-white text-slate-700 flex flex-col justify-between border-r border-[#edf0ee] shrink-0 z-50 transition-all duration-300 ease-in-out fixed lg:static inset-y-0 left-0 -translate-x-full lg:translate-x-0 shadow-xs">
         <div class="flex flex-col flex-1 overflow-hidden">
-            <!-- Sidebar Header / Logo -->
+            <!-- Sidebar Header / Logo (Persis SIR-IQOS & SPBU) -->
             <div class="h-16 flex items-center justify-center border-b border-[#edf0ee] shrink-0 transition-all px-3 bg-white">
                 <a href="{{ route('finance.dashboard') }}" class="flex items-center justify-center w-full overflow-hidden">
-                    <img src="/assets/images/mekarjaya-group-logo.png" alt="Mekar Jaya Group" class="h-10 w-auto max-w-[150px] object-contain shrink-0 sidebar-logo-full" />
-                    <div class="w-9 h-9 rounded-xl bg-white border border-slate-200 text-slate-800 font-black flex items-center justify-center text-xs shrink-0 hidden sidebar-logo-compact shadow-2xs" title="Mekar Jaya Group">
-                        MJ
-                    </div>
+                    <!-- Logo Full (Expanded) -->
+                    <img src="/assets/images/logo-full.png" alt="Mekar Jaya Group" class="h-11 sm:h-12 w-auto object-contain max-w-[200px] shrink-0 sidebar-logo-full" />
+                    <!-- Logo Icon (Collapsed) -->
+                    <img src="/assets/images/logo.png" alt="Mekar Jaya Group" class="w-10 h-10 object-contain shrink-0 hidden sidebar-logo-compact" />
                 </a>
             </div>
 
@@ -219,7 +223,7 @@
                         </a>
 
                         <!-- Super App Portal Link -->
-                        <a href="http://localhost:8000/port" target="_blank"
+                        <a href="{{ route('sso.portal') }}" target="_blank"
                            title="Super App Portal"
                            class="sidebar-item flex items-center text-xs transition-all duration-300 ease-in-out group relative cursor-pointer rounded-tl-[1.2rem] rounded-br-[1.2rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1.2rem] hover:rounded-bl-[1.2rem] hover:rounded-tl-none hover:rounded-br-none text-slate-600 hover:bg-[#ebf8c8]/60 hover:text-[#3f6212] font-semibold w-full px-3.5 py-2.5 justify-start gap-3">
                             <svg class="w-5 h-5 shrink-0 text-slate-500 group-hover:text-[#3f6212]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -419,7 +423,7 @@
 
                         <!-- Portal Link -->
                         <a
-                            href="http://localhost:8000/port"
+                            href="{{ route('sso.portal') }}"
                             target="_blank"
                             class="flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-[#10e58f] active:bg-slate-100 rounded-xl transition-all cursor-pointer group"
                         >

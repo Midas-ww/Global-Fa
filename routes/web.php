@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 
 // SSO & Autentikasi
 Route::get('/sso/callback', [SsoCallbackController::class, 'handle'])->name('sso.callback');
+Route::get('/sso/portal', [SsoCallbackController::class, 'redirectToPortal'])->name('sso.portal');
 Route::get('/login', [SsoCallbackController::class, 'showLogin'])->name('login');
 Route::post('/login', [SsoCallbackController::class, 'login'])->name('login.post');
 Route::match(['get', 'post'], '/logout', [SsoCallbackController::class, 'logout'])->name('logout');

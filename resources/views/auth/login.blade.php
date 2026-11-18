@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Global Financial Consolidation | Mekar Jaya Group</title>
     
+    <!-- Favicon & Icons persis SIR-IQOS & SPBU -->
+    <link rel="icon" type="image/png" href="/assets/images/logo.png">
+    <link rel="apple-touch-icon" href="/assets/images/logo.png">
+
     <!-- Fonts: Instrument Sans (Identik 100% dengan SIR-IQOS & API-SPBU) -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700" rel="stylesheet" />
@@ -63,7 +67,7 @@
         <!-- LOGO & BRAND -->
         <div class="text-center mb-8">
             <div class="inline-flex items-center justify-center p-3 rounded-2xl bg-white shadow-xs mb-3 border border-[#edf0ee]">
-                <img src="/assets/images/Mekar-Jaya-Group-Logo.png" alt="Mekar Jaya Group" class="h-10 w-auto object-contain" />
+                <img src="/assets/images/logo-full.png" alt="Mekar Jaya Group" class="h-11 sm:h-12 w-auto object-contain max-w-[220px]" />
             </div>
             <h1 class="text-2xl font-black text-slate-900 tracking-tight">GLOBAL-FA</h1>
             <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Mekar Jaya Group Financial Hub</p>
@@ -105,7 +109,7 @@
 
             <!-- SSO BUTTON (SOLID FLAT - NO GRADIENT) -->
             <div>
-                <a href="http://localhost:8000/port" class="w-full py-3 px-4 rounded-xl bg-[#ebf8c8] hover:bg-[#dff5b0] text-[#3f6212] font-bold text-xs border border-[#d9f99d] flex items-center justify-center gap-2 transition duration-150 cursor-pointer shadow-2xs">
+                <a href="{{ rtrim(config('services.mkj_superapp.url', env('SUPERAPP_URL', 'http://localhost:8000')), '/') }}/login" class="w-full py-3 px-4 rounded-xl bg-[#ebf8c8] hover:bg-[#dff5b0] text-[#3f6212] font-bold text-xs border border-[#d9f99d] flex items-center justify-center gap-2 transition duration-150 cursor-pointer shadow-2xs">
                     <svg class="w-4 h-4 text-[#3f6212]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z" />
                         <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65" />

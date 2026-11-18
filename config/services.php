@@ -35,6 +35,11 @@ return [
         ],
     ],
 
+    'mkj_superapp' => [
+        'url' => env('SUPERAPP_URL', env('MKJ_SUPERAPP_URL', 'http://localhost:8000')),
+        'secret' => env('SSO_SECRET', 'mekarjaya_sso_secret'),
+    ],
+
     'sso' => [
         'secret' => env('SSO_SECRET', 'mekarjaya_sso_secret'),
     ],
