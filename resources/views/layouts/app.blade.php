@@ -104,6 +104,14 @@
     </script>
 </head>
 <body class="bg-[#f8faf8] text-slate-800 antialiased font-sans flex h-screen overflow-hidden">
+    @php
+        $userName = auth()->user()->name ?? 'Executive';
+        $nameParts = explode(' ', trim($userName));
+        $userInitials = count($nameParts) >= 2 
+            ? strtoupper(substr($nameParts[0], 0, 1) . substr($nameParts[1], 0, 1))
+            : strtoupper(substr($userName, 0, 2));
+        $userRole = auth()->user()->role ?? 'HOLDING FINANCE';
+    @endphp
 
     <!-- MOBILE OVERLAY BACKDROP -->
     <div id="sidebarBackdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/40 z-40 hidden lg:hidden transition-opacity"></div>
@@ -296,12 +304,12 @@
         <!-- Sidebar Footer / User Profile & Logout (Persis SPBU & IQOS) -->
         <div class="p-3 border-t border-[#edf0ee] shrink-0 bg-slate-50/50 flex items-center transition-all mt-auto justify-between sidebar-footer">
             <div class="flex items-center gap-2.5 overflow-hidden">
-                <div class="w-8 h-8 rounded-full bg-[#10e58f] text-slate-900 font-bold text-xs flex items-center justify-center shrink-0 shadow-xs" title="{{ auth()->user()->name ?? 'Administrator' }}">
-                    {{ substr(auth()->user()->name ?? 'A', 0, 1) }}
+                <div class="w-8 h-8 rounded-full bg-[#7c3aed] text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs" title="{{ $userName }}">
+                    {{ $userInitials }}
                 </div>
                 <div class="flex flex-col truncate min-w-0 sidebar-label">
-                    <span class="text-xs font-bold text-slate-900 truncate" title="{{ auth()->user()->name ?? 'Administrator' }}">{{ auth()->user()->name ?? 'Administrator' }}</span>
-                    <span class="text-[10px] text-slate-500 font-medium truncate" title="{{ auth()->user()->email ?? 'Holding Executive' }}">{{ auth()->user()->email ?? 'Holding Executive' }}</span>
+                    <span class="text-xs font-bold text-slate-900 truncate" title="{{ $userName }}">{{ $userName }}</span>
+                    <span class="text-[10px] text-slate-500 font-semibold truncate uppercase" title="{{ $userRole }}">{{ $userRole }}</span>
                 </div>
             </div>
 
@@ -367,14 +375,6 @@
             </div>
 
             <!-- Right Section: Date Display & Profile Dropdown (Persis SIR-IQOS) -->
-            @php
-                $userName = auth()->user()->name ?? 'Executive';
-                $nameParts = explode(' ', trim($userName));
-                $userInitials = count($nameParts) >= 2 
-                    ? strtoupper(substr($nameParts[0], 0, 1) . substr($nameParts[1], 0, 1))
-                    : strtoupper(substr($userName, 0, 2));
-                $userRole = auth()->user()->role ?? 'HOLDING FINANCE';
-            @endphp
             <div class="flex items-center gap-2 sm:gap-4 shrink-0">
                 <!-- Date Display (Desktop only ala SIR-IQOS) -->
                 <div class="hidden lg:block text-xs font-medium text-slate-600 select-none">
@@ -393,7 +393,7 @@
                     >
                         <!-- Avatar Circle -->
                         <div class="relative shrink-0">
-                            <div class="w-8 h-8 rounded-full bg-[#10e58f] text-slate-950 font-bold text-xs flex items-center justify-center shadow-xs">
+                            <div class="w-8 h-8 rounded-full bg-[#7c3aed] text-white font-bold text-xs flex items-center justify-center shadow-xs">
                                 {{ $userInitials }}
                             </div>
                         </div>
