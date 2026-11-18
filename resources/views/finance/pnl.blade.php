@@ -239,7 +239,7 @@
             </div>
         </div>
 
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto custom-scrollbar">
             <table class="w-full text-left border-collapse text-xs">
                 <thead>
                     <tr class="bg-slate-50 text-slate-700 uppercase text-[11px] font-bold tracking-wider border-b border-slate-200">
@@ -350,16 +350,16 @@
             </div>
         </div>
 
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto overflow-y-auto max-h-[680px] custom-scrollbar border-t border-slate-100">
             <table class="w-full text-left border-collapse text-xs">
-                <thead>
-                    <tr class="bg-white text-slate-700 uppercase text-[11px] font-bold tracking-wider border-b border-slate-200">
-                        <th class="p-3.5 pl-6 w-24">Kode Akun</th>
-                        <th class="p-3.5">Keterangan / Uraian Akun</th>
-                        <th class="p-3.5 text-right w-44">{{ $pnl['period_label'] }}</th>
-                        <th class="p-3.5 text-right w-44 text-slate-400">{{ $pnl['previous_period_label'] }}</th>
-                        <th class="p-3.5 text-right w-36">Selisih (MoM)</th>
-                        <th class="p-3.5 text-center w-24">% Growth</th>
+                <thead class="sticky top-0 z-10 bg-white border-b-2 border-slate-200 shadow-2xs">
+                    <tr class="bg-white text-slate-700 uppercase text-[11px] font-bold tracking-wider">
+                        <th class="p-3.5 pl-6 w-24 bg-white">Kode Akun</th>
+                        <th class="p-3.5 bg-white">Keterangan / Uraian Akun</th>
+                        <th class="p-3.5 text-right w-44 bg-white">{{ $pnl['period_label'] }}</th>
+                        <th class="p-3.5 text-right w-44 text-slate-400 bg-white">{{ $pnl['previous_period_label'] }}</th>
+                        <th class="p-3.5 text-right w-36 bg-white">Selisih (MoM)</th>
+                        <th class="p-3.5 text-center w-24 bg-white">% Growth</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 font-medium">

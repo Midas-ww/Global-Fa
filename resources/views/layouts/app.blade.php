@@ -82,7 +82,63 @@
             }
         }
 
-        /* Custom Scrollbar */
+        /* ==========================================================================
+           Custom Scrollbars Ramping & Elegan ala SIR-IQOS & SPBU
+           ========================================================================== */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 transparent;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 7px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 9999px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: #047857;
+        }
+
+        /* Class spesifik untuk wadah tabel laporan (.custom-scrollbar & .custom-balance-scroll) */
+        .custom-scrollbar,
+        .custom-balance-scroll {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 rgba(241, 245, 249, 0.7);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar,
+        .custom-balance-scroll::-webkit-scrollbar {
+            width: 6px;
+            height: 7px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track,
+        .custom-balance-scroll::-webkit-scrollbar-track {
+            background: rgba(241, 245, 249, 0.7);
+            border-radius: 9999px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb,
+        .custom-balance-scroll::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 9999px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover,
+        .custom-balance-scroll::-webkit-scrollbar-thumb:hover {
+            background-color: #047857;
+        }
+
+        /* Custom Scrollbar - Hide when explicitly requested */
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
@@ -475,9 +531,49 @@
         </div>
 
         <!-- VIEW BODY -->
-        <main class="flex-1 overflow-y-auto px-4 sm:px-8 py-5">
+        <main id="mainContentArea" class="flex-1 overflow-y-auto px-4 sm:px-8 py-5 custom-scrollbar relative">
             @yield('content')
         </main>
+
+        <!-- FIXED HORIZONTAL SCROLLBAR TRACK ALA SIR-IQOS (Otomatis Tampil Saat Tabel Laporan Overflow Horizontal) -->
+        <div id="fixedHorizontalScrollbar"
+             class="hidden bg-white/95 backdrop-blur-xs border-t border-slate-200/90 py-1.5 px-4 shrink-0 transition-all duration-200 flex items-center gap-2 select-none shadow-xs print:hidden z-30"
+             title="Klik atau seret scrollbar untuk menggeser kolom tabel (ala SIR-IQOS)">
+            <!-- Left Arrow Button ◄ -->
+            <button type="button"
+                    onclick="scrollActiveReportTable(-250)"
+                    class="w-6 h-6 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 flex items-center justify-center shrink-0 cursor-pointer transition-colors shadow-2xs"
+                    aria-label="Scroll left">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+            </button>
+
+            <!-- Scrollbar Track Area -->
+            <div id="tableScrollTrack" onclick="onTableScrollTrackClick(event)" class="relative flex-1 h-3.5 bg-slate-100 hover:bg-slate-200/70 rounded-full flex items-center px-1 cursor-pointer transition-colors">
+                <!-- Draggable Scrollbar Thumb -->
+                <div id="tableScrollThumb"
+                     onmousedown="onTableThumbMouseDown(event)"
+                     ontouchstart="onTableThumbTouchStart(event)"
+                     class="h-2 rounded-full bg-slate-400 hover:bg-emerald-600 active:bg-emerald-700 cursor-grab active:cursor-grabbing transition-colors duration-150 shadow-2xs"
+                     style="width: 48px; transform: translateX(0px);">
+                </div>
+            </div>
+
+            <!-- Right Arrow Button ► -->
+            <button type="button"
+                    onclick="scrollActiveReportTable(250)"
+                    class="w-6 h-6 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 flex items-center justify-center shrink-0 cursor-pointer transition-colors shadow-2xs"
+                    aria-label="Scroll right">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+            </button>
+
+            <span class="text-[10px] text-slate-400 font-mono font-medium hidden sm:inline whitespace-nowrap pl-1">
+                Scrollbar Tabel &bull; SIR-IQOS Sync
+            </span>
+        </div>
     </div>
 
     <!-- Sidebar & Filter Scripts (Identik SPBU & IQOS) -->
@@ -662,7 +758,173 @@
                     if (searchInput) searchInput.focus();
                 }
             });
+
+            // Inisialisasi Sinkronisasi Scrollbar Horisontal ala SIR-IQOS
+            initReportTableScrollbar();
         });
+
+        // =========================================================================
+        // SINKRONISASI SCROLLBAR TABEL LAPORAN (ALA SIR-IQOS & SPBU)
+        // =========================================================================
+        let activeScrollableTable = null;
+        let isDraggingTableThumb = false;
+        let thumbDragStartX = 0;
+        let thumbInitialScrollLeft = 0;
+
+        function getActiveReportTable() {
+            const containers = document.querySelectorAll('main .overflow-x-auto, main .custom-scrollbar, main .custom-balance-scroll');
+            for (const el of containers) {
+                if (el.scrollWidth > el.clientWidth + 2 && el.offsetParent !== null) {
+                    return el;
+                }
+            }
+            return null;
+        }
+
+        function updateHorizontalScrollbarMetrics() {
+            const bar = document.getElementById('fixedHorizontalScrollbar');
+            const track = document.getElementById('tableScrollTrack');
+            const thumb = document.getElementById('tableScrollThumb');
+            if (!bar || !track || !thumb) return;
+
+            activeScrollableTable = getActiveReportTable();
+            if (!activeScrollableTable) {
+                bar.classList.add('hidden');
+                return;
+            }
+
+            bar.classList.remove('hidden');
+
+            const clientW = activeScrollableTable.clientWidth || 1;
+            const scrollW = activeScrollableTable.scrollWidth || 1;
+            const scrollL = activeScrollableTable.scrollLeft || 0;
+            const trackW = track.clientWidth || 1;
+
+            const minThumbW = 40;
+            const ratio = clientW / scrollW;
+            const thumbW = Math.max(minThumbW, Math.min(trackW * ratio, trackW));
+            const maxTrack = trackW - thumbW;
+            const maxScroll = scrollW - clientW;
+
+            const thumbLeftPos = maxScroll > 0 ? (scrollL / maxScroll) * maxTrack : 0;
+
+            thumb.style.width = Math.round(thumbW) + 'px';
+            thumb.style.transform = `translateX(${Math.round(thumbLeftPos)}px)`;
+        }
+
+        function scrollActiveReportTable(offset) {
+            if (!activeScrollableTable) activeScrollableTable = getActiveReportTable();
+            if (activeScrollableTable) {
+                activeScrollableTable.scrollBy({ left: offset, behavior: 'smooth' });
+            }
+        }
+
+        function onTableScrollTrackClick(e) {
+            if (isDraggingTableThumb || !activeScrollableTable) return;
+            const track = document.getElementById('tableScrollTrack');
+            const thumb = document.getElementById('tableScrollThumb');
+            if (!track || !thumb) return;
+
+            const rect = track.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const trackW = track.clientWidth || 1;
+            const thumbW = parseFloat(thumb.style.width) || 40;
+            const maxTrack = trackW - thumbW;
+            const maxScroll = activeScrollableTable.scrollWidth - activeScrollableTable.clientWidth;
+
+            if (maxTrack > 0 && maxScroll > 0) {
+                const targetThumbLeft = Math.max(0, Math.min(clickX - (thumbW / 2), maxTrack));
+                const targetScroll = (targetThumbLeft / maxTrack) * maxScroll;
+                activeScrollableTable.scrollTo({ left: targetScroll, behavior: 'smooth' });
+            }
+        }
+
+        function onTableThumbMouseDown(e) {
+            e.preventDefault();
+            if (!activeScrollableTable) activeScrollableTable = getActiveReportTable();
+            if (!activeScrollableTable) return;
+
+            isDraggingTableThumb = true;
+            thumbDragStartX = e.clientX;
+            thumbInitialScrollLeft = activeScrollableTable.scrollLeft;
+
+            window.addEventListener('mousemove', onTableThumbMouseMove);
+            window.addEventListener('mouseup', onTableThumbMouseUp);
+            document.body.style.userSelect = 'none';
+        }
+
+        function onTableThumbMouseMove(e) {
+            if (!isDraggingTableThumb || !activeScrollableTable) return;
+            const track = document.getElementById('tableScrollTrack');
+            const thumb = document.getElementById('tableScrollThumb');
+            if (!track || !thumb) return;
+
+            const deltaX = e.clientX - thumbDragStartX;
+            const trackW = track.clientWidth || 1;
+            const thumbW = parseFloat(thumb.style.width) || 40;
+            const maxTrack = trackW - thumbW;
+            const maxScroll = activeScrollableTable.scrollWidth - activeScrollableTable.clientWidth;
+            if (maxTrack <= 0 || maxScroll <= 0) return;
+
+            const scrollDelta = (deltaX / maxTrack) * maxScroll;
+            activeScrollableTable.scrollLeft = Math.max(0, Math.min(thumbInitialScrollLeft + scrollDelta, maxScroll));
+            updateHorizontalScrollbarMetrics();
+        }
+
+        function onTableThumbMouseUp() {
+            isDraggingTableThumb = false;
+            window.removeEventListener('mousemove', onTableThumbMouseMove);
+            window.removeEventListener('mouseup', onTableThumbMouseUp);
+            document.body.style.userSelect = '';
+        }
+
+        function onTableThumbTouchStart(e) {
+            if (!e.touches[0]) return;
+            if (!activeScrollableTable) activeScrollableTable = getActiveReportTable();
+            if (!activeScrollableTable) return;
+
+            isDraggingTableThumb = true;
+            thumbDragStartX = e.touches[0].clientX;
+            thumbInitialScrollLeft = activeScrollableTable.scrollLeft;
+
+            window.addEventListener('touchmove', onTableThumbTouchMove, { passive: false });
+            window.addEventListener('touchend', onTableThumbTouchEnd);
+        }
+
+        function onTableThumbTouchMove(e) {
+            if (!isDraggingTableThumb || !activeScrollableTable || !e.touches[0]) return;
+            e.preventDefault();
+            const track = document.getElementById('tableScrollTrack');
+            const thumb = document.getElementById('tableScrollThumb');
+            if (!track || !thumb) return;
+
+            const deltaX = e.touches[0].clientX - thumbDragStartX;
+            const trackW = track.clientWidth || 1;
+            const thumbW = parseFloat(thumb.style.width) || 40;
+            const maxTrack = trackW - thumbW;
+            const maxScroll = activeScrollableTable.scrollWidth - activeScrollableTable.clientWidth;
+            if (maxTrack <= 0 || maxScroll <= 0) return;
+
+            const scrollDelta = (deltaX / maxTrack) * maxScroll;
+            activeScrollableTable.scrollLeft = Math.max(0, Math.min(thumbInitialScrollLeft + scrollDelta, maxScroll));
+            updateHorizontalScrollbarMetrics();
+        }
+
+        function onTableThumbTouchEnd() {
+            isDraggingTableThumb = false;
+            window.removeEventListener('touchmove', onTableThumbTouchMove);
+            window.removeEventListener('touchend', onTableThumbTouchEnd);
+        }
+
+        function initReportTableScrollbar() {
+            updateHorizontalScrollbarMetrics();
+            document.querySelectorAll('main .overflow-x-auto, main .custom-scrollbar, main .custom-balance-scroll').forEach(el => {
+                el.addEventListener('scroll', updateHorizontalScrollbarMetrics);
+            });
+            window.addEventListener('resize', updateHorizontalScrollbarMetrics);
+            const mainEl = document.getElementById('mainContentArea');
+            if (mainEl) mainEl.addEventListener('scroll', updateHorizontalScrollbarMetrics);
+        }
     </script>
     @yield('scripts')
 </body>

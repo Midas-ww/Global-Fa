@@ -377,7 +377,7 @@
         </div>
 
         <!-- Table View -->
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto custom-scrollbar">
             <table class="w-full text-left border-collapse text-xs">
                 <thead>
                     <tr class="bg-white text-slate-400 font-bold uppercase tracking-wider border-b border-[#edf0ee] text-[10px]">

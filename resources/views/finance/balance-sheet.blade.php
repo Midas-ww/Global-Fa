@@ -126,14 +126,14 @@
                     <span class="text-xs font-mono text-emerald-700 font-semibold px-2.5 py-1 rounded-md bg-[#ebf8c8] border border-[#d9f99d]">{{ $bs['period_label'] }}</span>
                 </div>
 
-                <div class="p-4">
-                    <div class="overflow-x-auto">
+                <div class="p-4 flex-1 overflow-y-auto max-h-[580px] pr-2 custom-balance-scroll">
+                    <div class="overflow-x-auto custom-scrollbar">
                         <table class="w-full text-left border-collapse text-xs">
-                            <thead>
+                            <thead class="sticky top-0 z-10 bg-white">
                                 <tr class="text-slate-400 font-bold uppercase text-[10px] border-b border-slate-200">
-                                    <th class="pb-2">Kode Akun</th>
-                                    <th class="pb-2">Nama Akun Aktiva</th>
-                                    <th class="pb-2 text-right">Nominal</th>
+                                    <th class="pb-2 bg-white">Kode Akun</th>
+                                    <th class="pb-2 bg-white">Nama Akun Aktiva</th>
+                                    <th class="pb-2 text-right bg-white">Nominal</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100 font-medium">
@@ -160,7 +160,7 @@
             </div>
 
             <!-- Total Assets Footer (SOLID FLAT - NO GRADIENT) -->
-            <div class="p-4 bg-[#f5f9ed] border-t-2 border-[#d9f99d] flex items-center justify-between text-slate-900">
+            <div class="p-4 bg-[#f5f9ed] border-t-2 border-[#d9f99d] flex items-center justify-between text-slate-900 mt-auto">
                 <span class="font-black uppercase tracking-wide text-xs">TOTAL AKTIVA (ASSETS)</span>
                 <span class="text-base font-black font-mono text-[#15803d]">Rp {{ number_format($bs['assets']['total'], 0, ',', '.') }}</span>
             </div>
@@ -168,8 +168,8 @@
 
         <!-- RIGHT COLUMN: PASIVA (LIABILITIES & EQUITY) -->
         <div class="bg-white rounded-2xl border border-[#edf0ee] shadow-xs flex flex-col justify-between overflow-hidden">
-            <div>
-                <div class="p-4 bg-white border-b border-[#edf0ee] text-slate-900 flex items-center justify-between">
+            <div class="flex-1 flex flex-col min-h-0">
+                <div class="p-4 bg-white border-b border-[#edf0ee] text-slate-900 flex items-center justify-between shrink-0">
                     <div class="flex items-center gap-2.5">
                         <i data-lucide="shield-check" class="w-4 h-4 text-amber-500"></i>
                         <h4 class="font-bold text-sm tracking-wide uppercase">PASIVA (KEWAJIBAN & EKUITAS)</h4>
@@ -177,69 +177,73 @@
                     <span class="text-xs font-mono text-amber-800 font-semibold px-2.5 py-1 rounded-md bg-[#fef9c3] border border-[#fef08a]">{{ $bs['period_label'] }}</span>
                 </div>
 
-                <div class="p-4 space-y-6">
+                <div class="p-4 flex-1 space-y-6 overflow-y-auto max-h-[580px] pr-2 custom-balance-scroll">
                     
                     <!-- 1. LIABILITIES -->
                     <div>
-                        <div class="text-[11px] font-extrabold uppercase text-slate-500 tracking-wider pb-1.5 border-b border-slate-200 mb-2 flex items-center justify-between">
+                        <div class="sticky top-0 z-10 bg-white/95 backdrop-blur-xs text-[11px] font-extrabold uppercase text-slate-500 tracking-wider py-1.5 border-b border-slate-200 mb-2 flex items-center justify-between">
                             <span>1. KEWAJIBAN (LIABILITIES)</span>
                             <span class="text-slate-800 font-mono font-bold">Rp {{ number_format($bs['liabilities']['total'], 0, ',', '.') }}</span>
                         </div>
-                        <table class="w-full text-left border-collapse text-xs">
-                            <tbody class="divide-y divide-slate-100 font-medium">
-                                @forelse($bs['liabilities']['items'] as $item)
-                                <tr class="hover:bg-[#fbfdfa]">
-                                    <td class="py-2 font-mono text-[11px] text-slate-400 w-20">{{ $item->account_code ?? '2000' }}</td>
-                                    <td class="py-2 text-slate-800">
-                                        <div class="font-semibold">{{ $item->account_name }}</div>
-                                        <div class="text-[10px] text-slate-400 uppercase">{{ $item->business_unit_code }} &bull; {{ $item->entity_code }}</div>
-                                    </td>
-                                    <td class="py-2 text-right font-bold text-slate-900 font-mono">
-                                        Rp {{ number_format($item->amount, 0, ',', '.') }}
-                                    </td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="3" class="py-2 text-slate-400 italic text-center">Tidak ada kewajiban.</td>
-                                </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                        <div class="overflow-x-auto custom-scrollbar">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <tbody class="divide-y divide-slate-100 font-medium">
+                                    @forelse($bs['liabilities']['items'] as $item)
+                                    <tr class="hover:bg-[#fbfdfa]">
+                                        <td class="py-2 font-mono text-[11px] text-slate-400 w-20">{{ $item->account_code ?? '2000' }}</td>
+                                        <td class="py-2 text-slate-800">
+                                            <div class="font-semibold">{{ $item->account_name }}</div>
+                                            <div class="text-[10px] text-slate-400 uppercase">{{ $item->business_unit_code }} &bull; {{ $item->entity_code }}</div>
+                                        </td>
+                                        <td class="py-2 text-right font-bold text-slate-900 font-mono">
+                                            Rp {{ number_format($item->amount, 0, ',', '.') }}
+                                        </td>
+                                    </tr>
+                                    @empty
+                                    <tr>
+                                        <td colspan="3" class="py-2 text-slate-400 italic text-center">Tidak ada kewajiban.</td>
+                                    </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                     <!-- 2. EQUITY -->
                     <div>
-                        <div class="text-[11px] font-extrabold uppercase text-slate-500 tracking-wider pb-1.5 border-b border-slate-200 mb-2 flex items-center justify-between">
+                        <div class="sticky top-0 z-10 bg-white/95 backdrop-blur-xs text-[11px] font-extrabold uppercase text-slate-500 tracking-wider py-1.5 border-b border-slate-200 mb-2 flex items-center justify-between">
                             <span>2. EKUITAS & LABA DITAHAN (EQUITY)</span>
                             <span class="text-slate-800 font-mono font-bold">Rp {{ number_format($bs['equity']['total'], 0, ',', '.') }}</span>
                         </div>
-                        <table class="w-full text-left border-collapse text-xs">
-                            <tbody class="divide-y divide-slate-100 font-medium">
-                                @forelse($bs['equity']['items'] as $item)
-                                <tr class="hover:bg-[#fbfdfa]">
-                                    <td class="py-2 font-mono text-[11px] text-slate-400 w-20">{{ $item->account_code ?? '3000' }}</td>
-                                    <td class="py-2 text-slate-800">
-                                        <div class="font-semibold">{{ $item->account_name }}</div>
-                                        <div class="text-[10px] text-slate-400 uppercase">{{ $item->business_unit_code }} &bull; {{ $item->entity_code }}</div>
-                                    </td>
-                                    <td class="py-2 text-right font-bold text-slate-900 font-mono">
-                                        Rp {{ number_format($item->amount, 0, ',', '.') }}
-                                    </td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="3" class="py-2 text-slate-400 italic text-center">Tidak ada ekuitas.</td>
-                                </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                        <div class="overflow-x-auto custom-scrollbar">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <tbody class="divide-y divide-slate-100 font-medium">
+                                    @forelse($bs['equity']['items'] as $item)
+                                    <tr class="hover:bg-[#fbfdfa]">
+                                        <td class="py-2 font-mono text-[11px] text-slate-400 w-20">{{ $item->account_code ?? '3000' }}</td>
+                                        <td class="py-2 text-slate-800">
+                                            <div class="font-semibold">{{ $item->account_name }}</div>
+                                            <div class="text-[10px] text-slate-400 uppercase">{{ $item->business_unit_code }} &bull; {{ $item->entity_code }}</div>
+                                        </td>
+                                        <td class="py-2 text-right font-bold text-slate-900 font-mono">
+                                            Rp {{ number_format($item->amount, 0, ',', '.') }}
+                                        </td>
+                                    </tr>
+                                    @empty
+                                    <tr>
+                                        <td colspan="3" class="py-2 text-slate-400 italic text-center">Tidak ada ekuitas.</td>
+                                    </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                 </div>
             </div>
 
             <!-- Total Liabilities & Equity Footer (SOLID FLAT - NO GRADIENT) -->
-            <div class="p-4 bg-[#fefce8] border-t-2 border-[#fef08a] flex items-center justify-between text-slate-900">
+            <div class="p-4 bg-[#fefce8] border-t-2 border-[#fef08a] flex items-center justify-between text-slate-900 mt-auto">
                 <span class="font-black uppercase tracking-wide text-xs">TOTAL PASIVA (KEWAJIBAN + EKUITAS)</span>
                 <span class="text-base font-black font-mono text-[#854d0e]">Rp {{ number_format($bs['total_liabilities_and_equity'], 0, ',', '.') }}</span>
             </div>
@@ -260,7 +264,7 @@
             </div>
         </div>
 
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto custom-scrollbar">
             <table class="w-full text-left border-collapse text-xs">
                 <thead>
                     <tr class="bg-[#f8faf8] text-slate-400 font-bold uppercase text-[10px] border-b border-slate-200">
