@@ -573,6 +573,21 @@ class ExcelIngestionService
 
             $entityCode = strtoupper(str_replace(' ', '_', trim($sheetName)));
 
+            // Daftarkan entitas depo jika belum ada di master
+            $fmcgBu = GlobalBusinessUnit::where('code', 'fmcg')->first();
+            if ($fmcgBu) {
+                GlobalEntity::firstOrCreate(
+                    ['code' => $entityCode],
+                    [
+                        'business_unit_id' => $fmcgBu->id,
+                        'name' => 'Depo '.ucwords(strtolower(str_replace('_', ' ', $sheetName))),
+                        'location' => ucwords(strtolower(str_replace('_', ' ', $sheetName))),
+                        'sort_order' => 50,
+                        'is_active' => true,
+                    ]
+                );
+            }
+
             // Header ada di row 1
             $headerRow = $rows[1] ?? [];
             $dateColumns = [];
