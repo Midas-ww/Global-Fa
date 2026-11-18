@@ -299,7 +299,7 @@
                         @php
                             $totalRev = $summary['kpis']['revenue'] ?? 1;
                             $pct = $totalRev > 0 ? round(($bu['revenue'] / $totalRev) * 100, 1) : 0;
-                            $buTone = $bu['color'] ?: '#10e58f';
+                            $buTone = $bu['color'] ?: '#047857';
                         @endphp
                         <div class="p-2.5 rounded-xl border border-[#edf0ee] hover:border-slate-300 transition-colors bg-[#fbfdfa] flex items-center justify-between">
                             <div class="flex items-center gap-2 min-w-0">
@@ -358,7 +358,7 @@
                 @php
                     $totalRev = $summary['kpis']['revenue'] ?? 1;
                     $pct = $totalRev > 0 ? round(($bu['revenue'] / $totalRev) * 100, 1) : 0;
-                    $toneColor = $bu['color'] ?: '#10e58f';
+                    $toneColor = $bu['color'] ?: '#047857';
                 @endphp
                 <div class="bg-white p-3.5 rounded-xl border border-[#edf0ee]">
                     <div class="flex items-center justify-between text-xs mb-2">
@@ -392,7 +392,7 @@
                 </thead>
                 <tbody class="divide-y divide-[#edf0ee] font-medium text-slate-700">
                     @foreach($summary['by_business_unit'] as $bu)
-                    @php $tableTone = $bu['color'] ?: '#10e58f'; @endphp
+                    @php $tableTone = $bu['color'] ?: '#047857'; @endphp
                     <tr class="hover:bg-[#fbfdfa] transition-colors">
                         <td class="p-4 pl-6 font-bold text-slate-900 flex items-center gap-2.5">
                             <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color: {{ $tableTone }}"></span>
@@ -690,7 +690,19 @@
 
         const labels = buList.map(b => b.name);
         const data = buList.map(b => Number(b.revenue || 0));
-        const colors = buList.map(b => b.color || '#10e58f');
+        const fallbackPalette = ['#047857', '#d97706', '#b91c1c', '#0d9488', '#475569'];
+        const legacyColorMap = {
+            '#0ea5e9': '#047857', // FMCG: Emerald
+            '#ffd800': '#d97706', // Ekspedisi: Warm Amber
+            '#f43f5e': '#b91c1c', // SPBU: Deep Crimson
+            '#10e58f': '#0d9488', // IQOS: Refined Teal
+            '#6366f1': '#475569', // CCOD: Slate Steel
+        };
+
+        const colors = buList.map((b, idx) => {
+            const raw = (b.color || '').toLowerCase();
+            return legacyColorMap[raw] || b.color || fallbackPalette[idx % fallbackPalette.length];
+        });
 
         new Chart(ctx, {
             type: 'doughnut',
@@ -699,7 +711,7 @@
                 datasets: [{
                     data: data,
                     backgroundColor: colors,
-                    borderWidth: 2,
+                    borderWidth: 2.5,
                     borderColor: '#ffffff',
                     hoverOffset: 6
                 }]

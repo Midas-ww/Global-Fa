@@ -289,7 +289,7 @@
                 <div class="space-y-1">
                     <label class="text-xs font-bold text-slate-700">Warna Aksen Visual</label>
                     <div class="flex items-center gap-2">
-                        <input type="color" name="color" value="#10e58f" class="w-8 h-8 rounded-lg cursor-pointer border-0 p-0">
+                        <input type="color" name="color" value="#047857" class="w-8 h-8 rounded-lg cursor-pointer border-0 p-0">
                         <span class="text-xs text-slate-500 font-mono">Pilih warna badge</span>
                     </div>
                 </div>

@@ -29,14 +29,14 @@ class GlobalFinanceSeeder extends Seeder
             ]
         );
 
-        // 1. Business Units
+        // 1. Business Units (Harmonious Executive Color Palette ala Mekar Jaya & SIR-IQOS)
         $buFmcg = GlobalBusinessUnit::updateOrCreate(
             ['code' => 'fmcg'],
             [
                 'name' => 'MJS (FMCG)',
                 'description' => 'CV Mekar Jaya Sentosa - Jaringan distribusi barang konsumen (FMCG) 9 depo di Jawa Tengah.',
                 'icon' => 'box',
-                'color' => '#0ea5e9',
+                'color' => '#047857',
                 'data_source' => 'excel',
                 'sort_order' => 1,
                 'is_active' => true,
@@ -49,7 +49,7 @@ class GlobalFinanceSeeder extends Seeder
                 'name' => 'MJX (Ekspedisi)',
                 'description' => 'PT Mekar Jaya Xtrans Jaya - Jasa logistik dan angkutan armada truk ekspedisi.',
                 'icon' => 'truck',
-                'color' => '#ffd800',
+                'color' => '#d97706',
                 'data_source' => 'excel',
                 'sort_order' => 2,
                 'is_active' => true,
@@ -62,7 +62,7 @@ class GlobalFinanceSeeder extends Seeder
                 'name' => 'SPBU',
                 'description' => 'PT Air Mekar Jaya - Stasiun Pengisian Bahan Bakar Umum (SPBU No. 44.511.12).',
                 'icon' => 'fuel',
-                'color' => '#f43f5e',
+                'color' => '#b91c1c',
                 'data_source' => 'database',
                 'sort_order' => 3,
                 'is_active' => true,
@@ -75,7 +75,7 @@ class GlobalFinanceSeeder extends Seeder
                 'name' => 'IQOS (Retail)',
                 'description' => 'PT Mekar Retail Jaya - Retail modern dan toko resmi penjualan IQOS.',
                 'icon' => 'store',
-                'color' => '#10e58f',
+                'color' => '#0d9488',
                 'data_source' => 'database',
                 'sort_order' => 4,
                 'is_active' => true,
@@ -88,7 +88,7 @@ class GlobalFinanceSeeder extends Seeder
                 'name' => 'MJS Multikarya (CCOD)',
                 'description' => 'PT Mekar Jaya Sentosa Multikarya - Jasa dan distribusi Cash Collection on Delivery (CCOD) 12 cabang.',
                 'icon' => 'shopping-bag',
-                'color' => '#6366f1',
+                'color' => '#475569',
                 'data_source' => 'excel',
                 'sort_order' => 5,
                 'is_active' => true,
