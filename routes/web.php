@@ -22,6 +22,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/sync/database', [GlobalFinanceController::class, 'triggerDbSync'])->name('finance.sync.database');
     Route::post('/sync/excel', [GlobalFinanceController::class, 'uploadExcel'])->name('finance.sync.excel');
     Route::post('/sync/preview-excel', [GlobalFinanceController::class, 'previewExcel'])->name('finance.sync.preview');
+    Route::delete('/sync/logs/bulk-delete', [GlobalFinanceController::class, 'bulkDeleteIngestionLogs'])->name('finance.sync.bulk-delete');
     Route::delete('/sync/log/{id}', [GlobalFinanceController::class, 'deleteIngestionLog'])->name('finance.sync.delete-log');
 
     // Master Data Unit Usaha & Entitas

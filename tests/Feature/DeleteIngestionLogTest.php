@@ -103,4 +103,111 @@ class DeleteIngestionLogTest extends TestCase
         $response->assertSessionHas('success');
         $this->assertDatabaseMissing('global_ingestion_logs', ['id' => $log->id]);
     }
+
+    public function test_guest_cannot_bulk_delete_ingestion_logs(): void
+    {
+        $log = GlobalIngestionLog::create([
+            'business_unit_code' => 'fmcg',
+            'source_type' => 'excel_upload',
+            'filename' => 'sample.xlsx',
+            'records_count' => 10,
+            'status' => 'success',
+        ]);
+
+        $response = $this->delete(route('finance.sync.bulk-delete'), [
+            'ids' => [$log->id],
+        ]);
+
+        $response->assertRedirect(route('login'));
+        $this->assertDatabaseHas('global_ingestion_logs', ['id' => $log->id]);
+    }
+
+    public function test_authenticated_user_can_bulk_delete_ingestion_logs_and_financial_records(): void
+    {
+        $user = User::factory()->create();
+
+        $log1 = GlobalIngestionLog::create([
+            'business_unit_code' => 'fmcg',
+            'source_type' => 'excel_upload',
+            'filename' => 'bulk_file_1.xlsx',
+            'records_count' => 1,
+            'status' => 'success',
+        ]);
+
+        $log2 = GlobalIngestionLog::create([
+            'business_unit_code' => 'xtrans',
+            'source_type' => 'excel_upload',
+            'filename' => 'bulk_file_2.xlsx',
+            'records_count' => 1,
+            'status' => 'success',
+        ]);
+
+        $log3 = GlobalIngestionLog::create([
+            'business_unit_code' => 'ccod',
+            'source_type' => 'excel_upload',
+            'filename' => 'bulk_keep.xlsx',
+            'records_count' => 1,
+            'status' => 'success',
+        ]);
+
+        GlobalFinancialRecord::create([
+            'business_unit_code' => 'fmcg',
+            'entity_code' => 'BMG',
+            'period' => '2026-09-01',
+            'report_type' => 'pnl',
+            'category' => 'revenue',
+            'account_name' => 'Data 1',
+            'amount' => 100000,
+            'source_type' => 'excel_upload',
+            'notes' => 'bulk_file_1.xlsx',
+        ]);
+
+        GlobalFinancialRecord::create([
+            'business_unit_code' => 'xtrans',
+            'entity_code' => 'MJX',
+            'period' => '2026-09-01',
+            'report_type' => 'pnl',
+            'category' => 'revenue',
+            'account_name' => 'Data 2',
+            'amount' => 200000,
+            'source_type' => 'excel_upload',
+            'notes' => 'bulk_file_2.xlsx',
+        ]);
+
+        $keepRecord = GlobalFinancialRecord::create([
+            'business_unit_code' => 'ccod',
+            'entity_code' => 'MJS',
+            'period' => '2026-09-01',
+            'report_type' => 'pnl',
+            'category' => 'revenue',
+            'account_name' => 'Data Keep',
+            'amount' => 300000,
+            'source_type' => 'excel_upload',
+            'notes' => 'bulk_keep.xlsx',
+        ]);
+
+        $response = $this->actingAs($user)->delete(route('finance.sync.bulk-delete'), [
+            'ids' => [$log1->id, $log2->id],
+        ]);
+
+        $response->assertSessionHas('success');
+        $this->assertDatabaseMissing('global_ingestion_logs', ['id' => $log1->id]);
+        $this->assertDatabaseMissing('global_ingestion_logs', ['id' => $log2->id]);
+        $this->assertDatabaseHas('global_ingestion_logs', ['id' => $log3->id]);
+
+        $this->assertDatabaseMissing('global_financial_records', ['notes' => 'bulk_file_1.xlsx']);
+        $this->assertDatabaseMissing('global_financial_records', ['notes' => 'bulk_file_2.xlsx']);
+        $this->assertDatabaseHas('global_financial_records', ['id' => $keepRecord->id]);
+    }
+
+    public function test_bulk_delete_validation_fails_when_no_ids(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->delete(route('finance.sync.bulk-delete'), [
+            'ids' => [],
+        ]);
+
+        $response->assertSessionHasErrors('ids');
+    }
 }

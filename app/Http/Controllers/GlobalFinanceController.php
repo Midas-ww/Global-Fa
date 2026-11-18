@@ -309,6 +309,46 @@ class GlobalFinanceController extends Controller
     }
 
     /**
+     * Hapus beberapa riwayat import/sinkronisasi sekaligus beserta data finansial terkait.
+     */
+    public function bulkDeleteIngestionLogs(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer|exists:global_ingestion_logs,id',
+        ]);
+
+        $ids = $validated['ids'];
+        $logs = GlobalIngestionLog::whereIn('id', $ids)->get();
+
+        if ($logs->isEmpty()) {
+            return back()->with('error', 'Tidak ada riwayat yang dipilih untuk dihapus.');
+        }
+
+        $totalDeletedRecords = 0;
+        $deletedLogsCount = $logs->count();
+
+        DB::transaction(function () use ($logs, &$totalDeletedRecords) {
+            foreach ($logs as $log) {
+                if ($log->source_type === 'excel_upload') {
+                    $deleted = GlobalFinancialRecord::query()
+                        ->where('business_unit_code', $log->business_unit_code)
+                        ->where('source_type', 'excel_upload')
+                        ->where(function ($q) use ($log) {
+                            $q->where('notes', $log->filename)
+                                ->orWhereNull('notes');
+                        })
+                        ->delete();
+                    $totalDeletedRecords += $deleted;
+                }
+                $log->delete();
+            }
+        });
+
+        return back()->with('success', "Berhasil menghapus {$deletedLogsCount} riwayat import/sinkronisasi dan membersihkan ".number_format($totalDeletedRecords, 0, ',', '.').' baris data transaksi finansial terkait dari sistem.');
+    }
+
+    /**
      * Hapus riwayat import / sinkronisasi beserta data finansial terkait.
      */
     public function deleteIngestionLog(int $id): RedirectResponse

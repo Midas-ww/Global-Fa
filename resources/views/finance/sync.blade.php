@@ -390,7 +390,7 @@
 
     <!-- INGESTION & SYNC AUDIT LOG TABLE -->
     <div id="riwayat-import" class="bg-white rounded-2xl border border-[#edf0ee] shadow-xs overflow-hidden scroll-mt-6">
-        <div class="p-5 border-b border-[#edf0ee] flex items-center justify-between bg-white">
+        <div class="p-5 border-b border-[#edf0ee] flex items-center justify-between flex-wrap gap-3 bg-white">
             <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-xl bg-[#f5f9ed] text-[#3f6212] flex items-center justify-center border border-[#d9f99d]">
                     <i data-lucide="history" class="w-4 h-4"></i>
@@ -400,29 +400,60 @@
                     <p class="text-xs text-slate-400">Log audit seluruh penyerapan data dari database dan upload berkas Excel.</p>
                 </div>
             </div>
-            <span class="text-xs font-medium text-slate-400">Menampilkan 50 aktivitas terakhir</span>
+
+            <!-- Action Controls: Bulk Delete & Total Summary -->
+            <div class="flex items-center gap-3">
+                <div id="bulkActionBar" class="hidden flex items-center gap-2">
+                    <span id="selectedCountBadge" class="text-xs font-bold bg-amber-50 text-amber-900 border border-amber-200 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                        <span id="selectedCountText">0 riwayat dipilih</span>
+                    </span>
+                    <button type="button" onclick="openBulkDeleteModal()" class="px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                        <span>Hapus Terpilih</span>
+                    </button>
+                    <button type="button" onclick="resetLogSelections()" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold transition cursor-pointer">
+                        Batal
+                    </button>
+                </div>
+                <span id="logSummaryCount" class="text-xs font-medium text-slate-400">Menampilkan {{ count($logs) }} aktivitas terakhir</span>
+            </div>
         </div>
 
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-[#f8faf8] text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-[#edf0ee]">
-                        <th class="py-3 px-5">Waktu</th>
-                        <th class="py-3 px-5">Unit Bisnis</th>
-                        <th class="py-3 px-5">Metode / Sumber</th>
-                        <th class="py-3 px-5">Berkas / Tabel Referensi</th>
-                        <th class="py-3 px-5 text-right">Data Terserap</th>
-                        <th class="py-3 px-5 text-center">Status</th>
-                        <th class="py-3 px-5 text-center">Aksi</th>
+                        <th class="py-3 px-4 w-10 text-center">
+                            <input type="checkbox" id="selectAllLogs" onchange="toggleSelectAllLogs(this)" class="w-4 h-4 rounded border-slate-300 text-[#10e58f] focus:ring-[#10e58f] cursor-pointer" title="Pilih Semua Riwayat">
+                        </th>
+                        <th class="py-3 px-4">Waktu</th>
+                        <th class="py-3 px-4">Unit Bisnis</th>
+                        <th class="py-3 px-4">Metode / Sumber</th>
+                        <th class="py-3 px-4">Berkas / Tabel Referensi</th>
+                        <th class="py-3 px-4 text-right">Data Terserap</th>
+                        <th class="py-3 px-4 text-center">Status</th>
+                        <th class="py-3 px-4 text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-xs font-medium text-slate-700">
                     @forelse($logs as $log)
-                    <tr class="hover:bg-[#fbfdfa] transition">
-                        <td class="py-3 px-5 font-mono text-[11px] text-slate-500 whitespace-nowrap">
+                    <tr class="hover:bg-[#fbfdfa] transition" id="logRow_{{ $log->id }}">
+                        <td class="py-3 px-4 text-center">
+                            <input type="checkbox" name="log_ids[]" value="{{ $log->id }}"
+                                data-id="{{ $log->id }}"
+                                data-filename="{{ $log->filename ?? '-' }}"
+                                data-unit="{{ strtoupper($log->business_unit_code) }}"
+                                data-rows="{{ $log->records_count }}"
+                                data-type="{{ $log->source_type }}"
+                                onchange="updateSelectedLogsCount()"
+                                class="log-checkbox w-4 h-4 rounded border-slate-300 text-[#10e58f] focus:ring-[#10e58f] cursor-pointer"
+                                title="Pilih riwayat {{ $log->filename }}">
+                        </td>
+                        <td class="py-3 px-4 font-mono text-[11px] text-slate-500 whitespace-nowrap">
                             {{ $log->created_at->format('d/m/Y H:i:s') }}
                         </td>
-                        <td class="py-3 px-5 font-bold uppercase text-slate-800">
+                        <td class="py-3 px-4 font-bold uppercase text-slate-800">
                             <span class="px-2 py-0.5 rounded text-[11px] 
                                 @if(str_contains(strtolower($log->business_unit_code), 'spbu')) bg-rose-50 text-rose-700 border border-rose-200
                                 @elseif(str_contains(strtolower($log->business_unit_code), 'iqos') || str_contains(strtolower($log->business_unit_code), 'retail')) bg-[#ebf8c8] text-[#3f6212] border border-[#d9f99d]
@@ -433,7 +464,7 @@
                                 {{ $log->business_unit_code }}
                             </span>
                         </td>
-                        <td class="py-3 px-5">
+                        <td class="py-3 px-4">
                             @if($log->source_type === 'database_sync')
                                 <span class="inline-flex items-center gap-1 text-slate-800 font-semibold whitespace-nowrap">
                                     <i data-lucide="database" class="w-3.5 h-3.5 text-[#10e58f]"></i> Database Sync
@@ -444,13 +475,13 @@
                                 </span>
                             @endif
                         </td>
-                        <td class="py-3 px-5 font-mono text-slate-600">
+                        <td class="py-3 px-4 font-mono text-slate-600">
                             {{ $log->filename ?? '-' }}
                         </td>
-                        <td class="py-3 px-5 text-right font-black text-slate-900 font-mono whitespace-nowrap">
+                        <td class="py-3 px-4 text-right font-black text-slate-900 font-mono whitespace-nowrap">
                             {{ number_format($log->records_count, 0, ',', '.') }} rows
                         </td>
-                        <td class="py-3 px-5 text-center whitespace-nowrap">
+                        <td class="py-3 px-4 text-center whitespace-nowrap">
                             @if($log->status === 'success')
                                 <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#ebf8c8] text-[#3f6212] border border-[#d9f99d] inline-flex items-center gap-1">
                                     <i data-lucide="check-circle" class="w-3 h-3 text-[#16a34a]"></i> Berhasil
@@ -461,23 +492,26 @@
                                 </span>
                             @endif
                         </td>
-                        <td class="py-3 px-5 text-center whitespace-nowrap">
-                            <form action="{{ route('finance.sync.delete-log', $log->id) }}" method="POST" class="inline" 
-                                onsubmit="return confirm('{{ $log->source_type === 'excel_upload' 
-                                    ? 'Apakah Anda yakin ingin menghapus riwayat import file: ' . addslashes($log->filename) . ' (' . strtoupper($log->business_unit_code) . ')?\n\nPERINGATAN: Seluruh ' . number_format($log->records_count, 0, ',', '.') . ' data transaksi finansial terkait file ini juga akan dihapus dari sistem.' 
-                                    : 'Apakah Anda yakin ingin menghapus log sinkronisasi database untuk unit ' . strtoupper($log->business_unit_code) . ' (' . addslashes($log->filename) . ') dari riwayat?' }}');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition inline-flex items-center justify-center cursor-pointer" title="Hapus Riwayat">
-                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                </button>
-                            </form>
+                        <td class="py-3 px-4 text-center whitespace-nowrap">
+                            <button type="button"
+                                onclick="openSingleDeleteModal({{ $log->id }}, '{{ addslashes($log->filename ?? '-') }}', '{{ strtoupper($log->business_unit_code) }}', {{ $log->records_count }}, '{{ $log->source_type }}')"
+                                class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition inline-flex items-center justify-center cursor-pointer" title="Hapus Riwayat">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="py-8 text-center text-slate-400">
+                        <td colspan="8" class="py-8 text-center text-slate-400">
                             <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
+                            Belum ada riwayat aktivitas sinkronisasi atau upload file.
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
                             Belum ada riwayat aktivitas sinkronisasi atau upload file.
                         </td>
                     </tr>
@@ -857,5 +891,210 @@
         currentActiveForm.dataset.confirmed = "true";
         currentActiveForm.submit();
     }
+
+    // Bulk Selection & Delete Modal Logic (Ala SIR-IQOS)
+    function toggleSelectAllLogs(masterCheckbox) {
+        const checkboxes = document.querySelectorAll('.log-checkbox');
+        checkboxes.forEach(cb => {
+            cb.checked = masterCheckbox.checked;
+        });
+        updateSelectedLogsCount();
+    }
+
+    function updateSelectedLogsCount() {
+        const checkboxes = document.querySelectorAll('.log-checkbox:checked');
+        const count = checkboxes.length;
+        const totalCheckboxes = document.querySelectorAll('.log-checkbox').length;
+        const masterCheckbox = document.getElementById('selectAllLogs');
+        const bulkActionBar = document.getElementById('bulkActionBar');
+        const selectedCountText = document.getElementById('selectedCountText');
+        const logSummaryCount = document.getElementById('logSummaryCount');
+
+        if (masterCheckbox) {
+            masterCheckbox.checked = (totalCheckboxes > 0 && count === totalCheckboxes);
+            masterCheckbox.indeterminate = (count > 0 && count < totalCheckboxes);
+        }
+
+        if (count > 0) {
+            if (bulkActionBar) bulkActionBar.classList.remove('hidden');
+            if (selectedCountText) selectedCountText.innerText = count + ' riwayat dipilih';
+            if (logSummaryCount) logSummaryCount.classList.add('hidden');
+        } else {
+            if (bulkActionBar) bulkActionBar.classList.add('hidden');
+            if (logSummaryCount) logSummaryCount.classList.remove('hidden');
+        }
+    }
+
+    function resetLogSelections() {
+        const checkboxes = document.querySelectorAll('.log-checkbox');
+        checkboxes.forEach(cb => cb.checked = false);
+        const masterCheckbox = document.getElementById('selectAllLogs');
+        if (masterCheckbox) {
+            masterCheckbox.checked = false;
+            masterCheckbox.indeterminate = false;
+        }
+        updateSelectedLogsCount();
+    }
+
+    function openSingleDeleteModal(id, filename, unit, rows, type) {
+        const modal = document.getElementById('modalDeleteConfirm');
+        const form = document.getElementById('deleteConfirmForm');
+        const title = document.getElementById('deleteModalTitle');
+        const warning = document.getElementById('deleteModalWarningText');
+        const list = document.getElementById('deleteModalItemList');
+        const totalRowsEl = document.getElementById('deleteModalTotalRows');
+        const hiddenInputs = document.getElementById('deleteModalHiddenInputs');
+        const submitBtnText = document.getElementById('deleteModalSubmitBtnText');
+
+        form.action = `/sync/log/${id}`;
+        hiddenInputs.innerHTML = '';
+        title.innerText = 'Konfirmasi Hapus Riwayat Import';
+        submitBtnText.innerText = 'Ya, Hapus Data Ini';
+
+        if (type === 'excel_upload') {
+            warning.innerText = 'PERINGATAN: Berkas ini diunggah via Excel. Menghapus riwayat ini juga akan menghapus ' + Number(rows).toLocaleString('id-ID') + ' baris data transaksi finansial terkait dari database konsolidasi (P&L & Neraca).';
+        } else {
+            warning.innerText = 'Menghapus log audit sinkronisasi database untuk unit ' + unit + '. Data live di database cabang tidak akan terpengaruh.';
+        }
+
+        list.innerHTML = `
+            <div class="flex items-center justify-between p-2.5 rounded-lg bg-white border border-slate-200 text-xs">
+                <div class="flex items-center gap-2 truncate min-w-0">
+                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">${unit}</span>
+                    <span class="font-mono text-slate-800 truncate" title="${filename}">${filename}</span>
+                </div>
+                <span class="font-mono font-bold text-slate-900 shrink-0 ml-2">${Number(rows).toLocaleString('id-ID')} rows</span>
+            </div>
+        `;
+
+        totalRowsEl.innerText = Number(rows).toLocaleString('id-ID') + ' baris data';
+
+        modal.classList.remove('hidden');
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    function openBulkDeleteModal() {
+        const selected = Array.from(document.querySelectorAll('.log-checkbox:checked'));
+        if (selected.length === 0) return;
+
+        const modal = document.getElementById('modalDeleteConfirm');
+        const form = document.getElementById('deleteConfirmForm');
+        const title = document.getElementById('deleteModalTitle');
+        const warning = document.getElementById('deleteModalWarningText');
+        const list = document.getElementById('deleteModalItemList');
+        const totalRowsEl = document.getElementById('deleteModalTotalRows');
+        const hiddenInputs = document.getElementById('deleteModalHiddenInputs');
+        const submitBtnText = document.getElementById('deleteModalSubmitBtnText');
+
+        form.action = "{{ route('finance.sync.bulk-delete') }}";
+        hiddenInputs.innerHTML = '';
+        title.innerText = 'Konfirmasi Hapus ' + selected.length + ' Riwayat Terpilih';
+        submitBtnText.innerText = 'Ya, Hapus ' + selected.length + ' Riwayat Terpilih';
+
+        let totalRows = 0;
+        list.innerHTML = '';
+
+        selected.forEach(cb => {
+            const id = cb.value;
+            const filename = cb.dataset.filename || '-';
+            const unit = cb.dataset.unit || '-';
+            const rows = parseInt(cb.dataset.rows || 0, 10);
+            totalRows += rows;
+
+            // append hidden input
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'ids[]';
+            input.value = id;
+            hiddenInputs.appendChild(input);
+
+            // append list item
+            const item = document.createElement('div');
+            item.className = 'flex items-center justify-between p-2.5 rounded-lg bg-white border border-slate-200 text-xs';
+            item.innerHTML = `
+                <div class="flex items-center gap-2 truncate min-w-0">
+                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">${unit}</span>
+                    <span class="font-mono text-slate-800 truncate" title="${filename}">${filename}</span>
+                </div>
+                <span class="font-mono font-bold text-slate-900 shrink-0 ml-2">${rows.toLocaleString('id-ID')} rows</span>
+            `;
+            list.appendChild(item);
+        });
+
+        warning.innerText = 'PERINGATAN: Anda akan menghapus ' + selected.length + ' riwayat sekaligus. Seluruh transaksi finansial terkait berkas-berkas di atas (' + totalRows.toLocaleString('id-ID') + ' baris data) akan dibersihkan dari database konsolidasi.';
+        totalRowsEl.innerText = totalRows.toLocaleString('id-ID') + ' baris data';
+
+        modal.classList.remove('hidden');
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    function closeDeleteModal() {
+        const modal = document.getElementById('modalDeleteConfirm');
+        if (modal) modal.classList.add('hidden');
+    }
 </script>
+
+<!-- MODAL KONFIRMASI HAPUS RIWAYAT & ROLLBACK DATA (ALA SIR-IQOS) -->
+<div id="modalDeleteConfirm" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
+        <!-- Modal Header -->
+        <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-rose-50/50">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center border border-rose-200 shrink-0">
+                    <i data-lucide="alert-triangle" class="w-5 h-5 text-rose-600"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-900 text-sm" id="deleteModalTitle">Konfirmasi Hapus Data Import</h3>
+                    <p class="text-[11px] text-slate-500" id="deleteModalSubtitle">Peringatan penghapusan riwayat dan rollback data finansial</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeDeleteModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="p-6 space-y-4 text-xs">
+            <!-- Warning Box -->
+            <div class="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 space-y-1">
+                <div class="font-bold flex items-center gap-1.5 text-rose-900">
+                    <i data-lucide="alert-circle" class="w-4 h-4 text-rose-600 shrink-0"></i>
+                    <span>Tindakan ini permanen dan tidak dapat dibatalkan!</span>
+                </div>
+                <p class="text-[11px] text-rose-700 leading-relaxed" id="deleteModalWarningText">
+                    Seluruh data transaksi finansial terkait riwayat yang dipilih akan dihapus dari sistem konsolidasi (P&L dan Neraca).
+                </p>
+            </div>
+
+            <!-- Detail List of Items to be deleted -->
+            <div class="space-y-2">
+                <span class="font-bold text-slate-700 text-xs">Daftar Berkas yang Akan Dihapus:</span>
+                <div id="deleteModalItemList" class="max-h-44 overflow-y-auto space-y-1.5 border border-slate-200 rounded-xl p-2.5 bg-slate-50/50">
+                    <!-- Dynamic Items injected via JS -->
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 font-mono text-[11px]">
+                <span>Total Data Finansial Terdampak:</span>
+                <span id="deleteModalTotalRows" class="font-bold text-slate-900 font-sans">0 baris</span>
+            </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="p-4 bg-slate-50/70 border-t border-slate-100 flex items-center justify-end gap-2.5">
+            <button type="button" onclick="closeDeleteModal()" class="px-4 py-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold transition cursor-pointer">
+                Batal
+            </button>
+            <form id="deleteConfirmForm" method="POST" action="">
+                @csrf
+                <input type="hidden" name="_method" value="DELETE">
+                <div id="deleteModalHiddenInputs"></div>
+                <button type="submit" id="deleteModalSubmitBtn" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    <span id="deleteModalSubmitBtnText">Ya, Hapus Data Sekarang</span>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
 @endsection
