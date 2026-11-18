@@ -33,10 +33,10 @@ class GlobalFinanceSeeder extends Seeder
         $buFmcg = GlobalBusinessUnit::updateOrCreate(
             ['code' => 'fmcg'],
             [
-                'name' => 'Distributor FMCG',
-                'description' => 'Jaringan distribusi barang konsumen (FMCG) 9 depo di Jawa Tengah.',
+                'name' => 'MJS (FMCG)',
+                'description' => 'CV Mekar Jaya Sentosa - Jaringan distribusi barang konsumen (FMCG) 9 depo di Jawa Tengah.',
                 'icon' => 'box',
-                'color' => '#2563EB',
+                'color' => '#0ea5e9',
                 'data_source' => 'excel',
                 'sort_order' => 1,
                 'is_active' => true,
@@ -46,10 +46,10 @@ class GlobalFinanceSeeder extends Seeder
         $buXtrans = GlobalBusinessUnit::updateOrCreate(
             ['code' => 'xtrans'],
             [
-                'name' => 'Ekspedisi Mekar Jaya',
-                'description' => 'Jasa logistik dan angkutan truk ekspedisi PT Mekar Jaya Xtrans Jaya.',
+                'name' => 'MJX (Ekspedisi)',
+                'description' => 'PT Mekar Jaya Xtrans Jaya - Jasa logistik dan angkutan armada truk ekspedisi.',
                 'icon' => 'truck',
-                'color' => '#D97706',
+                'color' => '#ffd800',
                 'data_source' => 'excel',
                 'sort_order' => 2,
                 'is_active' => true,
@@ -59,10 +59,10 @@ class GlobalFinanceSeeder extends Seeder
         $buSpbu = GlobalBusinessUnit::updateOrCreate(
             ['code' => 'spbu'],
             [
-                'name' => 'SPBU Retail',
-                'description' => 'Stasiun Pengisian Bahan Bakar Umum (SPBU No. 44.511.12).',
+                'name' => 'SPBU',
+                'description' => 'PT Air Mekar Jaya - Stasiun Pengisian Bahan Bakar Umum (SPBU No. 44.511.12).',
                 'icon' => 'fuel',
-                'color' => '#DC2626',
+                'color' => '#f43f5e',
                 'data_source' => 'database',
                 'sort_order' => 3,
                 'is_active' => true,
@@ -72,12 +72,25 @@ class GlobalFinanceSeeder extends Seeder
         $buIqos = GlobalBusinessUnit::updateOrCreate(
             ['code' => 'iqos'],
             [
-                'name' => 'IQOS Official Store',
-                'description' => 'Retail device dan konsumsi rokok elektrik / heat-not-burn IQOS.',
+                'name' => 'IQOS (Retail)',
+                'description' => 'PT Mekar Retail Jaya - Retail modern dan toko resmi penjualan IQOS.',
                 'icon' => 'store',
-                'color' => '#059669',
+                'color' => '#10e58f',
                 'data_source' => 'database',
                 'sort_order' => 4,
+                'is_active' => true,
+            ]
+        );
+
+        $buCcod = GlobalBusinessUnit::updateOrCreate(
+            ['code' => 'ccod'],
+            [
+                'name' => 'MJS Multikarya (CCOD)',
+                'description' => 'PT Mekar Jaya Sentosa Multikarya - Jasa dan distribusi Cash Collection on Delivery (CCOD) 12 cabang.',
+                'icon' => 'shopping-bag',
+                'color' => '#f59e0b',
+                'data_source' => 'excel',
+                'sort_order' => 5,
                 'is_active' => true,
             ]
         );
@@ -100,6 +113,34 @@ class GlobalFinanceSeeder extends Seeder
                 ['code' => $ent['code']],
                 [
                     'business_unit_id' => $buFmcg->id,
+                    'name' => $ent['name'],
+                    'location' => $ent['location'],
+                    'sort_order' => $idx + 1,
+                    'is_active' => true,
+                ]
+            );
+        }
+
+        $ccodEntities = [
+            ['code' => 'CCOD_PATI', 'name' => 'CCOD PATI', 'location' => 'Pati'],
+            ['code' => 'CCOD_SMG', 'name' => 'CCOD SEMARANG', 'location' => 'Semarang'],
+            ['code' => 'CCOD_PKL', 'name' => 'CCOD Pekalongan', 'location' => 'Pekalongan'],
+            ['code' => 'CCOD_TGL', 'name' => 'CCOD TEGAL', 'location' => 'Tegal'],
+            ['code' => 'CCOD_BDG', 'name' => 'CCOD BANDUNG', 'location' => 'Bandung'],
+            ['code' => 'CCOD_SMD', 'name' => 'CCOD SUMEDANG', 'location' => 'Sumedang'],
+            ['code' => 'CCOD_SLT', 'name' => 'CCOD Salatiga', 'location' => 'Salatiga'],
+            ['code' => 'CCOD_MGL', 'name' => 'CCOD Magelang', 'location' => 'Magelang'],
+            ['code' => 'CCOD_CRB', 'name' => 'CCOD Cirebon', 'location' => 'Cirebon'],
+            ['code' => 'CCOD_JTW', 'name' => 'CCOD Jatiwangi', 'location' => 'Jatiwangi'],
+            ['code' => 'CCOD_KNG', 'name' => 'CCOD Kuningan', 'location' => 'Kuningan'],
+            ['code' => 'CCOD_LSR', 'name' => 'CCOD Losarang', 'location' => 'Losarang'],
+        ];
+
+        foreach ($ccodEntities as $idx => $ent) {
+            GlobalEntity::updateOrCreate(
+                ['code' => $ent['code']],
+                [
+                    'business_unit_id' => $buCcod->id,
                     'name' => $ent['name'],
                     'location' => $ent['location'],
                     'sort_order' => $idx + 1,
@@ -134,7 +175,7 @@ class GlobalFinanceSeeder extends Seeder
             ['code' => 'IQOS_RETAIL'],
             [
                 'business_unit_id' => $buIqos->id,
-                'name' => 'SIR-IQOS Store & Retail',
+                'name' => 'Retail Store & Outlet',
                 'location' => 'Pekalongan & Sekitarnya',
                 'sort_order' => 1,
                 'is_active' => true,
@@ -159,36 +200,36 @@ class GlobalFinanceSeeder extends Seeder
         // 4. Ingest Databases (IQOS & SPBU)
         echo "Ingesting IQOS from database...\n";
         try {
-            $iqosService = new IqosSyncService();
+            $iqosService = new IqosSyncService;
             $resIqos = $iqosService->sync();
-            echo "IQOS Synced: " . json_encode($resIqos) . "\n";
+            echo 'IQOS Synced: '.json_encode($resIqos)."\n";
         } catch (\Throwable $e) {
-            echo "IQOS Sync Warning: " . $e->getMessage() . "\n";
+            echo 'IQOS Sync Warning: '.$e->getMessage()."\n";
         }
 
         echo "Ingesting SPBU July 2026 from database...\n";
         try {
-            $spbuService = new SpbuSyncService();
+            $spbuService = new SpbuSyncService;
             $resSpbu = $spbuService->sync('2026-07');
-            echo "SPBU Synced: " . json_encode($resSpbu) . "\n";
+            echo 'SPBU Synced: '.json_encode($resSpbu)."\n";
         } catch (\Throwable $e) {
-            echo "SPBU Sync Warning: " . $e->getMessage() . "\n";
+            echo 'SPBU Sync Warning: '.$e->getMessage()."\n";
         }
 
         // 5. Ingest FMCG & Xtrans if file exists
-        $excelService = new ExcelIngestionService();
+        $excelService = new ExcelIngestionService;
         $fmcgPath = 'C:/Users/arisc/.gemini/antigravity/brain/5f57d2e4-2ff0-42a5-a3c8-369db83bcf9b/.user_uploaded/media_1794797514184_a54cffc9.xlsx';
         if (file_exists($fmcgPath)) {
             echo "Ingesting FMCG 9-Depot file...\n";
             $resFmcg = $excelService->ingestFmcgFile($fmcgPath);
-            echo "FMCG Ingested: " . $resFmcg['records_inserted'] . " records\n";
+            echo 'FMCG Ingested: '.$resFmcg['records_inserted']." records\n";
         }
 
         $xtransPath = 'C:/Users/arisc/.gemini/antigravity/brain/5f57d2e4-2ff0-42a5-a3c8-369db83bcf9b/.user_uploaded/media_1794798564677_92f0e307.xlsx';
         if (file_exists($xtransPath)) {
             echo "Ingesting Xtrans file...\n";
             $resXtrans = $excelService->ingestXtransFile($xtransPath);
-            echo "Xtrans Ingested: " . $resXtrans['records_inserted'] . " records\n";
+            echo 'Xtrans Ingested: '.$resXtrans['records_inserted']." records\n";
         }
     }
 }

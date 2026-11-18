@@ -7,7 +7,6 @@ use App\Models\GlobalEntity;
 use App\Models\GlobalFinancialRecord;
 use App\Models\GlobalIntercompanyElimination;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 
 class ConsolidationReportService
 {
@@ -21,7 +20,7 @@ class ConsolidationReportService
             ->distinct()
             ->orderBy('period', 'desc')
             ->pluck('period')
-            ->map(fn($d) => Carbon::parse($d)->format('Y-m-d'))
+            ->map(fn ($d) => Carbon::parse($d)->format('Y-m-d'))
             ->values()
             ->all();
     }
@@ -34,10 +33,10 @@ class ConsolidationReportService
         return GlobalBusinessUnit::with(['entities' => function ($q) {
             $q->orderBy('sort_order');
         }])
-        ->where('is_active', true)
-        ->orderBy('sort_order')
-        ->get()
-        ->toArray();
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->get()
+            ->toArray();
     }
 
     /**
@@ -45,7 +44,7 @@ class ConsolidationReportService
      */
     public function getDashboardSummary(?string $period = null): array
     {
-        if (!$period) {
+        if (! $period) {
             $latest = GlobalFinancialRecord::query()->max('period');
             $period = $latest ? Carbon::parse($latest)->format('Y-m-d') : '2026-07-01';
         }
@@ -121,10 +120,15 @@ class ConsolidationReportService
             $mOther = (float) $mRecs->where('category', 'other_income')->sum('amount') - (float) $mRecs->where('category', 'other_expense')->sum('amount');
             $mNet = ($mRev - $mCogs) - $mOpex + $mOther;
 
+            $mGp = $mRev - $mCogs;
+
             $monthlyTrends[] = [
                 'period' => $tpStr,
                 'label' => Carbon::parse($tp)->translatedFormat('M Y'),
                 'revenue' => $mRev,
+                'cogs' => $mCogs,
+                'gross_profit' => $mGp,
+                'opex' => $mOpex,
                 'net_profit' => $mNet,
             ];
         }
@@ -135,7 +139,9 @@ class ConsolidationReportService
         foreach ($entities as $ent) {
             $eRecs = $records->where('entity_code', $ent->code);
             $eRev = (float) $eRecs->where('category', 'revenue')->sum('amount');
-            if ($eRev <= 0) continue;
+            if ($eRev <= 0) {
+                continue;
+            }
 
             $eCogs = (float) $eRecs->where('category', 'cogs')->sum('amount');
             $eGp = $eRev - $eCogs;
@@ -155,7 +161,7 @@ class ConsolidationReportService
             ];
         }
 
-        usort($entityRankings, fn($a, $b) => $b['revenue'] <=> $a['revenue']);
+        usort($entityRankings, fn ($a, $b) => $b['revenue'] <=> $a['revenue']);
 
         return [
             'period' => $period,
@@ -226,9 +232,14 @@ class ConsolidationReportService
             $subtotalPrev = 0;
 
             foreach ($accountNames as $accName) {
-                $curAmount = (float) $curRecs->where('category', $catKey)->where('account_name', $accName)->sum('amount');
-                $prevAmount = (float) $prevRecs->where('category', $catKey)->where('account_name', $accName)->sum('amount');
-                $accCode = $curRecs->where('category', $catKey)->where('account_name', $accName)->first()->account_code ?? null;
+                $matchedCur = $curRecs->where('category', $catKey)->where('account_name', $accName);
+                $matchedPrev = $prevRecs->where('category', $catKey)->where('account_name', $accName);
+                $curAmount = (float) $matchedCur->sum('amount');
+                $prevAmount = (float) $matchedPrev->sum('amount');
+
+                $firstRec = $matchedCur->first() ?? $matchedPrev->first();
+                $accCode = $firstRec->account_code ?? null;
+                $buCodeOfItem = $firstRec->business_unit_code ?? null;
 
                 $variance = $curAmount - $prevAmount;
                 $growthPct = $prevAmount != 0 ? round(($variance / abs($prevAmount)) * 100, 2) : ($curAmount != 0 ? 100 : 0);
@@ -236,6 +247,7 @@ class ConsolidationReportService
                 $items[] = [
                     'account_code' => $accCode,
                     'account_name' => $accName,
+                    'business_unit_code' => $buCodeOfItem,
                     'current_amount' => $curAmount,
                     'previous_amount' => $prevAmount,
                     'variance' => $variance,
@@ -246,7 +258,7 @@ class ConsolidationReportService
                 $subtotalPrev += $prevAmount;
             }
 
-            usort($items, fn($a, $b) => $b['current_amount'] <=> $a['current_amount']);
+            usort($items, fn ($a, $b) => $b['current_amount'] <=> $a['current_amount']);
 
             $subVar = $subtotalCur - $subtotalPrev;
             $subGrowth = $subtotalPrev != 0 ? round(($subVar / abs($subtotalPrev)) * 100, 2) : 0;
@@ -279,6 +291,111 @@ class ConsolidationReportService
         $netCur = $opProfitCur + $otherIncCur - $otherExpCur;
         $netPrev = $opProfitPrev + $otherIncPrev - $otherExpPrev;
 
+        // Tren 12 Bulan Terakhir untuk Filter P&L
+        $trendPeriods = GlobalFinancialRecord::query()
+            ->where('report_type', 'pnl')
+            ->where('period', '<=', $period)
+            ->select('period')
+            ->distinct()
+            ->orderBy('period', 'desc')
+            ->limit(12)
+            ->pluck('period')
+            ->reverse()
+            ->values();
+
+        $pnlTrends = [];
+        foreach ($trendPeriods as $tp) {
+            $tpStr = Carbon::parse($tp)->format('Y-m-d');
+            $tQuery = GlobalFinancialRecord::query()
+                ->where('period', $tpStr)
+                ->where('report_type', 'pnl');
+
+            if ($buCode) {
+                $tQuery->where('business_unit_code', $buCode);
+            }
+            if ($entityCode) {
+                $tQuery->where('entity_code', $entityCode);
+            }
+            $tRecs = $tQuery->get();
+
+            $tRev = (float) $tRecs->where('category', 'revenue')->sum('amount');
+            $tCogs = (float) $tRecs->where('category', 'cogs')->sum('amount');
+            $tOpex = (float) $tRecs->where('category', 'opex')->sum('amount');
+            $tNet = ($tRev - $tCogs) - $tOpex;
+
+            $pnlTrends[] = [
+                'period' => $tpStr,
+                'label' => Carbon::parse($tp)->translatedFormat('M Y'),
+                'revenue' => $tRev,
+                'cogs' => $tCogs,
+                'gross_profit' => $tRev - $tCogs,
+                'opex' => $tOpex,
+                'net_profit' => $tNet,
+            ];
+        }
+
+        // Breakdown Kontribusi per Unit Bisnis untuk Periode Ini
+        $bus = GlobalBusinessUnit::with('entities')->where('is_active', true)->orderBy('sort_order')->get();
+        $byBusinessUnit = [];
+
+        foreach ($bus as $bu) {
+            $buRecs = $curRecs->where('business_unit_code', $bu->code);
+            $bRev = (float) $buRecs->where('category', 'revenue')->sum('amount');
+            $bCogs = (float) $buRecs->where('category', 'cogs')->sum('amount');
+            $bGp = $bRev - $bCogs;
+            $bOpex = (float) $buRecs->where('category', 'opex')->sum('amount');
+            $bOther = (float) $buRecs->where('category', 'other_income')->sum('amount') - (float) $buRecs->where('category', 'other_expense')->sum('amount');
+            $bNet = $bGp - $bOpex + $bOther;
+
+            $byBusinessUnit[] = [
+                'code' => $bu->code,
+                'name' => $bu->name,
+                'color' => $bu->color,
+                'icon' => $bu->icon,
+                'revenue' => $bRev,
+                'cogs' => $bCogs,
+                'gross_profit' => $bGp,
+                'gross_margin' => $bRev > 0 ? round(($bGp / $bRev) * 100, 2) : 0,
+                'opex' => $bOpex,
+                'net_profit' => $bNet,
+                'net_margin' => $bRev > 0 ? round(($bNet / $bRev) * 100, 2) : 0,
+            ];
+        }
+
+        // Breakdown Kontribusi per Entitas / Cabang jika Unit Bisnis dipilih
+        $byEntity = [];
+        if ($buCode && empty($entityCode)) {
+            $buEntities = GlobalEntity::whereHas('businessUnit', fn ($q) => $q->where('code', $buCode))
+                ->orderBy('sort_order')
+                ->get();
+
+            foreach ($buEntities as $ent) {
+                $eRecs = $curRecs->where('entity_code', $ent->code);
+                $eRev = (float) $eRecs->where('category', 'revenue')->sum('amount');
+                $eCogs = (float) $eRecs->where('category', 'cogs')->sum('amount');
+                $eGp = $eRev - $eCogs;
+                $eOpex = (float) $eRecs->where('category', 'opex')->sum('amount');
+                $eOther = (float) $eRecs->where('category', 'other_income')->sum('amount') - (float) $eRecs->where('category', 'other_expense')->sum('amount');
+                $eNet = $eGp - $eOpex + $eOther;
+
+                $byEntity[] = [
+                    'code' => $ent->code,
+                    'name' => $ent->name,
+                    'location' => $ent->location,
+                    'group' => str_starts_with($ent->code, 'CCOD') ? 'ccod' : 'depo',
+                    'revenue' => $eRev,
+                    'cogs' => $eCogs,
+                    'gross_profit' => $eGp,
+                    'gross_margin' => $eRev > 0 ? round(($eGp / $eRev) * 100, 2) : 0,
+                    'opex' => $eOpex,
+                    'other' => $eOther,
+                    'net_profit' => $eNet,
+                    'net_margin' => $eRev > 0 ? round(($eNet / $eRev) * 100, 2) : 0,
+                    'record_count' => $eRecs->count(),
+                ];
+            }
+        }
+
         return [
             'period' => $period,
             'period_label' => Carbon::parse($period)->translatedFormat('F Y'),
@@ -288,6 +405,8 @@ class ConsolidationReportService
                 'entity_code' => $entityCode,
             ],
             'sections' => $reportSections,
+            'by_business_unit' => $byBusinessUnit,
+            'by_entity' => $byEntity,
             'summary' => [
                 'gross_profit_current' => $gpCur,
                 'gross_profit_previous' => $gpPrev,
@@ -298,6 +417,7 @@ class ConsolidationReportService
                 'net_profit_variance' => $netCur - $netPrev,
                 'net_profit_growth' => $netPrev != 0 ? round((($netCur - $netPrev) / abs($netPrev)) * 100, 2) : 0,
             ],
+            'monthly_trends' => $pnlTrends,
         ];
     }
 

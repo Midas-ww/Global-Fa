@@ -3,7 +3,52 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+@theme inline {
+    --font-sans:
+        'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
+        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+        'Noto Color Emoji';
+}
+
+/* ==========================================================================
+   Responsive Global Typography & UI Scaling (Fluid Viewport Adaptation)
+   Skala dioptimalkan ke ~80% (12.8px) pada seluruh kategori layar laptop
+   agar seluruh card KPI, nominal uang, tabel, dan grafik tampil lega & presisi
+   identik dengan SIR-IQOS.
+   ========================================================================== */
+
+html {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+@media (max-width: 1599px) {
+    html {
+        font-size: 12.8px;
+    }
+}
+
+@media (max-width: 1359px) {
+    html {
+        font-size: 12.2px;
+    }
+}
+
+@media (max-width: 1023px) {
+    html {
+        font-size: 11.8px;
+    }
+}
+
+@media (max-width: 767px) {
+    html {
+        font-size: 15px;
+    }
+}
+
+.truncate-currency {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }

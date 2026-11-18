@@ -10,9 +10,11 @@ use App\Services\GlobalFinance\ConsolidationReportService;
 use App\Services\GlobalFinance\ExcelIngestionService;
 use App\Services\GlobalFinance\IqosSyncService;
 use App\Services\GlobalFinance\SpbuSyncService;
-use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class GlobalFinanceController extends Controller
@@ -32,7 +34,7 @@ class GlobalFinanceController extends Controller
         $availablePeriods = $this->reportService->getAvailablePeriods();
         $selectedPeriod = $request->query('period');
 
-        if (!$selectedPeriod || !in_array($selectedPeriod, $availablePeriods)) {
+        if (! $selectedPeriod || ! in_array($selectedPeriod, $availablePeriods)) {
             $selectedPeriod = $availablePeriods[0] ?? '2026-07-01';
         }
 
@@ -55,7 +57,7 @@ class GlobalFinanceController extends Controller
         $availablePeriods = $this->reportService->getAvailablePeriods();
         $selectedPeriod = $request->query('period');
 
-        if (!$selectedPeriod || !in_array($selectedPeriod, $availablePeriods)) {
+        if (! $selectedPeriod || ! in_array($selectedPeriod, $availablePeriods)) {
             $selectedPeriod = $availablePeriods[0] ?? '2026-07-01';
         }
 
@@ -83,7 +85,7 @@ class GlobalFinanceController extends Controller
         $availablePeriods = $this->reportService->getAvailablePeriods();
         $selectedPeriod = $request->query('period');
 
-        if (!$selectedPeriod || !in_array($selectedPeriod, $availablePeriods)) {
+        if (! $selectedPeriod || ! in_array($selectedPeriod, $availablePeriods)) {
             $selectedPeriod = $availablePeriods[0] ?? '2026-07-01';
         }
 
@@ -110,7 +112,7 @@ class GlobalFinanceController extends Controller
     {
         $availablePeriods = $this->reportService->getAvailablePeriods();
         $businessUnits = $this->reportService->getBusinessUnitsWithEntities();
-        $logs = GlobalIngestionLog::query()->orderBy('created_at', 'desc')->limit(20)->get();
+        $logs = GlobalIngestionLog::query()->orderBy('created_at', 'desc')->limit(50)->get();
 
         $stats = [
             'total_records' => GlobalFinancialRecord::count(),
@@ -138,9 +140,9 @@ class GlobalFinanceController extends Controller
 
         try {
             if ($target === 'all' || $target === 'iqos') {
-                $iqos = new IqosSyncService();
+                $iqos = new IqosSyncService;
                 $resIqos = $iqos->sync();
-                $results[] = "IQOS: " . ($resIqos['count'] ?? 0) . " periode disinkronkan.";
+                $results[] = 'Retail Store: '.($resIqos['count'] ?? 0).' periode disinkronkan.';
 
                 GlobalIngestionLog::create([
                     'business_unit_code' => 'iqos',
@@ -153,9 +155,9 @@ class GlobalFinanceController extends Controller
             }
 
             if ($target === 'all' || $target === 'spbu') {
-                $spbu = new SpbuSyncService();
+                $spbu = new SpbuSyncService;
                 $resSpbu = $spbu->sync($period);
-                $results[] = "SPBU ({$period}): {$resSpbu['records_count']} akun finansial diserap (Omzet: Rp " . number_format($resSpbu['revenue_total'], 0, ',', '.') . ").";
+                $results[] = "SPBU ({$period}): {$resSpbu['records_count']} akun finansial diserap (Omzet: Rp ".number_format($resSpbu['revenue_total'], 0, ',', '.').').';
 
                 GlobalIngestionLog::create([
                     'business_unit_code' => 'spbu',
@@ -167,7 +169,7 @@ class GlobalFinanceController extends Controller
                 ]);
             }
 
-            return back()->with('success', 'Sinkronisasi Database Berhasil: ' . implode(' | ', $results));
+            return back()->with('success', 'Sinkronisasi Database Berhasil: '.implode(' | ', $results));
         } catch (\Throwable $e) {
             GlobalIngestionLog::create([
                 'business_unit_code' => $target,
@@ -178,7 +180,33 @@ class GlobalFinanceController extends Controller
                 'details' => $e->getMessage(),
             ]);
 
-            return back()->with('error', 'Gagal sinkronisasi: ' . $e->getMessage());
+            return back()->with('error', 'Gagal sinkronisasi: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Pratinjau dan analisis file Excel sebelum konfirmasi import (mirip SIR-IQOS).
+     */
+    public function previewExcel(Request $request): JsonResponse
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:51200',
+            'type' => 'required|string|exists:global_business_units,code',
+        ]);
+
+        $file = $request->file('file');
+        $type = $request->input('type');
+
+        try {
+            $service = new ExcelIngestionService;
+            $preview = $service->previewFile($file->getRealPath(), $type, $file->getClientOriginalName());
+
+            return response()->json($preview);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal membaca file: '.$e->getMessage(),
+            ], 422);
         }
     }
 
@@ -189,24 +217,64 @@ class GlobalFinanceController extends Controller
     {
         $request->validate([
             'file' => 'required|file|mimes:xlsx,xls,csv|max:51200', // max 50MB
-            'type' => 'required|in:fmcg,xtrans',
+            'type' => 'required|string|exists:global_business_units,code',
+            'overwrite' => 'nullable|boolean',
         ]);
 
         $file = $request->file('file');
         $type = $request->input('type');
         $filename = $file->getClientOriginalName();
-        $path = $file->storeAs('imports', time() . '_' . $filename);
-        $fullPath = storage_path('app/' . $path);
+        $overwrite = $request->boolean('overwrite');
+        $fileHash = hash_file('sha256', $file->getRealPath());
 
-        $service = new ExcelIngestionService();
+        // 1. Deteksi apakah file Excel ini sudah pernah diimpor sebelumnya
+        if (! $overwrite) {
+            $existingLog = GlobalIngestionLog::query()
+                ->where('business_unit_code', $type)
+                ->where('source_type', 'excel_upload')
+                ->where('status', 'success')
+                ->where(function ($q) use ($filename, $fileHash) {
+                    $q->where('filename', $filename)
+                        ->orWhere('details', 'like', '%"file_hash":"'.$fileHash.'"%');
+                })
+                ->latest()
+                ->first();
+
+            if ($existingLog) {
+                $timeStr = $existingLog->created_at->translatedFormat('d M Y H:i');
+
+                return back()->with('error', "Peringatan Duplikasi: File '{$filename}' sudah pernah diimpor pada {$timeStr} (tercatat {$existingLog->records_count} data). Jika Anda bermaksud memperbarui atau mengunggah ulang data file ini, silakan centang opsi 'Timpa data yang sudah ada (Overwrite)'.");
+            }
+        }
+
+        $path = $file->storeAs('imports', time().'_'.$filename);
+        $fullPath = Storage::path($path);
+
+        $service = new ExcelIngestionService;
 
         try {
-            if ($type === 'fmcg') {
-                $res = $service->ingestFmcgFile($fullPath);
-                $msg = "FMCG: Berhasil mengimpor {$res['records_inserted']} data transaksi dari " . count($res['sheets_processed']) . " cabang depo.";
-            } else {
-                $res = $service->ingestXtransFile($fullPath);
+            // 2. Deteksi & Validasi apakah file Excel sesuai dengan tipe usaha yang dipilih
+            $service->validateBusinessUnit($fullPath, $type);
+
+            // 3. Proses Ingest Data
+            $detected = $service->detectFileType($fullPath);
+            if ($detected['type'] === 'universal_template') {
+                $res = $service->ingestUniversalTemplate($fullPath, $type, $filename);
+                $unitName = GlobalBusinessUnit::where('code', $type)->value('name') ?? strtoupper($type);
+                $msg = "{$unitName}: Berhasil mengimpor {$res['records_inserted']} data transaksi via Template Universal Holding.";
+            } elseif ($type === 'fmcg') {
+                $res = $service->ingestFmcgFile($fullPath, $filename);
+                $msg = "FMCG: Berhasil mengimpor {$res['records_inserted']} data transaksi dari ".count($res['sheets_processed'] ?? []).' lembar kerja (sheets).';
+            } elseif ($type === 'ccod') {
+                $res = $service->ingestFmcgDepartmentFile($fullPath, $filename);
+                $msg = "CCOD: Berhasil mengimpor {$res['records_inserted']} data transaksi dari ".($res['departments_count'] ?? 12).' cabang PT MJS Multikarya.';
+            } elseif ($type === 'xtrans') {
+                $res = $service->ingestXtransFile($fullPath, $filename);
                 $msg = "Ekspedisi: Berhasil mengimpor {$res['records_inserted']} data P&L dan Neraca PT Mekar Jaya Xtrans Jaya.";
+            } else {
+                $res = $service->ingestUniversalTemplate($fullPath, $type, $filename);
+                $unitName = GlobalBusinessUnit::where('code', $type)->value('name') ?? strtoupper($type);
+                $msg = "{$unitName}: Berhasil mengimpor {$res['records_inserted']} data transaksi finansial.";
             }
 
             GlobalIngestionLog::create([
@@ -215,11 +283,18 @@ class GlobalFinanceController extends Controller
                 'filename' => $filename,
                 'records_count' => $res['records_inserted'] ?? 0,
                 'status' => 'success',
-                'details' => json_encode($res),
+                'details' => json_encode(array_merge($res, [
+                    'file_hash' => $fileHash,
+                    'overwrite' => $overwrite,
+                ])),
             ]);
 
             return back()->with('success', $msg);
         } catch (\Throwable $e) {
+            if (file_exists($fullPath)) {
+                @unlink($fullPath);
+            }
+
             GlobalIngestionLog::create([
                 'business_unit_code' => $type,
                 'source_type' => 'excel_upload',
@@ -229,7 +304,39 @@ class GlobalFinanceController extends Controller
                 'details' => $e->getMessage(),
             ]);
 
-            return back()->with('error', 'Gagal memproses file Excel: ' . $e->getMessage());
+            return back()->with('error', $e->getMessage());
         }
+    }
+
+    /**
+     * Hapus riwayat import / sinkronisasi beserta data finansial terkait.
+     */
+    public function deleteIngestionLog(int $id): RedirectResponse
+    {
+        $log = GlobalIngestionLog::findOrFail($id);
+        $businessUnit = strtoupper($log->business_unit_code);
+        $filename = $log->filename;
+        $deletedRecordsCount = 0;
+
+        DB::transaction(function () use ($log, &$deletedRecordsCount) {
+            if ($log->source_type === 'excel_upload') {
+                $deletedRecordsCount = GlobalFinancialRecord::query()
+                    ->where('business_unit_code', $log->business_unit_code)
+                    ->where('source_type', 'excel_upload')
+                    ->where(function ($q) use ($log) {
+                        $q->where('notes', $log->filename)
+                            ->orWhereNull('notes');
+                    })
+                    ->delete();
+            }
+
+            $log->delete();
+        });
+
+        if ($log->source_type === 'excel_upload') {
+            return back()->with('success', "Riwayat import '{$filename}' ({$businessUnit}) berhasil dihapus beserta ".number_format($deletedRecordsCount, 0, ',', '.').' baris data finansial terkait.');
+        }
+
+        return back()->with('success', "Riwayat sinkronisasi database untuk unit {$businessUnit} ({$filename}) berhasil dihapus.");
     }
 }

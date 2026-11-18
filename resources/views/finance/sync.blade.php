@@ -1,50 +1,49 @@
 @extends('layouts.app')
 
-@section('title', 'Data Ingestion & Sync Hub')
-@section('page_title', 'Pusat Sinkronisasi Database & Import Excel')
+@section('title', 'Data Ingestion Hub')
 
 @section('content')
 <div class="space-y-6 pb-12">
 
     <!-- OVERVIEW STATS -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
-        <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm flex items-center justify-between">
+        <div class="bg-white rounded-2xl p-5 border border-[#edf0ee] shadow-xs flex items-center justify-between hover:border-slate-300 transition-all">
             <div>
                 <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Record Data</span>
                 <h4 class="text-2xl font-black text-slate-900 mt-1">{{ number_format($stats['total_records'] ?? 0, 0, ',', '.') }}</h4>
-                <p class="text-xs text-slate-500 mt-0.5">Tersimpan di database konsolidasi</p>
+                <p class="text-xs text-slate-400 mt-0.5">Tersimpan di database konsolidasi</p>
             </div>
-            <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                <i data-lucide="database" class="w-6 h-6"></i>
+            <div class="w-11 h-11 rounded-xl bg-[#ebf8c8] text-[#3f6212] flex items-center justify-center">
+                <i data-lucide="database" class="w-5 h-5"></i>
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm flex items-center justify-between">
+        <div class="bg-white rounded-2xl p-5 border border-[#edf0ee] shadow-xs flex items-center justify-between hover:border-slate-300 transition-all">
             <div>
                 <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Unit Bisnis Aktif</span>
                 <h4 class="text-2xl font-black text-slate-900 mt-1">{{ $stats['total_business_units'] ?? 4 }} Unit Bisnis</h4>
-                <p class="text-xs text-slate-500 mt-0.5">{{ $stats['total_entities'] ?? 12 }} Cabang & Entitas Hukum</p>
+                <p class="text-xs text-slate-400 mt-0.5">{{ $stats['total_entities'] ?? 12 }} Cabang & Entitas Hukum</p>
             </div>
-            <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                <i data-lucide="building-2" class="w-6 h-6"></i>
+            <div class="w-11 h-11 rounded-xl bg-[#ebf8c8] text-[#3f6212] flex items-center justify-center">
+                <i data-lucide="building-2" class="w-5 h-5"></i>
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm flex items-center justify-between">
+        <div class="bg-white rounded-2xl p-5 border border-[#edf0ee] shadow-xs flex items-center justify-between hover:border-slate-300 transition-all">
             <div>
                 <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Koneksi Database</span>
-                <h4 class="text-2xl font-black text-emerald-600 mt-1 flex items-center gap-1.5">
-                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <h4 class="text-2xl font-black text-[#16a34a] mt-1 flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#10e58f]"></span>
                     2 Terkoneksi
                 </h4>
-                <p class="text-xs text-slate-500 mt-0.5">SPBU (api_air) & IQOS (sir_iqos)</p>
+                <p class="text-xs text-slate-400 mt-0.5">SPBU (api_air) & IQOS (Retail) (sir_iqos)</p>
             </div>
-            <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                <i data-lucide="network" class="w-6 h-6"></i>
+            <div class="w-11 h-11 rounded-xl bg-[#ecfdf5] text-[#16a34a] flex items-center justify-center">
+                <i data-lucide="network" class="w-5 h-5"></i>
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm flex items-center justify-between">
+        <div class="bg-white rounded-2xl p-5 border border-[#edf0ee] shadow-xs flex items-center justify-between hover:border-slate-300 transition-all">
             <div>
                 <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Pembaruan Terakhir</span>
                 <h4 class="text-sm font-bold text-slate-800 mt-2 truncate max-w-[150px]">
@@ -52,8 +51,8 @@
                 </h4>
                 <p class="text-[11px] text-slate-400 mt-0.5">{{ $stats['last_sync'] ? \Carbon\Carbon::parse($stats['last_sync'])->format('d M Y H:i') : '-' }}</p>
             </div>
-            <div class="w-11 h-11 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-                <i data-lucide="clock" class="w-6 h-6"></i>
+            <div class="w-11 h-11 rounded-xl bg-[#fef9c3] text-[#854d0e] flex items-center justify-center">
+                <i data-lucide="clock" class="w-5 h-5"></i>
             </div>
         </div>
     </div>
@@ -61,40 +60,40 @@
     <!-- MAIN TWO-COLUMN SECTIONS: 1. DB SYNC, 2. EXCEL INGESTION -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-        <!-- SECTION 1: DATABASE SYNC (SPBU & IQOS) -->
-        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-6">
-            <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+        <!-- SECTION 1: DATABASE SYNC (SPBU & RETAIL) -->
+        <div class="bg-white rounded-2xl border border-[#edf0ee] shadow-xs p-6 space-y-6">
+            <div class="flex items-center justify-between border-b border-[#edf0ee] pb-4">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                    <div class="w-10 h-10 rounded-xl bg-[#f5f9ed] text-[#3f6212] flex items-center justify-center border border-[#d9f99d]">
                         <i data-lucide="refresh-cw" class="w-5 h-5"></i>
                     </div>
                     <div>
-                        <h3 class="font-extrabold text-slate-900 text-base">Sinkronisasi Database Otomatis</h3>
-                        <p class="text-xs text-slate-500">Tarik data real-time langsung dari database operasional unit bisnis.</p>
+                        <h3 class="font-bold text-slate-900 text-base">Sinkronisasi Database Otomatis</h3>
+                        <p class="text-xs text-slate-400">Tarik data real-time langsung dari database operasional SPBU & IQOS (Retail).</p>
                     </div>
                 </div>
-                <form action="{{ route('finance.sync.database') }}" method="POST" onsubmit="return confirm('Mulai sinkronisasi seluruh database terhubung (SPBU & IQOS)?');">
+                <form action="{{ route('finance.sync.database') }}" method="POST" onsubmit="return confirm('Mulai sinkronisasi seluruh database terhubung?');">
                     @csrf
                     <input type="hidden" name="target" value="all">
                     <input type="hidden" name="period" value="{{ $selectedPeriod ?? '2026-07' }}">
-                    <button type="submit" class="px-3.5 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition flex items-center gap-1.5 shadow-sm">
-                        <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-[#edf0ee] text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer">
+                        <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-500"></i>
                         Sinkronkan Semua
                     </button>
                 </form>
             </div>
 
             <!-- SPBU CARD -->
-            <div class="p-4 rounded-xl border border-slate-200/90 bg-slate-50/50 hover:bg-white hover:border-blue-300 transition duration-150">
+            <div class="p-4 rounded-xl border border-[#edf0ee] bg-[#fbfdfa] hover:bg-white hover:border-slate-300 transition duration-150 group">
                 <div class="flex items-start justify-between">
                     <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-lg bg-blue-100 text-blue-700 font-black text-xs flex items-center justify-center">
+                        <div class="w-9 h-9 rounded-lg bg-rose-50 text-rose-700 font-bold text-xs flex items-center justify-center border border-rose-200">
                             SPBU
                         </div>
                         <div>
-                            <h4 class="text-sm font-bold text-slate-900">SPBU 34-45501 (PT Air Mekar Jaya)</h4>
+                            <h4 class="text-sm font-bold text-slate-900">SPBU No. 44.511.12 (PT Air Mekar Jaya)</h4>
                             <div class="flex items-center gap-2 mt-0.5 text-xs text-slate-500">
-                                <span>DB: <code class="text-blue-600 font-mono">api_air</code></span>
+                                <span>DB: <code class="text-rose-600 font-mono font-semibold">api_air</code></span>
                                 <span>•</span>
                                 <span class="text-emerald-600 font-semibold flex items-center gap-1">
                                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Online
@@ -102,42 +101,48 @@
                             </div>
                         </div>
                     </div>
-                    <span class="px-2 py-0.5 text-[11px] font-bold rounded bg-blue-50 text-blue-700">Daily Shifts & Sales</span>
+                    <span class="px-2 py-0.5 text-[11px] font-bold rounded-md bg-rose-50 text-rose-700 border border-rose-200/60 font-mono">Daily BBM Shifts</span>
                 </div>
-                <p class="text-xs text-slate-600 mt-2.5 leading-relaxed">
+                <p class="text-xs text-slate-500 mt-2.5 leading-relaxed">
                     Menghitung omzet BBM (Pertalite, Pertamax, Biosolar, Dexlite), HPP modal tebusan Pertamina, dan laba kotor per shift untuk dikonversi ke akun Finansial Holding.
                 </p>
                 <form action="{{ route('finance.sync.database') }}" method="POST" class="mt-4 flex items-center gap-3">
                     @csrf
                     <input type="hidden" name="target" value="spbu">
                     <div class="flex-1">
-                        <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Periode Bulan</label>
-                        <select name="period" class="w-full bg-white border border-slate-200 rounded-lg text-xs font-medium px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="2026-07" selected>Juli 2026</option>
+                        <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Periode Bulan</label>
+                        <select name="period" class="w-full bg-white border border-[#edf0ee] rounded-xl text-xs font-mono font-medium px-3 py-2 text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#10e58f]">
+                            <option value="2026-09" selected>September 2026</option>
+                            <option value="2026-08">Agustus 2026</option>
+                            <option value="2026-07">Juli 2026</option>
                             <option value="2026-06">Juni 2026</option>
                             <option value="2026-05">Mei 2026</option>
+                            <option value="2026-04">April 2026</option>
+                            <option value="2026-03">Maret 2026</option>
+                            <option value="2026-02">Februari 2026</option>
+                            <option value="2026-01">Januari 2026</option>
                         </select>
                     </div>
                     <div class="pt-5">
-                        <button type="submit" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
-                            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                        <button type="submit" class="px-4 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-[#edf0ee] text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer">
+                            <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-emerald-600"></i>
                             Sinkron SPBU
                         </button>
                     </div>
                 </form>
             </div>
 
-            <!-- IQOS CARD -->
-            <div class="p-4 rounded-xl border border-slate-200/90 bg-slate-50/50 hover:bg-white hover:border-purple-300 transition duration-150">
+            <!-- IQOS (RETAIL) CARD -->
+            <div class="p-4 rounded-xl border border-[#edf0ee] bg-[#fbfdfa] hover:bg-white hover:border-slate-300 transition duration-150 group">
                 <div class="flex items-start justify-between">
                     <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-lg bg-purple-100 text-purple-700 font-black text-xs flex items-center justify-center">
+                        <div class="w-9 h-9 rounded-lg bg-[#ebf8c8] text-[#3f6212] font-bold text-xs flex items-center justify-center border border-[#d9f99d]">
                             IQOS
                         </div>
                         <div>
-                            <h4 class="text-sm font-bold text-slate-900">Retail IQOS (PT Mekar Retail Jaya)</h4>
+                            <h4 class="text-sm font-bold text-slate-900">IQOS (Retail) - PT Mekar Retail Jaya</h4>
                             <div class="flex items-center gap-2 mt-0.5 text-xs text-slate-500">
-                                <span>DB: <code class="text-purple-600 font-mono">sir_iqos</code></span>
+                                <span>DB: <code class="text-slate-700 font-mono font-semibold">sir_iqos</code></span>
                                 <span>•</span>
                                 <span class="text-emerald-600 font-semibold flex items-center gap-1">
                                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Online
@@ -145,103 +150,224 @@
                             </div>
                         </div>
                     </div>
-                    <span class="px-2 py-0.5 text-[11px] font-bold rounded bg-purple-50 text-purple-700">Monthly P&L Ledger</span>
+                    <span class="px-2 py-0.5 text-[11px] font-bold rounded-md bg-[#ebf8c8] text-[#3f6212] border border-[#d9f99d] font-mono">Monthly P&L Ledger</span>
                 </div>
-                <p class="text-xs text-slate-600 mt-2.5 leading-relaxed">
-                    Membaca buku laporan bulanan toko resmi IQOS, mencakup penjualan device & consumables HEETS/TEREA, HPP konsinyasi, dan biaya sewa counter.
+                <p class="text-xs text-slate-500 mt-2.5 leading-relaxed">
+                    Membaca buku laporan bulanan unit retail store, mencakup penjualan produk retail & consumables, HPP konsinyasi, dan biaya operasional toko.
                 </p>
                 <form action="{{ route('finance.sync.database') }}" method="POST" class="mt-4 flex items-center justify-between pt-1">
                     @csrf
                     <input type="hidden" name="target" value="iqos">
-                    <span class="text-xs text-slate-500">Mencakup 10 periode historis terdata di sistem SIR-IQOS.</span>
-                    <button type="submit" class="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+                    <span class="text-xs text-slate-400">Mencakup periode historis terdata di database operasional.</span>
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-[#10e58f] hover:bg-[#0fd684] text-slate-950 font-bold text-xs transition flex items-center gap-1.5 shadow-2xs cursor-pointer">
                         <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
-                        Sinkron IQOS
+                        Sinkron IQOS (Retail)
                     </button>
                 </form>
             </div>
         </div>
 
         <!-- SECTION 2: EXCEL INGESTION HUB -->
-        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 space-y-6">
-            <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div class="bg-white rounded-2xl border border-[#edf0ee] shadow-xs p-6 space-y-6">
+            <div class="flex items-center justify-between border-b border-[#edf0ee] pb-4 flex-wrap gap-3">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                    <div class="w-10 h-10 rounded-xl bg-[#ebf8c8] text-[#3f6212] flex items-center justify-center">
                         <i data-lucide="file-spreadsheet" class="w-5 h-5"></i>
                     </div>
                     <div>
-                        <h3 class="font-extrabold text-slate-900 text-base">Excel Ingestion Hub</h3>
-                        <p class="text-xs text-slate-500">Import laporan keuangan untuk unit bisnis yang belum terhubung sistem.</p>
+                        <h3 class="font-bold text-slate-900 text-base">Excel Ingestion Hub</h3>
+                        <p class="text-xs text-slate-400">Import laporan keuangan untuk unit bisnis yang belum terhubung sistem.</p>
                     </div>
                 </div>
-                <span class="px-2.5 py-1 text-[11px] font-bold rounded-full bg-emerald-100 text-emerald-800">
-                    Auto-Parsing
-                </span>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="px-2.5 py-1 text-[11px] font-bold rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1.5 shadow-2xs">
+                        <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i>
+                        <span>Validasi Cerdas & Proteksi Duplikasi Aktif</span>
+                    </span>
+                    <span class="px-2.5 py-1 text-[11px] font-bold rounded-full bg-[#f5f9ed] text-[#3f6212] border border-[#d9f99d]">
+                        Auto-Parsing
+                    </span>
+                </div>
             </div>
 
             <!-- FMCG 9 DEPO UPLOAD BOX -->
-            <div class="p-4 rounded-xl border border-dashed border-emerald-300 bg-emerald-50/20 hover:bg-emerald-50/40 transition">
+            <div class="p-4 rounded-xl border border-dashed border-[#10e58f] bg-[#fbfdfa] hover:bg-white transition">
                 <div class="flex items-center justify-between mb-2">
                     <div class="flex items-center gap-2">
-                        <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 font-black text-xs flex items-center justify-center">
-                            FMCG
+                        <div class="w-8 h-8 rounded-lg bg-[#ebf8c8] text-[#3f6212] font-black text-xs flex items-center justify-center">
+                            MJS
                         </div>
                         <div>
-                            <h4 class="text-sm font-bold text-slate-900">Distribusi FMCG (9 Depo Cabang)</h4>
-                            <p class="text-[11px] text-slate-500">Kuningan, Cirebon, Majalengka, Indramayu, Subang, Purwakarta, Karawang, Bekasi, Cikarang</p>
+                            <h4 class="text-sm font-bold text-slate-900">MJS (FMCG) - 9 Depo Cabang / CV Mekar Jaya Sentosa</h4>
+                            <p class="text-[11px] text-slate-400">Kuningan, Cirebon, Majalengka, Indramayu, Subang, Purwakarta, Karawang, Bekasi, Cikarang & Laporan Resmi MJS</p>
                         </div>
                     </div>
                 </div>
 
-                <form action="{{ route('finance.sync.excel') }}" method="POST" enctype="multipart/form-data" class="mt-3 space-y-3">
+                <form id="formFmcgUpload" action="{{ route('finance.sync.excel') }}" method="POST" enctype="multipart/form-data" class="mt-3 space-y-3" onsubmit="return handleExcelImportSubmit(event, this)">
                     @csrf
                     <input type="hidden" name="type" value="fmcg">
-                    <div class="relative flex items-center justify-center border-2 border-dashed border-slate-200 hover:border-emerald-500 rounded-xl p-3 bg-white transition cursor-pointer group">
-                        <input type="file" name="file" accept=".xlsx,.xls,.csv" required class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" onchange="this.nextElementSibling.innerText = this.files[0]?.name || 'Pilih file Excel FMCG...'">
+                    <div class="relative flex items-center justify-center border-2 border-dashed border-slate-200 hover:border-[#10e58f] rounded-xl p-3 bg-white transition cursor-pointer group">
+                        <input type="file" name="file" accept=".xlsx,.xls,.csv" required class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" onchange="this.nextElementSibling.innerText = this.files[0]?.name || 'Pilih file Excel MJS / FMCG...'">
                         <div class="text-center text-xs text-slate-500 flex items-center gap-2 pointer-events-none group-hover:text-emerald-700">
-                            <i data-lucide="upload-cloud" class="w-4 h-4 text-emerald-600"></i>
-                            <span class="font-medium text-slate-600">Pilih file Excel FMCG (.xlsx / .xls)</span>
+                            <i data-lucide="upload-cloud" class="w-4 h-4 text-[#10e58f]"></i>
+                            <span class="font-medium text-slate-600">Pilih file Excel MJS / FMCG (.xlsx / .xls)</span>
                         </div>
                     </div>
-                    <div class="flex items-center justify-between pt-1">
-                        <span class="text-[11px] text-slate-400">Format: Multi-sheet per depo (Sales, HPP, OPEX)</span>
-                        <button type="submit" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
-                            <i data-lucide="upload" class="w-3.5 h-3.5"></i>
-                            Import FMCG
+                    <div class="flex items-center justify-between flex-wrap gap-2 pt-1">
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" name="overwrite" id="overwriteFmcg" value="1" class="w-4 h-4 rounded border-slate-300 text-[#10e58f] focus:ring-[#10e58f] cursor-pointer">
+                            <label for="overwriteFmcg" class="text-xs text-slate-600 font-medium cursor-pointer select-none">
+                                Timpa data jika file sudah ada (<span class="font-mono text-slate-400">Overwrite</span>)
+                            </label>
+                        </div>
+                        <button type="submit" class="px-4 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer">
+                            <i data-lucide="search-check" class="w-3.5 h-3.5 text-emerald-600"></i>
+                            Cek & Import MJS (FMCG)
                         </button>
                     </div>
                 </form>
             </div>
 
             <!-- XTRANS EKSPEDISI UPLOAD BOX -->
-            <div class="p-4 rounded-xl border border-dashed border-amber-300 bg-amber-50/20 hover:bg-amber-50/40 transition">
+            <div class="p-4 rounded-xl border border-dashed border-[#ffd800] bg-[#fbfdfa] hover:bg-white transition">
                 <div class="flex items-center justify-between mb-2">
                     <div class="flex items-center gap-2">
-                        <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 font-black text-xs flex items-center justify-center">
-                            XTR
+                        <div class="w-8 h-8 rounded-lg bg-[#fef9c3] text-[#854d0e] font-black text-xs flex items-center justify-center">
+                            MJX
                         </div>
                         <div>
-                            <h4 class="text-sm font-bold text-slate-900">Ekspedisi (PT Mekar Jaya Xtrans Jaya)</h4>
-                            <p class="text-[11px] text-slate-500">Laporan Laba Rugi Operasional & Neraca Konsolidasi Armada</p>
+                            <h4 class="text-sm font-bold text-slate-900">MJX (Ekspedisi) - PT Mekar Jaya Xtrans Jaya</h4>
+                            <p class="text-[11px] text-slate-400">Laporan Laba Rugi Operasional & Neraca Konsolidasi Armada</p>
                         </div>
                     </div>
                 </div>
 
-                <form action="{{ route('finance.sync.excel') }}" method="POST" enctype="multipart/form-data" class="mt-3 space-y-3">
+                <form id="formXtransUpload" action="{{ route('finance.sync.excel') }}" method="POST" enctype="multipart/form-data" class="mt-3 space-y-3" onsubmit="return handleExcelImportSubmit(event, this)">
                     @csrf
                     <input type="hidden" name="type" value="xtrans">
-                    <div class="relative flex items-center justify-center border-2 border-dashed border-slate-200 hover:border-amber-500 rounded-xl p-3 bg-white transition cursor-pointer group">
+                    <div class="relative flex items-center justify-center border-2 border-dashed border-slate-200 hover:border-[#ffd800] rounded-xl p-3 bg-white transition cursor-pointer group">
                         <input type="file" name="file" accept=".xlsx,.xls,.csv" required class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" onchange="this.nextElementSibling.innerText = this.files[0]?.name || 'Pilih file Excel Ekspedisi...'">
                         <div class="text-center text-xs text-slate-500 flex items-center gap-2 pointer-events-none group-hover:text-amber-700">
-                            <i data-lucide="upload-cloud" class="w-4 h-4 text-amber-600"></i>
-                            <span class="font-medium text-slate-600">Pilih file Excel Xtrans (.xlsx / .xls)</span>
+                            <i data-lucide="upload-cloud" class="w-4 h-4 text-amber-500"></i>
+                            <span class="font-medium text-slate-600">Pilih file Excel MJX / Ekspedisi (.xlsx / .xls)</span>
                         </div>
                     </div>
-                    <div class="flex items-center justify-between pt-1">
-                        <span class="text-[11px] text-slate-400">Format: Sheet Laba Rugi & Neraca Berimbang</span>
-                        <button type="submit" class="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
-                            <i data-lucide="upload" class="w-3.5 h-3.5"></i>
-                            Import Ekspedisi
+                    <div class="flex items-center justify-between flex-wrap gap-2 pt-1">
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" name="overwrite" id="overwriteXtrans" value="1" class="w-4 h-4 rounded border-slate-300 text-[#ffd800] focus:ring-[#ffd800] cursor-pointer">
+                            <label for="overwriteXtrans" class="text-xs text-slate-600 font-medium cursor-pointer select-none">
+                                Timpa data jika file sudah ada (<span class="font-mono text-slate-400">Overwrite</span>)
+                            </label>
+                        </div>
+                        <button type="submit" class="px-4 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer">
+                            <i data-lucide="search-check" class="w-3.5 h-3.5 text-amber-500"></i>
+                            Cek & Import MJX (Ekspedisi)
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- CCOD (PT MEKAR JAYA SENTOSA MULTIKARYA) UPLOAD BOX -->
+            <div class="p-4 rounded-xl border border-dashed border-[#f59e0b] bg-[#fbfdfa] hover:bg-white transition">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 font-black text-xs flex items-center justify-center">
+                            CCOD
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-bold text-slate-900">MJS Multikarya (CCOD) - PT Mekar Jaya Sentosa Multikarya</h4>
+                            <p class="text-[11px] text-slate-400">Laporan Laba Rugi 12 Cabang CCOD (Pati, Semarang, Pekalongan, Tegal, Bandung, Sumedang, Salatiga, Magelang, Cirebon, Jatiwangi, Kuningan, Losarang)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="formCcodUpload" action="{{ route('finance.sync.excel') }}" method="POST" enctype="multipart/form-data" class="mt-3 space-y-3" onsubmit="return handleExcelImportSubmit(event, this)">
+                    @csrf
+                    <input type="hidden" name="type" value="ccod">
+                    <div class="relative flex items-center justify-center border-2 border-dashed border-slate-200 hover:border-[#f59e0b] rounded-xl p-3 bg-white transition cursor-pointer group">
+                        <input type="file" name="file" accept=".xlsx,.xls,.csv" required class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" onchange="this.nextElementSibling.innerText = this.files[0]?.name || 'Pilih file Excel CCOD Multikarya...'">
+                        <div class="text-center text-xs text-slate-500 flex items-center gap-2 pointer-events-none group-hover:text-amber-700">
+                            <i data-lucide="upload-cloud" class="w-4 h-4 text-amber-500"></i>
+                            <span class="font-medium text-slate-600">Pilih file Excel CCOD (.xlsx / .xls)</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between flex-wrap gap-2 pt-1">
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" name="overwrite" id="overwriteCcod" value="1" class="w-4 h-4 rounded border-slate-300 text-amber-500 focus:ring-amber-500 cursor-pointer">
+                            <label for="overwriteCcod" class="text-xs text-slate-600 font-medium cursor-pointer select-none">
+                                Timpa data jika file sudah ada (<span class="font-mono text-slate-400">Overwrite</span>)
+                            </label>
+                        </div>
+                        <button type="submit" class="px-4 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer">
+                            <i data-lucide="search-check" class="w-3.5 h-3.5 text-amber-600"></i>
+                            Cek & Import CCOD
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- UNIVERSAL TEMPLATE UPLOAD BOX (FOR ANY REGISTERED / NEW BUSINESS UNIT) -->
+            <div class="p-4 rounded-xl border border-dashed border-emerald-400 bg-[#fbfdfa] hover:bg-white transition">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-800 font-black text-xs flex items-center justify-center border border-emerald-200">
+                            <i data-lucide="layers" class="w-4 h-4 text-emerald-700"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h4 class="text-sm font-bold text-slate-900">Unit Usaha Lain / Baru (Template Universal)</h4>
+                                <span class="px-2 py-0.2 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-800">Fleksibel</span>
+                            </div>
+                            <p class="text-[11px] text-slate-400">Gunakan untuk unit bisnis baru dari Master Data atau cabang mana pun dengan format template standar holding.</p>
+                        </div>
+                    </div>
+
+                    <a id="btnDownloadUniversalTemplate" href="{{ route('finance.master.units.template', $businessUnits[0]['code'] ?? 'fmcg') }}"
+                       class="px-3 py-1.5 rounded-lg bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold transition flex items-center gap-1.5 shadow-2xs self-start sm:self-auto cursor-pointer"
+                       title="Unduh format template Excel resmi">
+                        <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-600"></i>
+                        Unduh Template Excel
+                    </a>
+                </div>
+
+                <form id="formUniversalUpload" action="{{ route('finance.sync.excel') }}" method="POST" enctype="multipart/form-data" class="mt-3 space-y-3" onsubmit="return handleExcelImportSubmit(event, this)">
+                    @csrf
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-slate-700">Pilih Unit Usaha Tujuan</label>
+                            <select name="type" required 
+                                onchange="document.getElementById('btnDownloadUniversalTemplate').href = '/master/units/' + this.value + '/template'"
+                                class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#10e58f] bg-white">
+                                @foreach($businessUnits as $bu)
+                                <option value="{{ $bu['code'] }}">{{ $bu['name'] }} ({{ strtoupper($bu['code']) }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="md:col-span-2 space-y-1">
+                            <label class="text-xs font-bold text-slate-700">Pilih Berkas Laporan Keuangan</label>
+                            <div class="relative flex items-center justify-center border-2 border-dashed border-slate-200 hover:border-[#10e58f] rounded-xl p-2 bg-white transition cursor-pointer group">
+                                <input type="file" name="file" accept=".xlsx,.xls,.csv" required class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" onchange="this.nextElementSibling.innerText = this.files[0]?.name || 'Pilih berkas template Excel...'">
+                                <div class="text-center text-xs text-slate-500 flex items-center gap-2 pointer-events-none group-hover:text-emerald-700 py-0.5">
+                                    <i data-lucide="upload-cloud" class="w-4 h-4 text-emerald-600"></i>
+                                    <span class="font-medium text-slate-600">Pilih berkas Excel (.xlsx / .xls)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between flex-wrap gap-2 pt-1 border-t border-slate-100">
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" name="overwrite" id="overwriteUniversal" value="1" class="w-4 h-4 rounded border-slate-300 text-[#10e58f] focus:ring-[#10e58f] cursor-pointer">
+                            <label for="overwriteUniversal" class="text-xs text-slate-600 font-medium cursor-pointer select-none">
+                                Timpa data jika file sudah ada (<span class="font-mono text-slate-400">Overwrite</span>)
+                            </label>
+                        </div>
+                        <button type="submit" class="px-4 py-2 rounded-lg bg-[#10e58f] hover:bg-[#0fd684] text-slate-950 text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer">
+                            <i data-lucide="search-check" class="w-3.5 h-3.5 text-slate-950"></i>
+                            Cek & Import Data Unit
                         </button>
                     </div>
                 </form>
@@ -251,43 +377,44 @@
     </div>
 
     <!-- INGESTION & SYNC AUDIT LOG TABLE -->
-    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-        <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+    <div class="bg-white rounded-2xl border border-[#edf0ee] shadow-xs overflow-hidden">
+        <div class="p-5 border-b border-[#edf0ee] flex items-center justify-between bg-white">
             <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center">
-                    <i data-lucide="history" class="w-5 h-5"></i>
+                <div class="w-9 h-9 rounded-xl bg-[#f5f9ed] text-[#3f6212] flex items-center justify-center border border-[#d9f99d]">
+                    <i data-lucide="history" class="w-4 h-4"></i>
                 </div>
                 <div>
-                    <h3 class="font-extrabold text-slate-900 text-base">Riwayat Aktivitas Ingestion & Sinkronisasi</h3>
-                    <p class="text-xs text-slate-500">Log audit seluruh penyerapan data dari database dan upload berkas Excel.</p>
+                    <h3 class="font-bold text-slate-900 text-base">Riwayat Aktivitas Ingestion & Sinkronisasi</h3>
+                    <p class="text-xs text-slate-400">Log audit seluruh penyerapan data dari database dan upload berkas Excel.</p>
                 </div>
             </div>
-            <span class="text-xs font-medium text-slate-400">Menampilkan 20 aktivitas terakhir</span>
+            <span class="text-xs font-medium text-slate-400">Menampilkan 50 aktivitas terakhir</span>
         </div>
 
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
-                    <tr class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                    <tr class="bg-[#f8faf8] text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-[#edf0ee]">
                         <th class="py-3 px-5">Waktu</th>
                         <th class="py-3 px-5">Unit Bisnis</th>
                         <th class="py-3 px-5">Metode / Sumber</th>
                         <th class="py-3 px-5">Berkas / Tabel Referensi</th>
                         <th class="py-3 px-5 text-right">Data Terserap</th>
                         <th class="py-3 px-5 text-center">Status</th>
+                        <th class="py-3 px-5 text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-xs font-medium text-slate-700">
                     @forelse($logs as $log)
-                    <tr class="hover:bg-slate-50/80 transition">
-                        <td class="py-3 px-5 font-mono text-[11px] text-slate-500">
+                    <tr class="hover:bg-[#fbfdfa] transition">
+                        <td class="py-3 px-5 font-mono text-[11px] text-slate-500 whitespace-nowrap">
                             {{ $log->created_at->format('d/m/Y H:i:s') }}
                         </td>
                         <td class="py-3 px-5 font-bold uppercase text-slate-800">
                             <span class="px-2 py-0.5 rounded text-[11px] 
                                 @if(str_contains(strtolower($log->business_unit_code), 'fmcg')) bg-emerald-50 text-emerald-700 border border-emerald-200
-                                @elseif(str_contains(strtolower($log->business_unit_code), 'spbu')) bg-blue-50 text-blue-700 border border-blue-200
-                                @elseif(str_contains(strtolower($log->business_unit_code), 'iqos')) bg-purple-50 text-purple-700 border border-purple-200
+                                @elseif(str_contains(strtolower($log->business_unit_code), 'spbu')) bg-rose-50 text-rose-700 border border-rose-200
+                                @elseif(str_contains(strtolower($log->business_unit_code), 'iqos') || str_contains(strtolower($log->business_unit_code), 'retail')) bg-[#ebf8c8] text-[#3f6212] border border-[#d9f99d]
                                 @elseif(str_contains(strtolower($log->business_unit_code), 'xtrans')) bg-amber-50 text-amber-700 border border-amber-200
                                 @else bg-slate-100 text-slate-700 border border-slate-200 @endif">
                                 {{ $log->business_unit_code }}
@@ -295,36 +422,48 @@
                         </td>
                         <td class="py-3 px-5">
                             @if($log->source_type === 'database_sync')
-                                <span class="inline-flex items-center gap-1 text-blue-600 font-semibold">
-                                    <i data-lucide="database" class="w-3.5 h-3.5"></i> Database Sync
+                                <span class="inline-flex items-center gap-1 text-slate-800 font-semibold whitespace-nowrap">
+                                    <i data-lucide="database" class="w-3.5 h-3.5 text-[#10e58f]"></i> Database Sync
                                 </span>
                             @else
-                                <span class="inline-flex items-center gap-1 text-emerald-600 font-semibold">
-                                    <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i> Excel Upload
+                                <span class="inline-flex items-center gap-1 text-slate-800 font-semibold whitespace-nowrap">
+                                    <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-[#ffd800]"></i> Excel Upload
                                 </span>
                             @endif
                         </td>
                         <td class="py-3 px-5 font-mono text-slate-600">
                             {{ $log->filename ?? '-' }}
                         </td>
-                        <td class="py-3 px-5 text-right font-black text-slate-900">
+                        <td class="py-3 px-5 text-right font-black text-slate-900 font-mono whitespace-nowrap">
                             {{ number_format($log->records_count, 0, ',', '.') }} rows
                         </td>
-                        <td class="py-3 px-5 text-center">
+                        <td class="py-3 px-5 text-center whitespace-nowrap">
                             @if($log->status === 'success')
-                                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 inline-flex items-center gap-1">
-                                    <i data-lucide="check-circle" class="w-3 h-3"></i> Berhasil
+                                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#ebf8c8] text-[#3f6212] border border-[#d9f99d] inline-flex items-center gap-1">
+                                    <i data-lucide="check-circle" class="w-3 h-3 text-[#16a34a]"></i> Berhasil
                                 </span>
                             @else
                                 <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800 inline-flex items-center gap-1" title="{{ $log->details }}">
-                                    <i data-lucide="alert-circle" class="w-3 h-3"></i> Gagal
+                                    <i data-lucide="alert-circle" class="w-3 h-3 text-rose-600"></i> Gagal
                                 </span>
                             @endif
+                        </td>
+                        <td class="py-3 px-5 text-center whitespace-nowrap">
+                            <form action="{{ route('finance.sync.delete-log', $log->id) }}" method="POST" class="inline" 
+                                onsubmit="return confirm('{{ $log->source_type === 'excel_upload' 
+                                    ? 'Apakah Anda yakin ingin menghapus riwayat import file: ' . addslashes($log->filename) . ' (' . strtoupper($log->business_unit_code) . ')?\n\nPERINGATAN: Seluruh ' . number_format($log->records_count, 0, ',', '.') . ' data transaksi finansial terkait file ini juga akan dihapus dari sistem.' 
+                                    : 'Apakah Anda yakin ingin menghapus log sinkronisasi database untuk unit ' . strtoupper($log->business_unit_code) . ' (' . addslashes($log->filename) . ') dari riwayat?' }}');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition inline-flex items-center justify-center cursor-pointer" title="Hapus Riwayat">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </form>
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" class="py-8 text-center text-slate-400">
+                        <td colspan="7" class="py-8 text-center text-slate-400">
                             <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
                             Belum ada riwayat aktivitas sinkronisasi atau upload file.
                         </td>
@@ -336,4 +475,374 @@
     </div>
 
 </div>
+
+<!-- PREVIEW & VERIFIKASI IMPORT MODAL (IDENTIK SISTEM SIR-IQOS) -->
+<div id="modalExcelPreview" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
+        <!-- Modal Header -->
+        <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-[#ebf8c8] text-[#3f6212] flex items-center justify-center border border-[#d9f99d]">
+                    <i data-lucide="file-check-2" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-900 text-sm">Verifikasi & Pratinjau Berkas Excel</h3>
+                    <p class="text-[11px] text-slate-400">Pengecekan kecocokan format, duplikasi, dan ringkasan data sebelum disimpan ke database</p>
+                </div>
+            </div>
+            <button type="button" onclick="closePreviewModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <!-- Modal Body Scrollable -->
+        <div class="p-6 overflow-y-auto space-y-4 text-xs">
+            
+            <!-- 1. LOADING STATE -->
+            <div id="previewLoadingState" class="py-12 flex flex-col items-center justify-center space-y-3 text-center">
+                <div class="w-10 h-10 border-3 border-emerald-200 border-t-[#10e58f] rounded-full animate-spin"></div>
+                <div>
+                    <h4 class="font-bold text-slate-800 text-sm">Menganalisis Berkas Excel...</h4>
+                    <p class="text-xs text-slate-400 mt-1 max-w-md">Membaca struktur sheet, mendeteksi tipe format, memeriksa histori duplikasi, dan mengekstrak ringkasan akun finansial.</p>
+                </div>
+            </div>
+
+            <!-- 2. ERROR STATE (MISMATCH / UNKNOWN / INVALID) -->
+            <div id="previewErrorState" class="hidden space-y-4 py-2">
+                <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 flex items-start gap-3">
+                    <div class="p-1.5 rounded-lg bg-rose-100 text-rose-700 shrink-0 mt-0.5">
+                        <i data-lucide="alert-octagon" class="w-5 h-5"></i>
+                    </div>
+                    <div class="space-y-1">
+                        <h4 class="font-bold text-rose-900 text-sm" id="previewErrorTitle">Validasi Format Gagal</h4>
+                        <p class="text-xs text-rose-700 leading-relaxed" id="previewErrorMessage"></p>
+                    </div>
+                </div>
+
+                <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-slate-600 text-xs">
+                    <span class="font-bold text-slate-800">Petunjuk Solusi:</span>
+                    <ul class="list-disc pl-5 space-y-1 text-slate-500">
+                        <li>Pastikan Anda mengunggah berkas pada kotak unit usaha yang sesuai (MJS FMCG, MJX Ekspedisi, atau Unit Usaha Lain).</li>
+                        <li>Gunakan format template resmi holding yang dapat diunduh pada tombol <span class="font-semibold text-slate-700">"Unduh Template Excel"</span>.</li>
+                        <li>Pastikan berkas Excel tidak dalam keadaan terkunci atau memiliki kata sandi.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 3. SUCCESS / PREVIEW STATE -->
+            <div id="previewSuccessState" class="hidden space-y-4">
+                <!-- File Card -->
+                <div class="p-3.5 rounded-xl bg-[#f8faf8] border border-[#edf0ee] flex items-center justify-between flex-wrap gap-3">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-9 h-9 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-emerald-600 shadow-2xs shrink-0">
+                            <i data-lucide="file-spreadsheet" class="w-5 h-5"></i>
+                        </div>
+                        <div class="truncate">
+                            <p class="font-bold text-slate-900 text-xs truncate" id="previewFileName">-</p>
+                            <p class="text-[11px] text-slate-400 font-mono mt-0.5">
+                                Ukuran: <span id="previewFileSize" class="text-slate-600 font-semibold">-</span> • 
+                                Hash: <span id="previewFileHash" class="text-slate-500 font-mono">-</span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[11px] font-bold text-slate-400 uppercase">Tujuan:</span>
+                        <span id="previewTargetUnitBadge" class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                            -
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Validation & Duplicate Status Alerts -->
+                <div class="space-y-2">
+                    <!-- Format Validation Badge -->
+                    <div id="previewFormatStatusAlert" class="p-3 rounded-xl flex items-center gap-2.5 text-xs font-semibold">
+                        <i id="previewFormatStatusIcon" data-lucide="check-circle" class="w-4 h-4 shrink-0"></i>
+                        <span id="previewFormatStatusText">-</span>
+                    </div>
+
+                    <!-- Duplicate Warning Alert -->
+                    <div id="previewDuplicateAlert" class="hidden p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 flex items-start gap-2.5 text-xs">
+                        <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5"></i>
+                        <div class="space-y-0.5">
+                            <span class="font-bold text-amber-900">Peringatan Duplikasi Berkas Terdeteksi</span>
+                            <p id="previewDuplicateMessage" class="text-[11px] text-amber-700 leading-relaxed"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4 Summary Metrics Cards -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                    <div class="p-3 rounded-xl bg-white border border-slate-200 shadow-2xs">
+                        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Lembar Kerja</span>
+                        <p class="text-base font-black text-slate-900 mt-0.5 font-mono" id="previewSheetsCount">0</p>
+                        <span class="text-[10px] text-slate-400">Sheet terdeteksi</span>
+                    </div>
+                    <div class="p-3 rounded-xl bg-white border border-slate-200 shadow-2xs">
+                        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Rentang Periode</span>
+                        <p class="text-xs font-bold text-slate-800 mt-1 truncate" id="previewPeriodRange">-</p>
+                        <span class="text-[10px] text-slate-400 font-mono"><span id="previewPeriodsCount">0</span> Periode</span>
+                    </div>
+                    <div class="p-3 rounded-xl bg-white border border-slate-200 shadow-2xs">
+                        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Estimasi Rekor</span>
+                        <p class="text-base font-black text-emerald-600 mt-0.5 font-mono" id="previewEstimatedRecords">0</p>
+                        <span class="text-[10px] text-slate-400">Baris data</span>
+                    </div>
+                    <div class="p-3 rounded-xl bg-white border border-slate-200 shadow-2xs">
+                        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Pendapatan Terakhir</span>
+                        <p class="text-xs font-black text-slate-900 mt-1 font-mono truncate" id="previewTotalRevenue">-</p>
+                        <span class="text-[10px] text-slate-400" id="previewLatestPeriodLabel">Periode akhir</span>
+                    </div>
+                </div>
+
+                <!-- Sheets list preview -->
+                <div class="space-y-1.5">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] font-bold text-slate-600 uppercase tracking-wide">Daftar Sheet Excel</span>
+                        <span class="text-[10px] text-slate-400" id="previewSheetsBadge"></span>
+                    </div>
+                    <div id="previewSheetsContainer" class="flex flex-wrap gap-1.5 p-2.5 rounded-xl bg-slate-50 border border-slate-100 max-h-20 overflow-y-auto">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Sample Rows Table -->
+                <div class="space-y-1.5">
+                    <span class="text-[11px] font-bold text-slate-600 uppercase tracking-wide">Sampel Akun Finansial Terbaca</span>
+                    <div class="rounded-xl border border-slate-200 overflow-hidden">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-50 text-[10px] font-bold uppercase text-slate-500 border-b border-slate-200">
+                                <tr>
+                                    <th class="py-2 px-3">Kode Akun</th>
+                                    <th class="py-2 px-3">Uraian / Nama Akun</th>
+                                    <th class="py-2 px-3 text-right">Nilai Periode</th>
+                                </tr>
+                            </thead>
+                            <tbody id="previewSampleRowsBody" class="divide-y divide-slate-100 bg-white font-medium text-slate-700">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Overwrite Checkbox in Modal -->
+                <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between flex-wrap gap-2">
+                    <label class="flex items-center gap-2 cursor-pointer select-none">
+                        <input type="checkbox" id="modalOverwriteCheckbox" class="w-4 h-4 rounded border-slate-300 text-[#10e58f] focus:ring-[#10e58f] cursor-pointer">
+                        <span class="text-xs font-semibold text-slate-700">
+                            Timpa data jika berkas sudah ada (<span class="font-mono text-slate-400 font-normal">Overwrite</span>)
+                        </span>
+                    </label>
+                    <span class="text-[11px] text-slate-400">Centang opsi ini jika Anda ingin memperbarui data sebelumnya</span>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="p-4 border-t border-slate-100 bg-slate-50/70 flex items-center justify-between">
+            <button type="button" onclick="closePreviewModal()" class="px-4 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 font-bold text-xs transition cursor-pointer">
+                Batal / Ganti Berkas
+            </button>
+            <button type="button" id="btnConfirmImport" onclick="confirmAndSubmit()" class="px-5 py-2 rounded-xl bg-[#10e58f] hover:bg-[#0fd684] text-slate-950 font-bold text-xs transition flex items-center gap-2 shadow-2xs cursor-pointer">
+                <i data-lucide="check" class="w-4 h-4"></i>
+                <span id="btnConfirmText">Konfirmasi & Simpan ke Database</span>
+            </button>
+        </div>
+    </div>
+</div>
+@endsection
+
+@section('scripts')
+<script>
+    let currentActiveForm = null;
+
+    function handleExcelImportSubmit(event, form) {
+        if (form.dataset.confirmed === "true") {
+            return true;
+        }
+
+        event.preventDefault();
+
+        const fileInput = form.querySelector('input[type="file"]');
+        if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+            alert("Silakan pilih berkas Excel terlebih dahulu.");
+            return false;
+        }
+
+        currentActiveForm = form;
+        openPreviewModal();
+
+        const formData = new FormData(form);
+
+        fetch('{{ route("finance.sync.preview") }}', {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: formData
+        })
+        .then(async response => {
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                showPreviewError(data.message || data.match_error || 'Gagal memverifikasi berkas Excel.');
+                return;
+            }
+            renderPreviewData(data);
+        })
+        .catch(err => {
+            showPreviewError('Terjadi kesalahan jaringan atau berkas terlalu besar: ' + err.message);
+        });
+
+        return false;
+    }
+
+    function openPreviewModal() {
+        const modal = document.getElementById('modalExcelPreview');
+        modal.classList.remove('hidden');
+        document.getElementById('previewLoadingState').classList.remove('hidden');
+        document.getElementById('previewErrorState').classList.add('hidden');
+        document.getElementById('previewSuccessState').classList.add('hidden');
+        document.getElementById('btnConfirmImport').classList.add('hidden');
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+
+    function closePreviewModal() {
+        const modal = document.getElementById('modalExcelPreview');
+        modal.classList.add('hidden');
+        if (currentActiveForm) {
+            currentActiveForm.dataset.confirmed = "";
+        }
+    }
+
+    function showPreviewError(message) {
+        document.getElementById('previewLoadingState').classList.add('hidden');
+        document.getElementById('previewSuccessState').classList.add('hidden');
+        const errState = document.getElementById('previewErrorState');
+        errState.classList.remove('hidden');
+        document.getElementById('previewErrorMessage').innerText = message;
+        document.getElementById('btnConfirmImport').classList.add('hidden');
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+
+    function renderPreviewData(data) {
+        document.getElementById('previewLoadingState').classList.add('hidden');
+        document.getElementById('previewErrorState').classList.add('hidden');
+        const successState = document.getElementById('previewSuccessState');
+        successState.classList.remove('hidden');
+
+        // Fill file info
+        document.getElementById('previewFileName').innerText = data.filename;
+        document.getElementById('previewFileSize').innerText = data.file_size;
+        document.getElementById('previewFileHash').innerText = (data.file_hash || '').substring(0, 16) + '...';
+        document.getElementById('previewTargetUnitBadge').innerText = data.target_label;
+
+        // Type Match Alert
+        const formatAlert = document.getElementById('previewFormatStatusAlert');
+        const formatIcon = document.getElementById('previewFormatStatusIcon');
+        const formatText = document.getElementById('previewFormatStatusText');
+
+        if (data.is_type_match) {
+            formatAlert.className = 'p-3 rounded-xl flex items-center gap-2.5 text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200';
+            formatIcon.className = 'w-4 h-4 shrink-0 text-emerald-600';
+            formatText.innerText = 'Format Berkas Sesuai: Terverifikasi untuk ' + data.target_label;
+        } else {
+            formatAlert.className = 'p-3 rounded-xl flex items-center gap-2.5 text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200';
+            formatIcon.className = 'w-4 h-4 shrink-0 text-rose-600';
+            formatText.innerText = data.match_error || ('Format Berbeda: Terdeteksi ' + data.detected_label);
+        }
+
+        // Duplicate Alert
+        const dupAlert = document.getElementById('previewDuplicateAlert');
+        const modalOverwrite = document.getElementById('modalOverwriteCheckbox');
+        
+        // Sync modal overwrite checkbox with current form
+        const originalOverwrite = currentActiveForm ? currentActiveForm.querySelector('input[name="overwrite"]') : null;
+        modalOverwrite.checked = originalOverwrite ? originalOverwrite.checked : false;
+
+        if (data.is_duplicate) {
+            dupAlert.classList.remove('hidden');
+            document.getElementById('previewDuplicateMessage').innerText = data.duplicate_info ? data.duplicate_info.message : 'File ini sudah pernah diimpor sebelumnya.';
+            // Otomatis centang overwrite jika duplikasi terdeteksi agar pengguna dapat langsung memperbarui
+            modalOverwrite.checked = true;
+        } else {
+            dupAlert.classList.add('hidden');
+        }
+
+        // Metrics
+        const s = data.summary || {};
+        document.getElementById('previewSheetsCount').innerText = s.sheets_count || (data.sheets ? data.sheets.length : 0);
+        document.getElementById('previewPeriodRange').innerText = s.period_range || '-';
+        document.getElementById('previewPeriodsCount').innerText = s.periods_count || 0;
+        document.getElementById('previewEstimatedRecords').innerText = Number(s.estimated_records || 0).toLocaleString('id-ID');
+        document.getElementById('previewTotalRevenue').innerText = s.total_revenue_formatted || '-';
+        document.getElementById('previewLatestPeriodLabel').innerText = s.latest_period ? ('Periode ' + s.latest_period) : 'Periode akhir';
+
+        // Sheets list
+        const sheetsContainer = document.getElementById('previewSheetsContainer');
+        sheetsContainer.innerHTML = '';
+        (data.sheets || []).forEach(sh => {
+            const span = document.createElement('span');
+            span.className = 'px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-700 font-mono text-[10px] font-semibold';
+            span.innerText = sh;
+            sheetsContainer.appendChild(span);
+        });
+        document.getElementById('previewSheetsBadge').innerText = (data.sheets || []).length + ' Sheet';
+
+        // Sample rows table
+        const sampleBody = document.getElementById('previewSampleRowsBody');
+        sampleBody.innerHTML = '';
+        const sampleRows = s.sample_rows || [];
+        if (sampleRows.length === 0) {
+            sampleBody.innerHTML = '<tr><td colspan="3" class="py-3 px-3 text-center text-slate-400">Tidak ada sampel baris akun yang terbaca.</td></tr>';
+        } else {
+            sampleRows.forEach(r => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="py-2 px-3 font-mono font-semibold text-slate-600 whitespace-nowrap">${r.code || '-'}</td>
+                    <td class="py-2 px-3 text-slate-800">${r.name}</td>
+                    <td class="py-2 px-3 text-right font-mono font-bold text-slate-900 whitespace-nowrap">${r.formatted_amount || ('Rp ' + Number(r.amount).toLocaleString('id-ID'))}</td>
+                `;
+                sampleBody.appendChild(tr);
+            });
+        }
+
+        // Confirm button
+        const btnConfirm = document.getElementById('btnConfirmImport');
+        if (data.can_import) {
+            btnConfirm.classList.remove('hidden');
+            btnConfirm.disabled = false;
+            document.getElementById('btnConfirmText').innerText = 'Konfirmasi & Simpan ke Database';
+        } else {
+            btnConfirm.classList.add('hidden');
+        }
+
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+
+    function confirmAndSubmit() {
+        if (!currentActiveForm) return;
+
+        // Sync modal overwrite back to original form
+        const modalOverwrite = document.getElementById('modalOverwriteCheckbox');
+        let originalOverwrite = currentActiveForm.querySelector('input[name="overwrite"]');
+        if (originalOverwrite) {
+            originalOverwrite.checked = modalOverwrite.checked;
+        }
+
+        const btnConfirm = document.getElementById('btnConfirmImport');
+        btnConfirm.disabled = true;
+        document.getElementById('btnConfirmText').innerText = 'Menyimpan ke Database...';
+
+        currentActiveForm.dataset.confirmed = "true";
+        currentActiveForm.submit();
+    }
+</script>
 @endsection
