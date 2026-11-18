@@ -139,18 +139,18 @@
             </div>
         </div>
 
-        <!-- Legend Indicators (1 Warna Monokromatik dengan Komposisi Berbeda) -->
+        <!-- Legend Indicators (Kombinasi Hijau & Kuning Seirama) -->
         <div class="mt-2 flex flex-wrap items-center gap-2.5 text-xs font-semibold">
             <span class="inline-flex items-center gap-1.5 text-emerald-950 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200/60">
                 <span class="w-2.5 h-2.5 rounded-full bg-[#047857]"></span>
                 Pendapatan
             </span>
-            <span class="inline-flex items-center gap-1.5 text-emerald-900 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200/60">
-                <span class="w-2.5 h-2.5 rounded-full bg-[#059669]"></span>
+            <span class="inline-flex items-center gap-1.5 text-amber-950 bg-amber-50 px-2.5 py-0.5 rounded-md border border-amber-200/60">
+                <span class="w-2.5 h-2.5 rounded-full bg-[#eab308]"></span>
                 HPP (COGS)
             </span>
-            <span class="inline-flex items-center gap-1.5 text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200/60">
-                <span class="w-2.5 h-2.5 rounded-full bg-[#34d399]"></span>
+            <span class="inline-flex items-center gap-1.5 text-amber-900 bg-amber-50 px-2.5 py-0.5 rounded-md border border-amber-200/60">
+                <span class="w-2.5 h-2.5 rounded-full bg-[#d97706]"></span>
                 Biaya Operasional
             </span>
             <span class="inline-flex items-center gap-1.5 text-[#3f6212] bg-[#ebf8c8] px-2.5 py-0.5 rounded-md border border-[#d9f99d]">
@@ -536,22 +536,26 @@
 
         const isLine = type === 'line';
 
-        // 1 Warna Monokromatik (Emerald/Green) dengan 4 Komposisi/Kedalaman Berbeda
+        // Warna Harmonis (Kombinasi Hijau & Kuning Seirama)
+        // 1. Pendapatan (Forest Emerald Green)
         const revGrad = ctx.createLinearGradient(0, 0, 0, 280);
         revGrad.addColorStop(0, 'rgba(4, 120, 87, 0.95)');
         revGrad.addColorStop(1, isLine ? 'rgba(4, 120, 87, 0.08)' : 'rgba(4, 120, 87, 0.45)');
 
+        // 2. HPP (COGS) (Warm Golden Yellow)
         const cogsGrad = ctx.createLinearGradient(0, 0, 0, 280);
-        cogsGrad.addColorStop(0, 'rgba(5, 150, 105, 0.85)');
-        cogsGrad.addColorStop(1, isLine ? 'rgba(5, 150, 105, 0.05)' : 'rgba(5, 150, 105, 0.35)');
+        cogsGrad.addColorStop(0, 'rgba(234, 179, 8, 0.95)');
+        cogsGrad.addColorStop(1, isLine ? 'rgba(234, 179, 8, 0.08)' : 'rgba(234, 179, 8, 0.45)');
 
+        // 3. Biaya Operasional (Honey Amber Gold)
         const opexGrad = ctx.createLinearGradient(0, 0, 0, 280);
-        opexGrad.addColorStop(0, 'rgba(52, 211, 153, 0.75)');
-        opexGrad.addColorStop(1, isLine ? 'rgba(52, 211, 153, 0.03)' : 'rgba(52, 211, 153, 0.25)');
+        opexGrad.addColorStop(0, 'rgba(217, 119, 6, 0.90)');
+        opexGrad.addColorStop(1, isLine ? 'rgba(217, 119, 6, 0.08)' : 'rgba(217, 119, 6, 0.45)');
 
+        // 4. Laba Bersih (Vibrant Lime Green)
         const profitGrad = ctx.createLinearGradient(0, 0, 0, 280);
         profitGrad.addColorStop(0, 'rgba(16, 229, 143, 0.95)');
-        profitGrad.addColorStop(1, isLine ? 'rgba(16, 229, 143, 0.08)' : 'rgba(16, 229, 143, 0.35)');
+        profitGrad.addColorStop(1, isLine ? 'rgba(16, 229, 143, 0.08)' : 'rgba(16, 229, 143, 0.45)');
 
         const datasets = isLine ? [
             {
@@ -571,28 +575,28 @@
             {
                 label: 'HPP',
                 data: pnlCogsData,
-                borderColor: '#059669',
+                borderColor: '#ca8a04',
                 backgroundColor: cogsGrad,
                 borderWidth: 2,
                 tension: 0.35,
                 fill: false,
                 pointRadius: 3,
                 pointHoverRadius: 5,
-                pointBackgroundColor: '#059669',
+                pointBackgroundColor: '#eab308',
                 pointBorderColor: '#ffffff',
                 pointBorderWidth: 2,
             },
             {
                 label: 'Biaya Operasional',
                 data: pnlOpexData,
-                borderColor: '#34d399',
+                borderColor: '#d97706',
                 backgroundColor: opexGrad,
                 borderWidth: 2,
                 tension: 0.35,
                 fill: false,
                 pointRadius: 3,
                 pointHoverRadius: 5,
-                pointBackgroundColor: '#34d399',
+                pointBackgroundColor: '#d97706',
                 pointBorderColor: '#ffffff',
                 pointBorderWidth: 2,
             },
@@ -625,7 +629,7 @@
                 label: 'HPP',
                 data: pnlCogsData,
                 backgroundColor: cogsGrad,
-                borderColor: '#059669',
+                borderColor: '#ca8a04',
                 borderWidth: 1,
                 borderRadius: { topLeft: 5, topRight: 5, bottomLeft: 0, bottomRight: 0 },
                 barPercentage: 0.7,
@@ -635,7 +639,7 @@
                 label: 'Biaya Operasional',
                 data: pnlOpexData,
                 backgroundColor: opexGrad,
-                borderColor: '#34d399',
+                borderColor: '#d97706',
                 borderWidth: 1,
                 borderRadius: { topLeft: 5, topRight: 5, bottomLeft: 0, bottomRight: 0 },
                 barPercentage: 0.7,
@@ -645,7 +649,7 @@
                 label: 'Laba Bersih',
                 data: pnlProfitData,
                 backgroundColor: profitGrad,
-                borderColor: '#10e58f',
+                borderColor: '#059669',
                 borderWidth: 1,
                 borderRadius: { topLeft: 5, topRight: 5, bottomLeft: 0, bottomRight: 0 },
                 barPercentage: 0.7,
