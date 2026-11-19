@@ -9,7 +9,7 @@
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-[#edf0ee] shadow-xs">
         <div class="space-y-1">
             <div class="flex items-center gap-2">
-                <span class="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-[#ebf8c8] text-[#3f6212] border border-[#d9f99d] uppercase tracking-wide">
+                <span class="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-[#ecfdf5] text-[#065f46] border border-[#a7f3d0] uppercase tracking-wide">
                     Portofolio & Organisasi
                 </span>
                 <span class="text-xs text-slate-400">•</span>
@@ -23,7 +23,7 @@
         
         <div class="flex items-center gap-2.5 flex-wrap">
             <button onclick="document.getElementById('modalAddUnit').classList.remove('hidden')" 
-                class="px-4 py-2.5 rounded-xl bg-[#10e58f] hover:bg-[#0fd684] text-slate-950 font-bold text-xs transition flex items-center gap-2 shadow-2xs cursor-pointer">
+                class="px-4 py-2.5 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs transition flex items-center gap-2 shadow-2xs cursor-pointer">
                 <i data-lucide="plus-circle" class="w-4 h-4"></i>
                 Tambah Unit Usaha Baru
             </button>
@@ -62,7 +62,7 @@
     <!-- STATS OVERVIEW -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="bg-white p-5 rounded-2xl border border-[#edf0ee] shadow-xs flex items-center gap-4">
-            <div class="w-12 h-12 rounded-xl bg-[#ebf8c8] text-[#3f6212] flex items-center justify-center font-black">
+            <div class="w-12 h-12 rounded-xl bg-[#ecfdf5] text-[#065f46] flex items-center justify-center font-black">
                 <i data-lucide="building-2" class="w-6 h-6"></i>
             </div>
             <div>
@@ -118,7 +118,7 @@
             <div class="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border-b border-[#edf0ee]">
                 <div class="flex items-start gap-4">
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center text-slate-900 shrink-0 font-black shadow-2xs"
-                         style="background-color: {{ $unit->color ?: '#ebf8c8' }}20; border: 1.5px solid {{ $unit->color ?: '#10e58f' }}; color: {{ $unit->color ?: '#166534' }};">
+                         style="background-color: {{ $unit->color ?: '#ecfdf5' }}20; border: 1.5px solid {{ $unit->color ?: '#059669' }}; color: {{ $unit->color ?: '#166534' }};">
                         <i data-lucide="{{ $unit->icon ?: 'building-2' }}" class="w-6 h-6"></i>
                     </div>
                     <div>
@@ -239,7 +239,7 @@
     <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
             <div class="flex items-center gap-2.5">
-                <div class="w-8 h-8 rounded-lg bg-[#ebf8c8] text-[#3f6212] flex items-center justify-center">
+                <div class="w-8 h-8 rounded-lg bg-[#ecfdf5] text-[#065f46] flex items-center justify-center">
                     <i data-lucide="plus-circle" class="w-4 h-4"></i>
                 </div>
                 <div>
@@ -258,14 +258,14 @@
                 <div class="space-y-1">
                     <label class="text-xs font-bold text-slate-700">Kode Unit Usaha <span class="text-rose-500">*</span></label>
                     <input type="text" name="code" required placeholder="misal: hotel, cafe, properti" 
-                        class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono font-semibold focus:outline-none focus:ring-2 focus:ring-[#10e58f]"
+                        class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono font-semibold focus:outline-none focus:ring-2 focus:ring-[#059669]"
                         oninput="this.value = this.value.toLowerCase().replace(/[^a-z0-9_]/g, '')">
                     <p class="text-[10px] text-slate-400">Huruf kecil & angka (contoh: <code class="text-slate-600">hotel</code>)</p>
                 </div>
 
                 <div class="space-y-1">
                     <label class="text-xs font-bold text-slate-700">Sumber Data Laporan <span class="text-rose-500">*</span></label>
-                    <select name="data_source" required class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#10e58f]">
+                    <select name="data_source" required class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#059669]">
                         <option value="excel">Excel Upload (Spreadsheet)</option>
                         <option value="database">Database Sync (Direct SQL)</option>
                         <option value="api">REST API</option>
@@ -276,13 +276,13 @@
             <div class="space-y-1">
                 <label class="text-xs font-bold text-slate-700">Nama Perusahaan / Unit Usaha <span class="text-rose-500">*</span></label>
                 <input type="text" name="name" required placeholder="misal: PT Mekar Hospitality Jaya" 
-                    class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#10e58f]">
+                    class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#059669]">
             </div>
 
             <div class="space-y-1">
                 <label class="text-xs font-bold text-slate-700">Deskripsi Singkat</label>
                 <textarea name="description" rows="2" placeholder="Bidang usaha, lingkup operasional, atau keterangan lainnya..." 
-                    class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#10e58f]"></textarea>
+                    class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#059669]"></textarea>
             </div>
 
             <div class="grid grid-cols-2 gap-3">
@@ -297,14 +297,14 @@
                 <div class="space-y-1">
                     <label class="text-xs font-bold text-slate-700">Ikon Lucide</label>
                     <input type="text" name="icon" value="building-2" placeholder="building-2, store, hotel, truck..." 
-                        class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#10e58f]">
+                        class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]">
                 </div>
             </div>
 
             <div class="space-y-1 pt-1 border-t border-slate-100">
                 <label class="text-xs font-bold text-slate-700">Cabang / Entitas Awal (Opsional)</label>
                 <textarea name="initial_entities" rows="2" placeholder="KUNINGAN:Cabang Kuningan:Kuningan&#10;CIREBON:Cabang Cirebon:Cirebon" 
-                    class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#10e58f]"></textarea>
+                    class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#059669]"></textarea>
                 <p class="text-[10px] text-slate-400">Format per baris: <code class="text-slate-600">KODE_CABANG:Nama Cabang:Kota Lokasi</code> (bisa ditambahkan nanti).</p>
             </div>
 
@@ -314,7 +314,7 @@
                     Batal
                 </button>
                 <button type="submit" 
-                    class="px-4 py-2 rounded-xl bg-[#10e58f] hover:bg-[#0fd684] text-slate-950 font-bold text-xs transition shadow-2xs cursor-pointer">
+                    class="px-4 py-2 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs transition shadow-2xs cursor-pointer">
                     Simpan Unit Usaha
                 </button>
             </div>
@@ -347,19 +347,19 @@
             <div class="space-y-1">
                 <label class="text-xs font-bold text-slate-700">Nama Perusahaan / Unit Usaha <span class="text-rose-500">*</span></label>
                 <input type="text" name="name" id="editUnitName" required 
-                    class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#10e58f]">
+                    class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#059669]">
             </div>
 
             <div class="space-y-1">
                 <label class="text-xs font-bold text-slate-700">Deskripsi Singkat</label>
                 <textarea name="description" id="editUnitDesc" rows="2" 
-                    class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#10e58f]"></textarea>
+                    class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#059669]"></textarea>
             </div>
 
             <div class="grid grid-cols-2 gap-3">
                 <div class="space-y-1">
                     <label class="text-xs font-bold text-slate-700">Sumber Data</label>
-                    <select name="data_source" id="editUnitDataSource" required class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#10e58f]">
+                    <select name="data_source" id="editUnitDataSource" required class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#059669]">
                         <option value="excel">Excel Upload</option>
                         <option value="database">Database Sync</option>
                         <option value="api">REST API</option>
@@ -375,11 +375,11 @@
             <div class="space-y-1">
                 <label class="text-xs font-bold text-slate-700">Ikon Lucide</label>
                 <input type="text" name="icon" id="editUnitIcon" 
-                    class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#10e58f]">
+                    class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#059669]">
             </div>
 
             <div class="flex items-center gap-2 pt-2">
-                <input type="checkbox" name="is_active" id="editUnitActive" value="1" class="w-4 h-4 rounded text-[#10e58f] focus:ring-[#10e58f] cursor-pointer">
+                <input type="checkbox" name="is_active" id="editUnitActive" value="1" class="w-4 h-4 rounded text-[#059669] focus:ring-[#059669] cursor-pointer">
                 <label for="editUnitActive" class="text-xs font-bold text-slate-700 cursor-pointer select-none">
                     Status Aktif (Ditampilkan dalam konsolidasi holding)
                 </label>
@@ -391,7 +391,7 @@
                     Batal
                 </button>
                 <button type="submit" 
-                    class="px-4 py-2 rounded-xl bg-[#10e58f] hover:bg-[#0fd684] text-slate-950 font-bold text-xs transition shadow-2xs cursor-pointer">
+                    class="px-4 py-2 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs transition shadow-2xs cursor-pointer">
                     Simpan Perubahan
                 </button>
             </div>
@@ -404,7 +404,7 @@
     <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
             <div class="flex items-center gap-2.5">
-                <div class="w-8 h-8 rounded-lg bg-[#ebf8c8] text-[#3f6212] flex items-center justify-center">
+                <div class="w-8 h-8 rounded-lg bg-[#ecfdf5] text-[#065f46] flex items-center justify-center">
                     <i data-lucide="network" class="w-4 h-4"></i>
                 </div>
                 <div>
@@ -423,7 +423,7 @@
             <div class="space-y-1">
                 <label class="text-xs font-bold text-slate-700">Kode Cabang / Entitas <span class="text-rose-500">*</span></label>
                 <input type="text" name="code" required placeholder="misal: KNG, CRB, DEPO_01" 
-                    class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono font-bold uppercase focus:outline-none focus:ring-2 focus:ring-[#10e58f]"
+                    class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono font-bold uppercase focus:outline-none focus:ring-2 focus:ring-[#059669]"
                     oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9_]/g, '')">
                 <p class="text-[10px] text-slate-400">Kode unik cabang (contoh: <code class="text-slate-600">CABANG_KNG</code>)</p>
             </div>
@@ -431,13 +431,13 @@
             <div class="space-y-1">
                 <label class="text-xs font-bold text-slate-700">Nama Lengkap Cabang <span class="text-rose-500">*</span></label>
                 <input type="text" name="name" required placeholder="misal: Depo Cabang Kuningan" 
-                    class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#10e58f]">
+                    class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#059669]">
             </div>
 
             <div class="space-y-1">
                 <label class="text-xs font-bold text-slate-700">Kota / Lokasi</label>
                 <input type="text" name="location" placeholder="misal: Kuningan / Jawa Barat" 
-                    class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#10e58f]">
+                    class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#059669]">
             </div>
 
             <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
@@ -446,7 +446,7 @@
                     Batal
                 </button>
                 <button type="submit" 
-                    class="px-4 py-2 rounded-xl bg-[#10e58f] hover:bg-[#0fd684] text-slate-950 font-bold text-xs transition shadow-2xs cursor-pointer">
+                    class="px-4 py-2 rounded-xl bg-[#059669] hover:bg-[#047857] text-white font-bold text-xs transition shadow-2xs cursor-pointer">
                     Simpan Cabang
                 </button>
             </div>
@@ -527,7 +527,7 @@
         form.action = `/master/units/${id}`;
         document.getElementById('editUnitName').value = name;
         document.getElementById('editUnitDesc').value = desc;
-        document.getElementById('editUnitColor').value = color || '#10e58f';
+        document.getElementById('editUnitColor').value = color || '#059669';
         document.getElementById('editUnitIcon').value = icon || 'building-2';
         document.getElementById('editUnitDataSource').value = dataSource || 'excel';
         document.getElementById('editUnitActive').checked = (isActive === 1);

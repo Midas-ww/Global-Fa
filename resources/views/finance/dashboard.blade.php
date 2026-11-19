@@ -20,7 +20,7 @@
             <!-- Period Selector -->
             <form action="{{ route('finance.dashboard') }}" method="GET" class="flex items-center">
                 <div class="flex items-center gap-1.5 px-3 py-2 bg-white border border-[#edf0ee] rounded-xl shadow-2xs">
-                    <i data-lucide="calendar" class="w-3.5 h-3.5 text-[#10e58f] shrink-0"></i>
+                    <i data-lucide="calendar" class="w-3.5 h-3.5 text-[#059669] shrink-0"></i>
                     <label for="periodSelectDash" class="text-xs font-semibold text-slate-500">Periode:</label>
                     <select name="period" id="periodSelectDash" onchange="this.form.submit()" class="text-xs font-bold font-mono bg-transparent text-slate-900 focus:outline-none cursor-pointer">
                         @foreach($availablePeriods as $p)
@@ -52,12 +52,12 @@
         <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col justify-between">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-xl bg-[#ebf8c8] text-[#3f6212] flex items-center justify-center border border-[#d9f99d]">
+                    <div class="w-8 h-8 rounded-xl bg-[#ecfdf5] text-[#065f46] flex items-center justify-center border border-[#a7f3d0]">
                         <i data-lucide="dollar-sign" class="w-4 h-4"></i>
                     </div>
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Total Revenue</span>
                 </div>
-                <a href="{{ route('finance.pnl', ['period' => $selectedPeriod]) }}" class="text-slate-400 hover:text-[#3f6212] p-1 rounded-lg hover:bg-[#ebf8c8]/60 transition-colors">
+                <a href="{{ route('finance.pnl', ['period' => $selectedPeriod]) }}" class="text-slate-400 hover:text-[#065f46] p-1 rounded-lg hover:bg-[#ecfdf5]/60 transition-colors">
                     <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
                 </a>
             </div>
@@ -67,7 +67,7 @@
                     Rp {{ number_format($summary['kpis']['revenue'] ?? 0, 0, ',', '.') }}
                 </div>
                 <div class="flex items-center gap-1.5">
-                    <span class="px-2 py-0.5 rounded-full font-mono text-[11px] font-bold bg-[#ebf8c8] text-[#3f6212] border border-[#d9f99d]">
+                    <span class="px-2 py-0.5 rounded-full font-mono text-[11px] font-bold bg-[#ecfdf5] text-[#065f46] border border-[#a7f3d0]">
                         +100%
                     </span>
                 </div>
@@ -87,7 +87,7 @@
                     </div>
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-500">HPP & Beban Usaha</span>
                 </div>
-                <a href="{{ route('finance.sync') }}" class="text-slate-400 hover:text-[#3f6212] p-1 rounded-lg hover:bg-[#ebf8c8]/60 transition-colors">
+                <a href="{{ route('finance.sync') }}" class="text-slate-400 hover:text-[#065f46] p-1 rounded-lg hover:bg-[#ecfdf5]/60 transition-colors">
                     <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
                 </a>
             </div>
@@ -109,12 +109,12 @@
         <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col justify-between">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-xl bg-[#ebf8c8] text-[#3f6212] flex items-center justify-center border border-[#d9f99d]">
+                    <div class="w-8 h-8 rounded-xl bg-[#ecfdf5] text-[#065f46] flex items-center justify-center border border-[#a7f3d0]">
                         <i data-lucide="trending-up" class="w-4 h-4"></i>
                     </div>
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Laba Kotor (GP)</span>
                 </div>
-                <a href="{{ route('finance.pnl', ['period' => $selectedPeriod]) }}" class="text-slate-400 hover:text-[#3f6212] p-1 rounded-lg hover:bg-[#ebf8c8]/60 transition-colors">
+                <a href="{{ route('finance.pnl', ['period' => $selectedPeriod]) }}" class="text-slate-400 hover:text-[#065f46] p-1 rounded-lg hover:bg-[#ecfdf5]/60 transition-colors">
                     <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
                 </a>
             </div>
@@ -124,7 +124,7 @@
                     Rp {{ number_format($summary['kpis']['gross_profit'] ?? 0, 0, ',', '.') }}
                 </div>
                 <div class="flex items-center gap-1.5">
-                    <span class="px-2 py-0.5 rounded-full font-mono text-[11px] font-bold bg-[#ebf8c8] text-[#3f6212] border border-[#d9f99d]">
+                    <span class="px-2 py-0.5 rounded-full font-mono text-[11px] font-bold bg-[#ecfdf5] text-[#065f46] border border-[#a7f3d0]">
                         Margin {{ $summary['kpis']['gross_margin_percentage'] ?? 0 }}%
                     </span>
                 </div>
@@ -140,12 +140,12 @@
         <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col justify-between">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-xl bg-[#ebf8c8] text-[#3f6212] flex items-center justify-center border border-[#d9f99d]">
+                    <div class="w-8 h-8 rounded-xl bg-[#ecfdf5] text-[#065f46] flex items-center justify-center border border-[#a7f3d0]">
                         <i data-lucide="landmark" class="w-4 h-4"></i>
                     </div>
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Laba Bersih (Net)</span>
                 </div>
-                <a href="{{ route('finance.pnl', ['period' => $selectedPeriod]) }}" class="text-slate-400 hover:text-[#3f6212] p-1 rounded-lg hover:bg-[#ebf8c8]/60 transition-colors">
+                <a href="{{ route('finance.pnl', ['period' => $selectedPeriod]) }}" class="text-slate-400 hover:text-[#065f46] p-1 rounded-lg hover:bg-[#ecfdf5]/60 transition-colors">
                     <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
                 </a>
             </div>
@@ -155,7 +155,7 @@
                     Rp {{ number_format($net, 0, ',', '.') }}
                 </div>
                 <div class="flex items-center gap-1.5">
-                    <span class="px-2 py-0.5 rounded-full font-mono text-[11px] font-bold bg-[#ebf8c8] text-[#3f6212] border border-[#d9f99d]">
+                    <span class="px-2 py-0.5 rounded-full font-mono text-[11px] font-bold bg-[#ecfdf5] text-[#065f46] border border-[#a7f3d0]">
                         {{ $isNetPositive ? '+' : '' }}{{ $summary['kpis']['net_margin_percentage'] ?? 0 }}%
                     </span>
                 </div>
@@ -221,8 +221,8 @@
                         <span class="w-2.5 h-2.5 rounded-full bg-[#d97706]"></span>
                         Beban OPEX
                     </span>
-                    <span class="inline-flex items-center gap-1.5 text-[#3f6212] bg-[#ebf8c8] px-2.5 py-0.5 rounded-md border border-[#d9f99d]">
-                        <span class="w-2.5 h-2.5 rounded-full bg-[#10e58f]"></span>
+                    <span class="inline-flex items-center gap-1.5 text-[#065f46] bg-[#ecfdf5] px-2.5 py-0.5 rounded-md border border-[#a7f3d0]">
+                        <span class="w-2.5 h-2.5 rounded-full bg-[#059669]"></span>
                         Laba Bersih
                     </span>
                 </div>
@@ -269,7 +269,7 @@
                         <h2 class="text-base font-bold text-slate-900">Distribusi Unit Bisnis Holding</h2>
                         <p class="text-slate-500 text-xs mt-0.5">Proporsi kontribusi omzet per pilar usaha</p>
                     </div>
-                    <span class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-[#ebf8c8] text-[#3f6212] border border-[#d9f99d]">
+                    <span class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-[#ecfdf5] text-[#065f46] border border-[#a7f3d0]">
                         {{ count($summary['by_business_unit'] ?? []) }} Pilar Usaha
                     </span>
                 </div>
@@ -339,7 +339,7 @@
 
             <!-- Time Tabs (Flat Clean - NO GRADIENT) -->
             <div class="flex items-center gap-2">
-                <span class="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#f5f9ed] text-[#3f6212] border border-[#d9f99d]">
+                <span class="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#f0fdf4] text-[#065f46] border border-[#a7f3d0]">
                     Monthly
                 </span>
                 <span class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-500 hover:text-slate-800 cursor-pointer">
@@ -406,7 +406,7 @@
                             Rp {{ number_format($bu['net_profit'], 0, ',', '.') }}
                         </td>
                         <td class="p-4 text-center pr-6">
-                            <span class="px-2.5 py-0.5 rounded-full font-bold text-[11px] {{ $bu['net_profit'] >= 0 ? 'bg-[#ebf8c8] text-[#3f6212] border border-[#d9f99d]' : 'bg-rose-50 text-rose-700 border border-rose-200' }}">
+                            <span class="px-2.5 py-0.5 rounded-full font-bold text-[11px] {{ $bu['net_profit'] >= 0 ? 'bg-[#ecfdf5] text-[#065f46] border border-[#a7f3d0]' : 'bg-rose-50 text-rose-700 border border-rose-200' }}">
                                 {{ $bu['net_margin'] }}%
                             </span>
                         </td>
@@ -414,7 +414,7 @@
                     @endforeach
 
                     <!-- TOTAL ROW -->
-                    <tr class="bg-[#f5f9ed] font-black text-slate-900 border-t-2 border-[#edf0ee]">
+                    <tr class="bg-[#f0fdf4] font-black text-slate-900 border-t-2 border-[#a7f3d0]">
                         <td class="p-4 pl-6 uppercase text-[11px] tracking-wider text-slate-900">TOTAL HOLDING TERKONSOLIDASI</td>
                         <td class="p-4 text-right font-mono text-[#15803d]">Rp {{ number_format($summary['kpis']['revenue'] ?? 0, 0, ',', '.') }}</td>
                         <td class="p-4 text-right font-mono">Rp {{ number_format($summary['kpis']['cogs'] ?? 0, 0, ',', '.') }}</td>
@@ -424,7 +424,7 @@
                             Rp {{ number_format($summary['kpis']['net_profit'] ?? 0, 0, ',', '.') }}
                         </td>
                         <td class="p-4 text-center pr-6">
-                            <span class="px-2.5 py-1 rounded-full font-black text-xs bg-[#ebf8c8] text-[#3f6212] border border-[#d9f99d]">
+                            <span class="px-2.5 py-1 rounded-full font-black text-xs bg-[#ecfdf5] text-[#065f46] border border-[#a7f3d0]">
                                 {{ $summary['kpis']['net_margin_percentage'] ?? 0 }}%
                             </span>
                         </td>
@@ -544,14 +544,14 @@
             {
                 label: 'Laba Bersih',
                 data: profitData,
-                borderColor: '#10e58f',
-                backgroundColor: '#10e58f',
+                borderColor: '#059669',
+                backgroundColor: '#059669',
                 borderWidth: 2.5,
                 tension: 0.3,
                 fill: false,
                 pointRadius: 4,
                 pointHoverRadius: 6,
-                pointBackgroundColor: '#10e58f',
+                pointBackgroundColor: '#059669',
                 pointBorderColor: '#ffffff',
                 pointBorderWidth: 2,
             }

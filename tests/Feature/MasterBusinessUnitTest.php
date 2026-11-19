@@ -46,7 +46,7 @@ class MasterBusinessUnitTest extends TestCase
             'name' => 'PT Mekar Hospitality Jaya',
             'description' => 'Unit bisnis perhotelan dan resort',
             'data_source' => 'excel',
-            'color' => '#10e58f',
+            'color' => '#059669',
             'icon' => 'hotel',
             'initial_entities' => "HOTEL_KNG:Mekar Hotel Kuningan:Kuningan\nHOTEL_CRB:Mekar Hotel Cirebon:Cirebon",
         ]);

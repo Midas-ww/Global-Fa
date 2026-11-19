@@ -30,10 +30,10 @@
                     },
                     colors: {
                         brand: {
-                            green: '#10e58f',
+                            green: '#059669',
                             yellow: '#ffd800',
-                            lime: '#ebf8c8',
-                            'lime-dark': '#3f6212',
+                            lime: '#ecfdf5',
+                            'lime-dark': '#065f46',
                             surface: '#f8faf8',
                             border: '#edf0ee',
                         }
@@ -193,7 +193,7 @@
                         <path d="m21 21-4.3-4.3" />
                     </svg>
                     <input type="text" id="sidebarSearch" placeholder="Cari menu Global FA..."
-                        class="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#10e58f] focus:bg-white transition-all shadow-2xs"
+                        class="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#059669] focus:bg-white transition-all shadow-2xs"
                         oninput="filterSidebar(this.value)" />
                     <button id="searchClearBtn" onclick="clearSearch()" type="button"
                         class="absolute right-2.5 p-0.5 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-200/60 transition-colors cursor-pointer hidden"
@@ -229,8 +229,8 @@
                         <!-- Overview Link (Persis Dashboard Icon ala SPBU & IQOS) -->
                         <a href="{{ route('finance.dashboard') }}"
                            title="Overview"
-                           class="sidebar-item flex items-center text-xs transition-all duration-300 ease-in-out group relative cursor-pointer rounded-tl-[1.2rem] rounded-br-[1.2rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1.2rem] hover:rounded-bl-[1.2rem] hover:rounded-tl-none hover:rounded-br-none {{ request()->routeIs('finance.dashboard') ? 'bg-[#ebf8c8] text-[#3f6212] font-bold shadow-2xs' : 'text-slate-600 hover:bg-[#ebf8c8]/60 hover:text-[#3f6212] font-semibold' }} w-full px-3.5 py-2.5 justify-start gap-3">
-                            <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('finance.dashboard') ? 'text-[#3f6212]' : 'text-slate-500 group-hover:text-[#3f6212]' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                           class="sidebar-item flex items-center text-xs transition-all duration-300 ease-in-out group relative cursor-pointer rounded-tl-[1.2rem] rounded-br-[1.2rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1.2rem] hover:rounded-bl-[1.2rem] hover:rounded-tl-none hover:rounded-br-none {{ request()->routeIs('finance.dashboard') ? 'bg-[#ecfdf5] text-[#065f46] border border-[#a7f3d0] font-bold shadow-2xs' : 'text-slate-600 hover:bg-[#ecfdf5]/60 hover:text-[#065f46] font-semibold' }} w-full px-3.5 py-2.5 justify-start gap-3">
+                            <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('finance.dashboard') ? 'text-[#065f46]' : 'text-slate-500 group-hover:text-[#065f46]' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <rect width="7" height="9" x="3" y="3" rx="1" />
                                 <rect width="7" height="5" x="14" y="3" rx="1" />
                                 <rect width="7" height="9" x="14" y="12" rx="1" />
@@ -242,8 +242,8 @@
                         <!-- Laba Rugi (P&L) Link (Persis PNL Chart Icon ala SPBU & IQOS) -->
                         <a href="{{ route('finance.pnl') }}"
                            title="Laba Rugi (P&L)"
-                           class="sidebar-item flex items-center text-xs transition-all duration-300 ease-in-out group relative cursor-pointer rounded-tl-[1.2rem] rounded-br-[1.2rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1.2rem] hover:rounded-bl-[1.2rem] hover:rounded-tl-none hover:rounded-br-none {{ request()->routeIs('finance.pnl') ? 'bg-[#ebf8c8] text-[#3f6212] font-bold shadow-2xs' : 'text-slate-600 hover:bg-[#ebf8c8]/60 hover:text-[#3f6212] font-semibold' }} w-full px-3.5 py-2.5 justify-start gap-3">
-                            <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('finance.pnl') ? 'text-[#3f6212]' : 'text-slate-500 group-hover:text-[#3f6212]' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                           class="sidebar-item flex items-center text-xs transition-all duration-300 ease-in-out group relative cursor-pointer rounded-tl-[1.2rem] rounded-br-[1.2rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1.2rem] hover:rounded-bl-[1.2rem] hover:rounded-tl-none hover:rounded-br-none {{ request()->routeIs('finance.pnl') ? 'bg-[#ecfdf5] text-[#065f46] border border-[#a7f3d0] font-bold shadow-2xs' : 'text-slate-600 hover:bg-[#ecfdf5]/60 hover:text-[#065f46] font-semibold' }} w-full px-3.5 py-2.5 justify-start gap-3">
+                            <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('finance.pnl') ? 'text-[#065f46]' : 'text-slate-500 group-hover:text-[#065f46]' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M3 17l6-6 4 3 8-9" />
                                 <circle cx="3" cy="17" r="1" />
                                 <circle cx="9" cy="11" r="1" />
@@ -256,8 +256,8 @@
                         <!-- Neraca Keuangan (Balance Sheet) Link (Persis Balance Scale ala SPBU & IQOS) -->
                         <a href="{{ route('finance.balance-sheet') }}"
                            title="Neraca Keuangan"
-                           class="sidebar-item flex items-center text-xs transition-all duration-300 ease-in-out group relative cursor-pointer rounded-tl-[1.2rem] rounded-br-[1.2rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1.2rem] hover:rounded-bl-[1.2rem] hover:rounded-tl-none hover:rounded-br-none {{ request()->routeIs('finance.balance-sheet') ? 'bg-[#ebf8c8] text-[#3f6212] font-bold shadow-2xs' : 'text-slate-600 hover:bg-[#ebf8c8]/60 hover:text-[#3f6212] font-semibold' }} w-full px-3.5 py-2.5 justify-start gap-3">
-                            <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('finance.balance-sheet') ? 'text-[#3f6212]' : 'text-slate-500 group-hover:text-[#3f6212]' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                           class="sidebar-item flex items-center text-xs transition-all duration-300 ease-in-out group relative cursor-pointer rounded-tl-[1.2rem] rounded-br-[1.2rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1.2rem] hover:rounded-bl-[1.2rem] hover:rounded-tl-none hover:rounded-br-none {{ request()->routeIs('finance.balance-sheet') ? 'bg-[#ecfdf5] text-[#065f46] border border-[#a7f3d0] font-bold shadow-2xs' : 'text-slate-600 hover:bg-[#ecfdf5]/60 hover:text-[#065f46] font-semibold' }} w-full px-3.5 py-2.5 justify-start gap-3">
+                            <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('finance.balance-sheet') ? 'text-[#065f46]' : 'text-slate-500 group-hover:text-[#065f46]' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M12 3v18" />
                                 <path d="M3 7h18" />
                                 <path d="M3 7l-2 5h7L6 7" />
@@ -276,8 +276,8 @@
                         <!-- Riwayat & Import Data Link (Persis IQOS) -->
                         <a href="{{ route('finance.sync') }}"
                            title="Riwayat & Import Data"
-                           class="sidebar-item flex items-center text-xs transition-all duration-300 ease-in-out group relative cursor-pointer rounded-tl-[1.2rem] rounded-br-[1.2rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1.2rem] hover:rounded-bl-[1.2rem] hover:rounded-tl-none hover:rounded-br-none {{ request()->routeIs('finance.sync') ? 'bg-[#ebf8c8] text-[#3f6212] font-bold shadow-2xs' : 'text-slate-600 hover:bg-[#ebf8c8]/60 hover:text-[#3f6212] font-semibold' }} w-full px-3.5 py-2.5 justify-start gap-3">
-                            <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('finance.sync') ? 'text-[#3f6212]' : 'text-slate-500 group-hover:text-[#3f6212]' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                           class="sidebar-item flex items-center text-xs transition-all duration-300 ease-in-out group relative cursor-pointer rounded-tl-[1.2rem] rounded-br-[1.2rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1.2rem] hover:rounded-bl-[1.2rem] hover:rounded-tl-none hover:rounded-br-none {{ request()->routeIs('finance.sync') ? 'bg-[#ecfdf5] text-[#065f46] border border-[#a7f3d0] font-bold shadow-2xs' : 'text-slate-600 hover:bg-[#ecfdf5]/60 hover:text-[#065f46] font-semibold' }} w-full px-3.5 py-2.5 justify-start gap-3">
+                            <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('finance.sync') ? 'text-[#065f46]' : 'text-slate-500 group-hover:text-[#065f46]' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
                                 <path d="M21 3v5h-5" />
                                 <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
@@ -289,8 +289,8 @@
                         <!-- Super App Portal Link -->
                         <a href="{{ route('sso.portal') }}" target="_blank"
                            title="Super App Portal"
-                           class="sidebar-item flex items-center text-xs transition-all duration-300 ease-in-out group relative cursor-pointer rounded-tl-[1.2rem] rounded-br-[1.2rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1.2rem] hover:rounded-bl-[1.2rem] hover:rounded-tl-none hover:rounded-br-none text-slate-600 hover:bg-[#ebf8c8]/60 hover:text-[#3f6212] font-semibold w-full px-3.5 py-2.5 justify-start gap-3">
-                            <svg class="w-5 h-5 shrink-0 text-slate-500 group-hover:text-[#3f6212]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                           class="sidebar-item flex items-center text-xs transition-all duration-300 ease-in-out group relative cursor-pointer rounded-tl-[1.2rem] rounded-br-[1.2rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1.2rem] hover:rounded-bl-[1.2rem] hover:rounded-tl-none hover:rounded-br-none text-slate-600 hover:bg-[#ecfdf5]/60 hover:text-[#065f46] font-semibold w-full px-3.5 py-2.5 justify-start gap-3">
+                            <svg class="w-5 h-5 shrink-0 text-slate-500 group-hover:text-[#065f46]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
                                 <polyline points="15 3 21 3 21 9" />
                                 <line x1="21" y1="3" x2="14" y2="10" />
@@ -306,8 +306,8 @@
                     <nav class="space-y-1.5">
                         <a href="{{ route('finance.master.units') }}"
                            title="Master Unit Bisnis"
-                           class="sidebar-item flex items-center text-xs transition-all duration-300 ease-in-out group relative cursor-pointer rounded-tl-[1.2rem] rounded-br-[1.2rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1.2rem] hover:rounded-bl-[1.2rem] hover:rounded-tl-none hover:rounded-br-none {{ request()->routeIs('finance.master.*') ? 'bg-[#ebf8c8] text-[#3f6212] font-bold shadow-2xs' : 'text-slate-600 hover:bg-[#ebf8c8]/60 hover:text-[#3f6212] font-semibold' }} w-full px-3.5 py-2.5 justify-start gap-3">
-                            <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('finance.master.*') ? 'text-[#3f6212]' : 'text-slate-500 group-hover:text-[#3f6212]' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                           class="sidebar-item flex items-center text-xs transition-all duration-300 ease-in-out group relative cursor-pointer rounded-tl-[1.2rem] rounded-br-[1.2rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1.2rem] hover:rounded-bl-[1.2rem] hover:rounded-tl-none hover:rounded-br-none {{ request()->routeIs('finance.master.*') ? 'bg-[#ecfdf5] text-[#065f46] border border-[#a7f3d0] font-bold shadow-2xs' : 'text-slate-600 hover:bg-[#ecfdf5]/60 hover:text-[#065f46] font-semibold' }} w-full px-3.5 py-2.5 justify-start gap-3">
+                            <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('finance.master.*') ? 'text-[#065f46]' : 'text-slate-500 group-hover:text-[#065f46]' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <rect width="16" height="20" x="4" y="2" rx="2" />
                                 <path d="M9 22v-4h6v4" />
                                 <path d="M8 6h.01" />
@@ -422,7 +422,7 @@
                     <span class="hidden sm:inline">Mekarjaya Group</span>
                     <span class="inline sm:hidden font-semibold">MJG</span>
                     <span>/</span>
-                    <span class="text-slate-900 font-bold shrink-0 text-[#10e58f]">
+                    <span class="text-slate-900 font-bold shrink-0 text-[#059669]">
                         Global FA
                     </span>
                     <span>/</span>
@@ -481,9 +481,9 @@
                         <a
                             href="{{ route('sso.portal') }}"
                             target="_blank"
-                            class="flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-[#10e58f] active:bg-slate-100 rounded-xl transition-all cursor-pointer group"
+                            class="flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-[#059669] active:bg-slate-100 rounded-xl transition-all cursor-pointer group"
                         >
-                            <svg class="w-4 h-4 text-slate-500 group-hover:text-[#10e58f] shrink-0 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <svg class="w-4 h-4 text-slate-500 group-hover:text-[#059669] shrink-0 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z" />
                                 <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65" />
                                 <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65" />

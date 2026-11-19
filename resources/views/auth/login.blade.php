@@ -30,10 +30,10 @@
                     },
                     colors: {
                         brand: {
-                            green: '#10e58f',
+                            green: '#059669',
                             yellow: '#ffd800',
-                            lime: '#ebf8c8',
-                            'lime-dark': '#3f6212',
+                            lime: '#ecfdf5',
+                            'lime-dark': '#065f46',
                             surface: '#f8faf8',
                             border: '#edf0ee',
                         }
@@ -74,7 +74,7 @@
             <div class="flex items-center justify-center gap-2 mt-2 text-[10px] font-mono font-bold">
                 <span class="px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">SPBU</span>
                 <span class="text-slate-300">•</span>
-                <span class="px-2 py-0.5 rounded bg-[#ebf8c8] text-[#3f6212] border border-[#d9f99d]">RETAIL</span>
+                <span class="px-2 py-0.5 rounded bg-teal-50 text-teal-800 border border-teal-200">RETAIL</span>
                 <span class="text-slate-300">•</span>
                 <span class="px-2 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200">FMCG</span>
                 <span class="text-slate-300">•</span>
@@ -109,8 +109,8 @@
 
             <!-- SSO BUTTON (SOLID FLAT - NO GRADIENT) -->
             <div>
-                <a href="{{ rtrim(config('services.mkj_superapp.url', env('SUPERAPP_URL', 'http://localhost:8000')), '/') }}/login" class="w-full py-3 px-4 rounded-xl bg-[#ebf8c8] hover:bg-[#dff5b0] text-[#3f6212] font-bold text-xs border border-[#d9f99d] flex items-center justify-center gap-2 transition duration-150 cursor-pointer shadow-2xs">
-                    <svg class="w-4 h-4 text-[#3f6212]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <a href="{{ rtrim(config('services.mkj_superapp.url', env('SUPERAPP_URL', 'http://localhost:8000')), '/') }}/login" class="w-full py-3 px-4 rounded-xl bg-[#ecfdf5] hover:bg-[#d1fae5] text-[#065f46] font-bold text-xs border border-[#a7f3d0] flex items-center justify-center gap-2 transition duration-150 cursor-pointer shadow-2xs">
+                    <svg class="w-4 h-4 text-[#065f46]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z" />
                         <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65" />
                         <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65" />
@@ -133,7 +133,7 @@
                     <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Email Akun</label>
                     <div class="relative">
                         <i data-lucide="mail" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 pointer-events-none"></i>
-                        <input type="email" name="email" value="{{ old('email', 'admin@mekarjaya.com') }}" required class="w-full bg-[#f8faf8] border border-[#edf0ee] rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#10e58f] focus:ring-1 focus:ring-[#10e58f]">
+                        <input type="email" name="email" value="{{ old('email', 'admin@mekarjaya.com') }}" required class="w-full bg-[#f8faf8] border border-[#edf0ee] rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]">
                     </div>
                 </div>
 
@@ -141,13 +141,13 @@
                     <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Kata Sandi</label>
                     <div class="relative">
                         <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 pointer-events-none"></i>
-                        <input type="password" name="password" value="password" required class="w-full bg-[#f8faf8] border border-[#edf0ee] rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#10e58f] focus:ring-1 focus:ring-[#10e58f]">
+                        <input type="password" name="password" value="password" required class="w-full bg-[#f8faf8] border border-[#edf0ee] rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]">
                     </div>
                 </div>
 
                 <div class="flex items-center justify-between text-xs text-slate-500">
                     <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" name="remember" checked class="rounded border-slate-300 text-slate-900 focus:ring-[#10e58f]">
+                        <input type="checkbox" name="remember" checked class="rounded border-slate-300 text-slate-900 focus:ring-[#059669]">
                         <span>Ingat saya</span>
                     </label>
                     <span class="text-[11px] text-slate-400 font-mono">admin / password</span>

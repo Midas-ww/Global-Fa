@@ -12,16 +12,16 @@
             <div class="flex items-center gap-1.5 flex-wrap">
                 <!-- ALL / CONSOLIDATED TAB -->
                 <a href="{{ route('finance.balance-sheet', ['period' => $selectedPeriod]) }}"
-                   class="px-3.5 py-1.5 rounded-tl-[1rem] rounded-br-[1rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1rem] hover:rounded-bl-[1rem] hover:rounded-tl-none hover:rounded-br-none text-xs font-bold transition-all duration-300 cursor-pointer {{ empty($selectedBu) ? 'bg-[#ebf8c8] text-[#3f6212] border border-[#d9f99d] shadow-2xs' : 'bg-white hover:bg-[#ebf8c8]/50 text-slate-700 hover:text-[#3f6212] border border-slate-200' }}">
+                   class="px-3.5 py-1.5 rounded-tl-[1rem] rounded-br-[1rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1rem] hover:rounded-bl-[1rem] hover:rounded-tl-none hover:rounded-br-none text-xs font-bold transition-all duration-300 cursor-pointer {{ empty($selectedBu) ? 'bg-[#ecfdf5] text-[#065f46] border border-[#a7f3d0] shadow-2xs' : 'bg-white hover:bg-[#ecfdf5]/50 text-slate-700 hover:text-[#065f46] border border-slate-200' }}">
                     <span class="flex items-center gap-1.5">
-                        <i data-lucide="layers" class="w-3.5 h-3.5 {{ empty($selectedBu) ? 'text-[#3f6212]' : 'text-slate-400' }}"></i>
+                        <i data-lucide="layers" class="w-3.5 h-3.5 {{ empty($selectedBu) ? 'text-[#065f46]' : 'text-slate-400' }}"></i>
                         <span>Semua (Konsolidasi Holding)</span>
                     </span>
                 </a>
 
                 @foreach($businessUnits as $bu)
                 <a href="{{ route('finance.balance-sheet', ['period' => $selectedPeriod, 'business_unit' => $bu['code']]) }}"
-                   class="px-3.5 py-1.5 rounded-tl-[1rem] rounded-br-[1rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1rem] hover:rounded-bl-[1rem] hover:rounded-tl-none hover:rounded-br-none text-xs font-bold transition-all duration-300 cursor-pointer {{ $selectedBu === $bu['code'] ? 'bg-[#ebf8c8] text-[#3f6212] border border-[#d9f99d] shadow-2xs' : 'bg-white hover:bg-[#ebf8c8]/50 text-slate-700 hover:text-[#3f6212] border border-slate-200' }}">
+                   class="px-3.5 py-1.5 rounded-tl-[1rem] rounded-br-[1rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1rem] hover:rounded-bl-[1rem] hover:rounded-tl-none hover:rounded-br-none text-xs font-bold transition-all duration-300 cursor-pointer {{ $selectedBu === $bu['code'] ? 'bg-[#ecfdf5] text-[#065f46] border border-[#a7f3d0] shadow-2xs' : 'bg-white hover:bg-[#ecfdf5]/50 text-slate-700 hover:text-[#065f46] border border-slate-200' }}">
                     <span class="flex items-center gap-1.5">
                         <span class="w-2 h-2 rounded-full shrink-0" style="background-color: {{ $bu['color'] }}"></span>
                         <span>{{ $bu['name'] }}</span>
@@ -53,7 +53,7 @@
                 </form>
 
                 @if($bs['is_balanced'])
-                <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#ebf8c8] text-[#3f6212] border border-[#d9f99d] text-xs font-black shadow-2xs">
+                <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#ecfdf5] text-[#065f46] border border-[#a7f3d0] text-xs font-black shadow-2xs">
                     <i data-lucide="check-circle" class="w-4 h-4 text-[#16a34a]"></i>
                     <span class="hidden sm:inline">NERACA SEIMBANG</span>
                     <span class="sm:hidden">BALANCED</span>
@@ -85,17 +85,17 @@
         <div class="pt-3 border-t border-[#edf0ee] flex items-center justify-between flex-wrap gap-3">
             <div class="flex items-center gap-1.5 flex-wrap">
                 <span class="text-xs font-bold text-slate-700 mr-1 flex items-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full shrink-0" style="background-color: {{ $activeBu['color'] ?? '#10e58f' }}"></span>
+                    <span class="w-2 h-2 rounded-full shrink-0" style="background-color: {{ $activeBu['color'] ?? '#059669' }}"></span>
                     <span>{{ $entityLabel }} ({{ count($entities) }}):</span>
                 </span>
                 <div class="flex items-center gap-1.5 flex-wrap">
                     <a href="{{ route('finance.balance-sheet', ['period' => $selectedPeriod, 'business_unit' => $selectedBu]) }}"
-                       class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all {{ empty($selectedEntity) ? 'bg-[#ebf8c8] text-[#3f6212] border border-[#d9f99d] shadow-2xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200' }}">
+                       class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all {{ empty($selectedEntity) ? 'bg-[#ecfdf5] text-[#065f46] border border-[#a7f3d0] shadow-2xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200' }}">
                         Semua Cabang
                     </a>
                     @foreach($entities as $e)
                     <a href="{{ route('finance.balance-sheet', ['period' => $selectedPeriod, 'business_unit' => $selectedBu, 'entity' => $e['code']]) }}"
-                       class="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all {{ $selectedEntity === $e['code'] ? 'bg-[#ebf8c8] text-[#3f6212] font-bold border border-[#d9f99d] shadow-2xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200' }}">
+                       class="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all {{ $selectedEntity === $e['code'] ? 'bg-[#ecfdf5] text-[#065f46] font-bold border border-[#a7f3d0] shadow-2xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200' }}">
                         {{ $e['name'] }}
                     </a>
                     @endforeach
@@ -123,7 +123,7 @@
                         <i data-lucide="briefcase" class="w-4 h-4 text-emerald-600"></i>
                         <h4 class="font-bold text-sm tracking-wide uppercase">AKTIVA (ASSETS)</h4>
                     </div>
-                    <span class="text-xs font-mono text-emerald-700 font-semibold px-2.5 py-1 rounded-md bg-[#ebf8c8] border border-[#d9f99d]">{{ $bs['period_label'] }}</span>
+                    <span class="text-xs font-mono text-emerald-700 font-semibold px-2.5 py-1 rounded-md bg-[#ecfdf5] border border-[#a7f3d0]">{{ $bs['period_label'] }}</span>
                 </div>
 
                 <div class="p-4 flex-1 overflow-y-auto max-h-[580px] pr-2 custom-balance-scroll">
@@ -160,7 +160,7 @@
             </div>
 
             <!-- Total Assets Footer (SOLID FLAT - NO GRADIENT) -->
-            <div class="p-4 bg-[#f5f9ed] border-t-2 border-[#d9f99d] flex items-center justify-between text-slate-900 mt-auto">
+            <div class="p-4 bg-[#f0fdf4] border-t-2 border-[#a7f3d0] flex items-center justify-between text-slate-900 mt-auto">
                 <span class="font-black uppercase tracking-wide text-xs">TOTAL AKTIVA (ASSETS)</span>
                 <span class="text-base font-black font-mono text-[#15803d]">Rp {{ number_format($bs['assets']['total'], 0, ',', '.') }}</span>
             </div>
