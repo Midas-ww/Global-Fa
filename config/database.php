@@ -66,11 +66,11 @@ return [
 
         'mysql_spbu' => [
             'driver' => 'mysql',
-            'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', '3306'),
+            'host' => env('DB_SPBU_HOST', env('DB_HOST', '127.0.0.1')),
+            'port' => env('DB_SPBU_PORT', env('DB_PORT', '3306')),
             'database' => env('DB_SPBU_DATABASE', 'api_air'),
-            'username' => env('DB_USERNAME', 'root'),
-            'password' => env('DB_PASSWORD', ''),
+            'username' => env('DB_SPBU_USERNAME', env('DB_USERNAME', 'root')),
+            'password' => env('DB_SPBU_PASSWORD', env('DB_PASSWORD', '')),
             'charset' => 'utf8mb4',
             'collation' => 'utf8mb4_unicode_ci',
             'prefix' => '',
@@ -79,11 +79,11 @@ return [
 
         'mysql_iqos' => [
             'driver' => 'mysql',
-            'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', '3306'),
+            'host' => env('DB_IQOS_HOST', env('DB_HOST', '127.0.0.1')),
+            'port' => env('DB_IQOS_PORT', env('DB_PORT', '3306')),
             'database' => env('DB_IQOS_DATABASE', 'sir_iqos'),
-            'username' => env('DB_USERNAME', 'root'),
-            'password' => env('DB_PASSWORD', ''),
+            'username' => env('DB_IQOS_USERNAME', env('DB_USERNAME', 'root')),
+            'password' => env('DB_IQOS_PASSWORD', env('DB_PASSWORD', '')),
             'charset' => 'utf8mb4',
             'collation' => 'utf8mb4_unicode_ci',
             'prefix' => '',

@@ -4,16 +4,13 @@ namespace App\Services\GlobalFinance;
 
 use App\Models\GlobalFinancialRecord;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class SpbuSyncService
 {
     /**
      * Jalankan kalkulasi dan sinkronisasi laporan SPBU untuk bulan tertentu.
      *
-     * @param string $yearMonth Format YYYY-MM (contoh: '2026-07')
-     * @return array
+     * @param  string  $yearMonth  Format YYYY-MM (contoh: '2026-07')
      */
     public function sync(string $yearMonth = '2026-07'): array
     {
@@ -21,47 +18,70 @@ class SpbuSyncService
         $endDate = Carbon::createFromFormat('Y-m', $yearMonth)->endOfMonth()->format('Y-m-d');
         $periodDate = $startDate;
 
+        $spbuPath = env('SPBU_PROJECT_PATH', 'D:/Mekar Jaya/API-SPBU');
+        if (! file_exists($spbuPath.'/vendor/autoload.php')) {
+            $fallbacks = [
+                base_path('../API-SPBU'),
+                base_path('../api-spbu'),
+                '/var/www/api-spbu',
+                'C:/Mekar Jaya/API-SPBU',
+            ];
+            foreach ($fallbacks as $fb) {
+                if (file_exists($fb.'/vendor/autoload.php')) {
+                    $spbuPath = $fb;
+                    break;
+                }
+            }
+        }
+
+        $spbuPathNormalized = str_replace('\\', '/', $spbuPath);
+        if (! file_exists($spbuPathNormalized.'/vendor/autoload.php')) {
+            throw new \RuntimeException("Path project API-SPBU tidak ditemukan di: [{$spbuPathNormalized}]. Harap atur 'SPBU_PROJECT_PATH' di file .env server.");
+        }
+
+        $spbuDb = config('database.connections.mysql_spbu.database', 'api_air');
+
         $script = "
-        require 'D:/Mekar Jaya/API-SPBU/vendor/autoload.php';
+        require '{$spbuPathNormalized}/vendor/autoload.php';
         if (class_exists(Dotenv\Dotenv::class)) {
-            \$dotenv = Dotenv\Dotenv::createMutable('D:/Mekar Jaya/API-SPBU');
+            \$dotenv = Dotenv\Dotenv::createMutable('{$spbuPathNormalized}');
             \$dotenv->load();
         }
 
-        putenv('DB_DATABASE=api_air');
-        \$_ENV['DB_DATABASE'] = 'api_air';
-        \$_SERVER['DB_DATABASE'] = 'api_air';
+        putenv('DB_DATABASE={$spbuDb}');
+        \$_ENV['DB_DATABASE'] = '{$spbuDb}';
+        \$_SERVER['DB_DATABASE'] = '{$spbuDb}';
 
-        \$app = require_once 'D:/Mekar Jaya/API-SPBU/bootstrap/app.php';
+        \$app = require_once '{$spbuPathNormalized}/bootstrap/app.php';
         \$kernel = \$app->make(Illuminate\Contracts\Console\Kernel::class);
         \$kernel->bootstrap();
 
-        config(['database.connections.mysql.database' => 'api_air']);
+        config(['database.connections.mysql.database' => '{$spbuDb}']);
         \Illuminate\Support\Facades\DB::purge('mysql');
 
         \$pnlService = app(App\Services\PnlService::class);
-        \$pnl = \$pnlService->monthly('$startDate', '$endDate', false);
+        \$pnl = \$pnlService->monthly('{$startDate}', '{$endDate}', false);
 
         \$bsService = app(App\Services\BalanceSheetService::class);
-        \$bs = \$bsService->generate('$endDate');
+        \$bs = \$bsService->generate('{$endDate}');
 
         echo json_encode(['pnl' => \$pnl, 'bs' => \$bs]);
         ";
 
-        $tempFile = storage_path('temp_spbu_calc_' . time() . '.php');
-        file_put_contents($tempFile, "<?php\n" . $script);
+        $tempFile = storage_path('temp_spbu_calc_'.time().'.php');
+        file_put_contents($tempFile, "<?php\n".$script);
 
         $phpBinary = PHP_BINARY ?: 'php';
-        $output = shell_exec(escapeshellarg($phpBinary) . ' ' . escapeshellarg($tempFile) . ' 2>&1');
+        $output = shell_exec(escapeshellarg($phpBinary).' '.escapeshellarg($tempFile).' 2>&1');
         @unlink($tempFile);
 
-        if (!$output) {
-            throw new \RuntimeException("Gagal menjalankan kalkulasi SPBU via CLI.");
+        if (! $output) {
+            throw new \RuntimeException('Gagal menjalankan kalkulasi SPBU via CLI.');
         }
 
         $data = json_decode($output, true);
-        if (!$data || !isset($data['pnl']) || !isset($data['bs'])) {
-            throw new \RuntimeException("Output kalkulasi SPBU tidak valid.");
+        if (! $data || ! isset($data['pnl']) || ! isset($data['bs'])) {
+            throw new \RuntimeException('Output kalkulasi SPBU tidak valid.');
         }
 
         $pnl = $data['pnl'];
@@ -77,7 +97,7 @@ class SpbuSyncService
         $status = 'final';
 
         // --- 1. REVENUE ---
-        if (!empty($pnl['revenue']['products'])) {
+        if (! empty($pnl['revenue']['products'])) {
             foreach ($pnl['revenue']['products'] as $idx => $prod) {
                 $records[] = [
                     'business_unit_code' => 'spbu',
@@ -86,12 +106,12 @@ class SpbuSyncService
                     'report_type' => 'pnl',
                     'category' => 'revenue',
                     'sub_category' => 'fuel_sales',
-                    'account_code' => '40' . str_pad((string)($idx + 1), 2, '0', STR_PAD_LEFT),
-                    'account_name' => 'Penjualan ' . ($prod['name'] ?? 'BBM'),
+                    'account_code' => '40'.str_pad((string) ($idx + 1), 2, '0', STR_PAD_LEFT),
+                    'account_name' => 'Penjualan '.($prod['name'] ?? 'BBM'),
                     'amount' => (float) ($prod['net_amount'] ?? $prod['amount'] ?? 0),
                     'status' => $status,
                     'source_type' => 'database_sync',
-                    'notes' => 'Volume: ' . number_format((float)($prod['volume'] ?? 0), 0, ',', '.') . ' L',
+                    'notes' => 'Volume: '.number_format((float) ($prod['volume'] ?? 0), 0, ',', '.').' L',
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
@@ -115,7 +135,7 @@ class SpbuSyncService
         }
 
         // --- 2. COGS (HPP) ---
-        if (!empty($pnl['cost_of_goods_sold']['products'])) {
+        if (! empty($pnl['cost_of_goods_sold']['products'])) {
             foreach ($pnl['cost_of_goods_sold']['products'] as $idx => $cProd) {
                 $records[] = [
                     'business_unit_code' => 'spbu',
@@ -124,8 +144,8 @@ class SpbuSyncService
                     'report_type' => 'pnl',
                     'category' => 'cogs',
                     'sub_category' => 'fuel_cost',
-                    'account_code' => '50' . str_pad((string)($idx + 1), 2, '0', STR_PAD_LEFT),
-                    'account_name' => 'HPP ' . ($cProd['name'] ?? 'BBM'),
+                    'account_code' => '50'.str_pad((string) ($idx + 1), 2, '0', STR_PAD_LEFT),
+                    'account_name' => 'HPP '.($cProd['name'] ?? 'BBM'),
                     'amount' => (float) ($cProd['amount'] ?? 0),
                     'status' => $status,
                     'source_type' => 'database_sync',
@@ -136,7 +156,7 @@ class SpbuSyncService
         }
 
         // Losis & Tera HPP
-        if (!empty($pnl['cost_of_goods_sold']['bbm_losis'])) {
+        if (! empty($pnl['cost_of_goods_sold']['bbm_losis'])) {
             $records[] = [
                 'business_unit_code' => 'spbu',
                 'entity_code' => 'SPBU_44',
@@ -157,7 +177,9 @@ class SpbuSyncService
         // --- 3. OPEX ---
         $opexBreakdown = $pnl['operating_expenses']['breakdown'] ?? [];
         foreach ($opexBreakdown as $opKey => $val) {
-            if ($opKey === 'total' || $opKey === 'subtotal_kas_besar') continue;
+            if ($opKey === 'total' || $opKey === 'subtotal_kas_besar') {
+                continue;
+            }
             $readableName = ucwords(str_replace('_', ' ', $opKey));
             $records[] = [
                 'business_unit_code' => 'spbu',
@@ -166,8 +188,8 @@ class SpbuSyncService
                 'report_type' => 'pnl',
                 'category' => 'opex',
                 'sub_category' => 'operasional_spbu',
-                'account_code' => '6000-' . substr(md5($opKey), 0, 4),
-                'account_name' => 'Biaya ' . $readableName,
+                'account_code' => '6000-'.substr(md5($opKey), 0, 4),
+                'account_name' => 'Biaya '.$readableName,
                 'amount' => (float) $val,
                 'status' => $status,
                 'source_type' => 'database_sync',
