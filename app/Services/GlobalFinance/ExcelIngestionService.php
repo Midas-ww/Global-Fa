@@ -74,36 +74,35 @@ class ExcelIngestionService
             ];
         }
 
-        // 2. Deteksi FMCG (CV Mekar Jaya Sentosa 9 Depo atau PT MJS Multikarya - CCOD)
-        $fmcgDepoKnown = ['BMG', 'PWT', 'PML GT', 'PML MT', 'WLR', 'RDK', 'PWJ', 'KBM', 'PKL', 'TGL', 'KDS', 'CRB', 'KNG'];
-        $hasDepoSheets = count(array_intersect($upperSheets, $fmcgDepoKnown)) > 0;
         // 2. Deteksi CCOD (PT Mekar Jaya Sentosa Multikarya - 12 Cabang)
         $isCcodDept = str_contains($upperHeader, 'MULTIKARYA') || str_contains($upperHeader, 'BY DEPARTMENT') || str_contains($upperHeader, 'CCOD');
         if ($isCcodDept) {
             return [
                 'type' => 'ccod',
-                'label' => 'MJS Multikarya (CCOD - 12 Cabang)',
+                'label' => 'CCOD (12 Cabang)',
                 'sheets' => $sheetNames,
             ];
         }
 
-        // 3. Deteksi FMCG (CV Mekar Jaya Sentosa - 9 Depo Cabang)
+        // 3. Deteksi Unilever FMCG (9 Depo Cabang)
+        $fmcgDepoKnown = ['BMG', 'PWT', 'PML GT', 'PML MT', 'WLR', 'RDK', 'PWJ', 'KBM', 'PKL', 'TGL', 'KDS', 'CRB', 'KNG'];
+        $hasDepoSheets = count(array_intersect($upperSheets, $fmcgDepoKnown)) > 0;
         if ($hasDepoSheets) {
             return [
                 'type' => 'fmcg',
-                'label' => 'Distribusi FMCG (9 Depo Cabang)',
+                'label' => 'Unilever (9 Depo Cabang)',
                 'sheets' => $sheetNames,
             ];
         }
 
-        // 4. Deteksi Laporan Rekap CV MJS Pusat (Hanya sheet PL & BS, tidak ada perincian 9 Depo)
+        // 4. Deteksi AQUA (Danone - CV Mekar Jaya Sentosa - Sheet PL & BS)
         if (
             (in_array('PL', $upperSheets) && (in_array('BS', $upperSheets) || in_array('BS DET.', $upperSheets))) &&
-            (str_contains($upperHeader, 'MEKAR JAYA SENTOSA') || str_contains($upperHeader, 'MJS'))
+            (str_contains($upperHeader, 'MEKAR JAYA SENTOSA') || str_contains($upperHeader, 'MJS') || str_contains($upperHeader, 'AQUA') || str_contains($upperHeader, 'TIV'))
         ) {
             return [
-                'type' => 'mjs_summary',
-                'label' => 'Laporan Rekap CV MJS Pusat (Sheet PL & BS Tanpa Rincian Depo)',
+                'type' => 'aqua',
+                'label' => 'AQUA (CV Mekar Jaya Sentosa)',
                 'sheets' => $sheetNames,
             ];
         }
@@ -159,19 +158,20 @@ class ExcelIngestionService
         }
 
         $selectedLabel = match ($selectedType) {
-            'fmcg' => 'Distribusi FMCG (9 Depo Cabang)',
+            'fmcg' => 'Unilever (9 Depo Cabang)',
+            'aqua' => 'AQUA (CV Mekar Jaya Sentosa)',
             'xtrans' => 'Ekspedisi (PT Mekar Jaya Xtrans Jaya)',
-            'ccod' => 'MJS Multikarya (CCOD - 12 Cabang)',
+            'ccod' => 'CCOD (12 Cabang)',
             default => strtoupper($selectedType),
         };
 
         // Jika terdeteksi jelas sebagai unit bisnis yang berbeda atau rekap pusat
         if ($detected['type'] !== 'unknown' && $detected['type'] !== $selectedType) {
-            if ($detected['type'] === 'mjs_summary' && $selectedType === 'fmcg') {
+            if ($detected['type'] === 'aqua' && $selectedType === 'fmcg') {
                 throw new \InvalidArgumentException(
                     "Validasi Format Gagal: File ini terdeteksi sebagai {$detected['label']}. ".
-                    "Unit 'Distribusi FMCG' mewajibkan file Laporan 9 Depo Cabang (yang memiliki sheet: BMG, PWT, PML GT, PML MT, WLR, RDK, PWJ, KBM, PKL seperti 'PL Depo Persentase MJP Jan 24 - Dec 26.xlsx'). ".
-                    'File rekapitulasi pusat tidak dapat diimpor langsung ke unit FMCG karena tidak memuat rincian cabang depo.'
+                    "Unit 'Unilever' mewajibkan file Laporan 9 Depo Cabang (yang memiliki sheet: BMG, PWT, PML GT, PML MT, WLR, RDK, PWJ, KBM, PKL seperti 'PL Depo Persentase MJP Jan 24 - Dec 26.xlsx'). ".
+                    'File laporan rekapitulasi Danone AQUA harus diimpor melalui kotak unit AQUA.'
                 );
             }
 
@@ -231,8 +231,8 @@ class ExcelIngestionService
         $isTypeMatch = ($detectedType === 'universal_template' || $detectedType === $targetType);
         $matchError = null;
         if (! $isTypeMatch && $detectedType !== 'unknown') {
-            if ($detectedType === 'mjs_summary' && $targetType === 'fmcg') {
-                $matchError = "File ini adalah Laporan Rekap CV MJS Pusat (hanya sheet PL & BS). Unit 'Distribusi FMCG' mewajibkan file Laporan 9 Depo Cabang (memiliki sheet BMG, PWT, PML GT, dll).";
+            if (($detectedType === 'aqua' || $detectedType === 'mjs_summary') && $targetType === 'fmcg') {
+                $matchError = "File ini adalah Laporan AQUA Danone (CV Mekar Jaya Sentosa). Unit 'Unilever' mewajibkan file Laporan 9 Depo Cabang (memiliki sheet BMG, PWT, PML GT, dll). Silakan pilih kotak import AQUA.";
             } else {
                 $matchError = "File ini terdeteksi sebagai '{$detectedLabel}', yang tidak cocok untuk diimpor ke unit '{$targetLabel}'.";
             }
@@ -1142,26 +1142,48 @@ class ExcelIngestionService
     }
 
     /**
-     * Ingest file Excel Laporan Bulanan Resmi MJS (CV Mekar Jaya Sentosa - Sheet PL & BS).
+     * Ingest file Excel Laporan Bulanan Resmi AQUA (CV Mekar Jaya Sentosa - Sheet PL & BS).
      */
-    protected function ingestMjsSummaryFile(Spreadsheet $spreadsheet, ?string $filename = null): array
+    public function ingestAquaFile(string $filePath, ?string $filename = null): array
+    {
+        ini_set('memory_limit', '1024M');
+        $spreadsheet = IOFactory::load($filePath);
+
+        return $this->ingestAquaSummaryFile($spreadsheet, $filename);
+    }
+
+    /**
+     * Ingest Spreadsheet Laporan Bulanan Resmi AQUA (CV Mekar Jaya Sentosa - Sheet PL & BS).
+     */
+    public function ingestAquaSummaryFile(Spreadsheet $spreadsheet, ?string $filename = null): array
     {
         $totalRecords = 0;
 
-        // Pastikan entitas MJS (Holding/Pusat FMCG) terdaftar di master
-        $fmcgBu = GlobalBusinessUnit::where('code', 'fmcg')->first();
-        if ($fmcgBu) {
-            GlobalEntity::firstOrCreate(
-                ['code' => 'MJS'],
-                [
-                    'business_unit_id' => $fmcgBu->id,
-                    'name' => 'CV Mekar Jaya Sentosa (Pusat)',
-                    'location' => 'Pekalongan / Jawa Tengah',
-                    'sort_order' => 0,
-                    'is_active' => true,
-                ]
-            );
-        }
+        // Pastikan Unit Usaha AQUA terdaftar di master
+        $aquaBu = GlobalBusinessUnit::firstOrCreate(
+            ['code' => 'aqua'],
+            [
+                'name' => 'AQUA',
+                'description' => 'CV Mekar Jaya Sentosa - Distributor resmi air minum dalam kemasan Danone AQUA & VIT.',
+                'icon' => 'droplet',
+                'color' => '#0284C7',
+                'data_source' => 'excel',
+                'sort_order' => 2,
+                'is_active' => true,
+            ]
+        );
+
+        // Pastikan entitas MJS (AQUA) terdaftar di master
+        GlobalEntity::firstOrCreate(
+            ['code' => 'MJS'],
+            [
+                'business_unit_id' => $aquaBu->id,
+                'name' => 'CV Mekar Jaya Sentosa (AQUA)',
+                'location' => 'Pekalongan / Jawa Tengah',
+                'sort_order' => 1,
+                'is_active' => true,
+            ]
+        );
 
         // 1. SHEET PL (Laba Rugi CV Mekar Jaya Sentosa)
         $plSheet = $spreadsheet->getSheetByName('PL');
@@ -1188,7 +1210,7 @@ class ExcelIngestionService
             }
 
             GlobalFinancialRecord::query()
-                ->where('business_unit_code', 'fmcg')
+                ->where('business_unit_code', 'aqua')
                 ->where('entity_code', 'MJS')
                 ->where('report_type', 'pnl')
                 ->delete();
@@ -1205,24 +1227,22 @@ class ExcelIngestionService
                     continue;
                 }
 
-                $upper = strtoupper($accName);
-                if (str_contains($upper, 'REVENUE') || str_contains($upper, 'PENDAPATAN') || str_starts_with($accCode, '4000')) {
-                    $currentCategory = 'revenue';
-                }
-                if (str_contains($upper, 'COST OF GOODS SOLD') || str_contains($upper, 'HARGA POKOK') || str_starts_with($accCode, '5000')) {
-                    $currentCategory = 'cogs';
-                }
-                if (str_contains($upper, 'OPERATING EXPENSES') || str_contains($upper, 'BIAYA OPERASIONAL') || str_starts_with($accCode, '6000')) {
-                    $currentCategory = 'opex';
-                }
-                if (str_contains($upper, 'OTHER EXPENSE') || (str_contains($upper, 'DILUAR USAHA') && str_starts_with($accCode, '8000'))) {
-                    $currentCategory = 'other_expense';
-                }
-                if (str_contains($upper, 'OTHER INCOME') || (str_contains($upper, 'DILUAR USAHA') && str_starts_with($accCode, '9000'))) {
-                    $currentCategory = 'other_income';
+                // Abaikan baris header, subtotal, dan ringkasan laba rugi yang tidak memiliki kode akun operasional
+                if (empty($accCode) || ! preg_match('/^[45689]/', $accCode)) {
+                    continue;
                 }
 
-                if (empty($accCode) && (str_contains($upper, 'TOTAL') || str_contains($upper, 'GROSS PROFIT') || str_contains($upper, 'LABA'))) {
+                if (str_starts_with($accCode, '4')) {
+                    $currentCategory = 'revenue';
+                } elseif (str_starts_with($accCode, '5')) {
+                    $currentCategory = 'cogs';
+                } elseif (str_starts_with($accCode, '6')) {
+                    $currentCategory = 'opex';
+                } elseif (str_starts_with($accCode, '8')) {
+                    $currentCategory = 'other_expense';
+                } elseif (str_starts_with($accCode, '9')) {
+                    $currentCategory = 'other_income';
+                } else {
                     continue;
                 }
 
@@ -1233,7 +1253,7 @@ class ExcelIngestionService
                     }
 
                     $batch[] = [
-                        'business_unit_code' => 'fmcg',
+                        'business_unit_code' => 'aqua',
                         'entity_code' => 'MJS',
                         'period' => $period,
                         'report_type' => 'pnl',
@@ -1244,7 +1264,7 @@ class ExcelIngestionService
                         'amount' => (float) $val,
                         'status' => 'final',
                         'source_type' => 'excel_upload',
-                        'notes' => $filename ?: 'Laporan Resmi CV Mekar Jaya Sentosa',
+                        'notes' => $filename ?: 'Laporan Resmi CV Mekar Jaya Sentosa (AQUA)',
                         'created_at' => now(),
                         'updated_at' => now(),
                     ];
@@ -1270,7 +1290,7 @@ class ExcelIngestionService
             $period = ! empty($dateColumns) ? reset($dateColumns) : '2026-09-01';
 
             GlobalFinancialRecord::query()
-                ->where('business_unit_code', 'fmcg')
+                ->where('business_unit_code', 'aqua')
                 ->where('entity_code', 'MJS')
                 ->where('report_type', 'balance_sheet')
                 ->delete();
@@ -1285,7 +1305,7 @@ class ExcelIngestionService
 
                 if (! empty($nameLeft) && is_numeric($amountLeft)) {
                     $batchBs[] = [
-                        'business_unit_code' => 'fmcg',
+                        'business_unit_code' => 'aqua',
                         'entity_code' => 'MJS',
                         'period' => $period,
                         'report_type' => 'balance_sheet',
@@ -1296,7 +1316,7 @@ class ExcelIngestionService
                         'amount' => (float) $amountLeft,
                         'status' => 'final',
                         'source_type' => 'excel_upload',
-                        'notes' => $filename ?: 'Neraca Resmi CV Mekar Jaya Sentosa',
+                        'notes' => $filename ?: 'Neraca Resmi CV Mekar Jaya Sentosa (AQUA)',
                         'created_at' => now(),
                         'updated_at' => now(),
                     ];
@@ -1309,12 +1329,12 @@ class ExcelIngestionService
 
                 if (! empty($nameRight) && is_numeric($amountRight)) {
                     $category = 'liability';
-                    if (str_contains(strtoupper($nameRight), 'EQUITY') || str_contains(strtoupper($nameRight), 'EARNING') || str_contains(strtoupper($nameRight), 'INCOME') || $codeRight === 'L') {
+                    if (str_contains(strtoupper($nameRight), 'EQUITY') || str_contains(strtoupper($nameRight), 'EARNING') || str_contains(strtoupper($nameRight), 'INCOME') || str_contains(strtoupper($nameRight), 'PRIVE') || $codeRight === 'L') {
                         $category = 'equity';
                     }
 
                     $batchBs[] = [
-                        'business_unit_code' => 'fmcg',
+                        'business_unit_code' => 'aqua',
                         'entity_code' => 'MJS',
                         'period' => $period,
                         'report_type' => 'balance_sheet',
@@ -1325,7 +1345,7 @@ class ExcelIngestionService
                         'amount' => (float) $amountRight,
                         'status' => 'final',
                         'source_type' => 'excel_upload',
-                        'notes' => $filename ?: 'Neraca Resmi CV Mekar Jaya Sentosa',
+                        'notes' => $filename ?: 'Neraca Resmi CV Mekar Jaya Sentosa (AQUA)',
                         'created_at' => now(),
                         'updated_at' => now(),
                     ];
@@ -1340,11 +1360,19 @@ class ExcelIngestionService
 
         return [
             'success' => true,
-            'business_unit' => 'fmcg',
+            'business_unit' => 'aqua',
             'sheets_processed' => ['PL', 'BS'],
             'records_inserted' => $totalRecords,
-            'summary_type' => 'mjs_holding',
+            'summary_type' => 'aqua_danone',
         ];
+    }
+
+    /**
+     * Alias backwards-compatibility untuk laporan CV MJS Pusat.
+     */
+    protected function ingestMjsSummaryFile(Spreadsheet $spreadsheet, ?string $filename = null): array
+    {
+        return $this->ingestAquaSummaryFile($spreadsheet, $filename);
     }
 
     /**

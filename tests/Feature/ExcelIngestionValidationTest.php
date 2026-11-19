@@ -43,7 +43,7 @@ class ExcelIngestionValidationTest extends TestCase
 
             // Harus melempar exception jika dipaksa validasi ke XTRANS
             $this->expectException(\InvalidArgumentException::class);
-            $this->expectExceptionMessage('Validasi Format Gagal: File ini terdeteksi sebagai Distribusi FMCG');
+            $this->expectExceptionMessage('Validasi Format Gagal: File ini terdeteksi sebagai Unilever');
             $service->validateBusinessUnit($fmcgFile, 'xtrans');
         } else {
             $this->markTestSkipped('Sample file not found');
@@ -57,11 +57,11 @@ class ExcelIngestionValidationTest extends TestCase
 
         if (file_exists($summaryFile)) {
             $detected = $service->detectFileType($summaryFile);
-            $this->assertEquals('mjs_summary', $detected['type']);
+            $this->assertEquals('aqua', $detected['type']);
 
             // Harus melempar exception jika dipaksa validasi ke FMCG 9 Depo
             $this->expectException(\InvalidArgumentException::class);
-            $this->expectExceptionMessage('Validasi Format Gagal: File ini terdeteksi sebagai Laporan Rekap CV MJS Pusat');
+            $this->expectExceptionMessage('Validasi Format Gagal: File ini terdeteksi sebagai AQUA');
             $service->validateBusinessUnit($summaryFile, 'fmcg');
         } else {
             $this->markTestSkipped('Sample file not found');
@@ -73,7 +73,7 @@ class ExcelIngestionValidationTest extends TestCase
         $user = User::first() ?? User::factory()->create();
 
         GlobalBusinessUnit::firstOrCreate(['code' => 'fmcg'], [
-            'name' => 'FMCG',
+            'name' => 'Unilever',
             'data_source' => 'excel',
         ]);
 
@@ -95,12 +95,12 @@ class ExcelIngestionValidationTest extends TestCase
             $response->assertOk();
             $response->assertJson([
                 'success' => true,
-                'detected_type' => 'mjs_summary',
+                'detected_type' => 'aqua',
                 'target_type' => 'fmcg',
                 'is_type_match' => false,
                 'can_import' => false,
             ]);
-            $this->assertStringContainsString('Laporan Rekap CV MJS Pusat', $response->json('match_error'));
+            $this->assertStringContainsString('Laporan AQUA Danone', $response->json('match_error'));
         } else {
             $this->markTestSkipped('Sample file not found');
         }
@@ -212,6 +212,24 @@ class ExcelIngestionValidationTest extends TestCase
             $response->assertOk();
             $this->assertTrue($response->json('is_duplicate'));
             $this->assertStringContainsString('sudah pernah diimpor', $response->json('duplicate_info.message'));
+        } else {
+            $this->markTestSkipped('Sample file not found');
+        }
+    }
+
+    public function test_it_accepts_and_imports_aqua_file(): void
+    {
+        $service = new ExcelIngestionService;
+        $summaryFile = 'D:/BKU MJS/MJS SEPT 26.xlsx';
+
+        if (file_exists($summaryFile)) {
+            $detected = $service->detectFileType($summaryFile);
+            $this->assertEquals('aqua', $detected['type']);
+
+            $res = $service->ingestAquaFile($summaryFile);
+            $this->assertTrue($res['success']);
+            $this->assertEquals('aqua', $res['business_unit']);
+            $this->assertGreaterThan(0, $res['records_inserted']);
         } else {
             $this->markTestSkipped('Sample file not found');
         }

@@ -264,13 +264,16 @@ class GlobalFinanceController extends Controller
                 $msg = "{$unitName}: Berhasil mengimpor {$res['records_inserted']} data transaksi via Template Universal Holding.";
             } elseif ($type === 'fmcg') {
                 $res = $service->ingestFmcgFile($fullPath, $filename);
-                $msg = "FMCG: Berhasil mengimpor {$res['records_inserted']} data transaksi dari ".count($res['sheets_processed'] ?? []).' lembar kerja (sheets).';
+                $msg = "Unilever: Berhasil mengimpor {$res['records_inserted']} data transaksi dari ".count($res['sheets_processed'] ?? []).' lembar kerja (sheets).';
+            } elseif ($type === 'aqua') {
+                $res = $service->ingestAquaFile($fullPath, $filename);
+                $msg = "AQUA: Berhasil mengimpor {$res['records_inserted']} data transaksi P&L dan Neraca Danone AQUA.";
             } elseif ($type === 'ccod') {
                 $res = $service->ingestFmcgDepartmentFile($fullPath, $filename);
-                $msg = "CCOD: Berhasil mengimpor {$res['records_inserted']} data transaksi dari ".($res['departments_count'] ?? 12).' cabang PT MJS Multikarya.';
+                $msg = "CCOD: Berhasil mengimpor {$res['records_inserted']} data transaksi dari ".($res['departments_count'] ?? 12).' cabang.';
             } elseif ($type === 'xtrans') {
                 $res = $service->ingestXtransFile($fullPath, $filename);
-                $msg = "Ekspedisi: Berhasil mengimpor {$res['records_inserted']} data P&L dan Neraca PT Mekar Jaya Xtrans Jaya.";
+                $msg = "Ekspedisi: Berhasil mengimpor {$res['records_inserted']} data P&L dan Neraca armada ekspedisi.";
             } else {
                 $res = $service->ingestUniversalTemplate($fullPath, $type, $filename);
                 $unitName = GlobalBusinessUnit::where('code', $type)->value('name') ?? strtoupper($type);

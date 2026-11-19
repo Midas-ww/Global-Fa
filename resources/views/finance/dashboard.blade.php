@@ -19,8 +19,8 @@
         <div class="flex items-center gap-2 flex-wrap">
             <!-- Period Selector -->
             <form action="{{ route('finance.dashboard') }}" method="GET" class="flex items-center">
-                <div class="flex items-center gap-1.5 px-3 py-2 bg-white border border-[#edf0ee] rounded-xl shadow-2xs">
-                    <i data-lucide="calendar" class="w-3.5 h-3.5 text-[#059669] shrink-0"></i>
+                <div class="flex items-center gap-1.5 px-3 py-2 bg-white border border-[#f0efe6] rounded-xl shadow-2xs">
+                    <i data-lucide="calendar" class="w-3.5 h-3.5 text-[#d97706] shrink-0"></i>
                     <label for="periodSelectDash" class="text-xs font-semibold text-slate-500">Periode:</label>
                     <select name="period" id="periodSelectDash" onchange="this.form.submit()" class="text-xs font-bold font-mono bg-transparent text-slate-900 focus:outline-none cursor-pointer">
                         @foreach($availablePeriods as $p)
@@ -33,13 +33,13 @@
             </form>
 
             <a href="{{ route('finance.sync') }}"
-               class="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-[#edf0ee] rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer">
+               class="px-3.5 py-2 bg-white hover:bg-amber-50/60 text-slate-700 border border-[#f0efe6] rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer">
                 <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-slate-500"></i>
                 <span>Data Ingestion</span>
             </a>
             <a href="{{ route('finance.pnl', ['period' => $selectedPeriod]) }}"
-               class="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-800 border border-[#edf0ee] rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer">
-                <i data-lucide="file-text" class="w-3.5 h-3.5 text-emerald-600"></i>
+               class="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold border border-amber-400 rounded-xl text-xs transition-all flex items-center gap-1.5 shadow-xs cursor-pointer">
+                <i data-lucide="file-text" class="w-3.5 h-3.5 text-slate-950"></i>
                 <span>Laporan P&L</span>
             </a>
         </div>
@@ -49,15 +49,15 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         
         <!-- Card 1: Total Revenue -->
-        <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col justify-between">
+        <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs hover:shadow-md hover:border-amber-300 transition-all duration-200 flex flex-col justify-between">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-xl bg-[#ecfdf5] text-[#065f46] flex items-center justify-center border border-[#a7f3d0]">
-                        <i data-lucide="dollar-sign" class="w-4 h-4"></i>
+                    <div class="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-950 flex items-center justify-center border border-amber-300">
+                        <i data-lucide="dollar-sign" class="w-4 h-4 text-amber-700"></i>
                     </div>
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Total Revenue</span>
                 </div>
-                <a href="{{ route('finance.pnl', ['period' => $selectedPeriod]) }}" class="text-slate-400 hover:text-[#065f46] p-1 rounded-lg hover:bg-[#ecfdf5]/60 transition-colors">
+                <a href="{{ route('finance.pnl', ['period' => $selectedPeriod]) }}" class="text-slate-400 hover:text-amber-700 p-1 rounded-lg hover:bg-amber-50 transition-colors">
                     <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
                 </a>
             </div>
@@ -67,7 +67,7 @@
                     Rp {{ number_format($summary['kpis']['revenue'] ?? 0, 0, ',', '.') }}
                 </div>
                 <div class="flex items-center gap-1.5">
-                    <span class="px-2 py-0.5 rounded-full font-mono text-[11px] font-bold bg-[#ecfdf5] text-[#065f46] border border-[#a7f3d0]">
+                    <span class="px-2 py-0.5 rounded-full font-mono text-[11px] font-bold bg-amber-500/15 text-amber-950 border border-amber-300">
                         +100%
                     </span>
                 </div>
@@ -87,7 +87,7 @@
                     </div>
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-500">HPP & Beban Usaha</span>
                 </div>
-                <a href="{{ route('finance.sync') }}" class="text-slate-400 hover:text-[#065f46] p-1 rounded-lg hover:bg-[#ecfdf5]/60 transition-colors">
+                <a href="{{ route('finance.sync') }}" class="text-slate-400 hover:text-amber-700 p-1 rounded-lg hover:bg-amber-50 transition-colors">
                     <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
                 </a>
             </div>
@@ -106,15 +106,15 @@
         </div>
 
         <!-- Card 3: Laba Kotor (Gross Profit) -->
-        <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col justify-between">
+        <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs hover:shadow-md hover:border-amber-300 transition-all duration-200 flex flex-col justify-between">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-xl bg-[#ecfdf5] text-[#065f46] flex items-center justify-center border border-[#a7f3d0]">
-                        <i data-lucide="trending-up" class="w-4 h-4"></i>
+                    <div class="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-950 flex items-center justify-center border border-amber-300">
+                        <i data-lucide="trending-up" class="w-4 h-4 text-amber-700"></i>
                     </div>
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Laba Kotor (GP)</span>
                 </div>
-                <a href="{{ route('finance.pnl', ['period' => $selectedPeriod]) }}" class="text-slate-400 hover:text-[#065f46] p-1 rounded-lg hover:bg-[#ecfdf5]/60 transition-colors">
+                <a href="{{ route('finance.pnl', ['period' => $selectedPeriod]) }}" class="text-slate-400 hover:text-amber-700 p-1 rounded-lg hover:bg-amber-50 transition-colors">
                     <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
                 </a>
             </div>
@@ -124,7 +124,7 @@
                     Rp {{ number_format($summary['kpis']['gross_profit'] ?? 0, 0, ',', '.') }}
                 </div>
                 <div class="flex items-center gap-1.5">
-                    <span class="px-2 py-0.5 rounded-full font-mono text-[11px] font-bold bg-[#ecfdf5] text-[#065f46] border border-[#a7f3d0]">
+                    <span class="px-2 py-0.5 rounded-full font-mono text-[11px] font-bold bg-amber-500/15 text-amber-950 border border-amber-300">
                         Margin {{ $summary['kpis']['gross_margin_percentage'] ?? 0 }}%
                     </span>
                 </div>
@@ -137,15 +137,15 @@
             $net = $summary['kpis']['net_profit'] ?? 0;
             $isNetPositive = $net >= 0;
         @endphp
-        <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col justify-between">
+        <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs hover:shadow-md hover:border-amber-300 transition-all duration-200 flex flex-col justify-between">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-xl bg-[#ecfdf5] text-[#065f46] flex items-center justify-center border border-[#a7f3d0]">
-                        <i data-lucide="landmark" class="w-4 h-4"></i>
+                    <div class="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-950 flex items-center justify-center border border-amber-300">
+                        <i data-lucide="landmark" class="w-4 h-4 text-amber-700"></i>
                     </div>
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Laba Bersih (Net)</span>
                 </div>
-                <a href="{{ route('finance.pnl', ['period' => $selectedPeriod]) }}" class="text-slate-400 hover:text-[#065f46] p-1 rounded-lg hover:bg-[#ecfdf5]/60 transition-colors">
+                <a href="{{ route('finance.pnl', ['period' => $selectedPeriod]) }}" class="text-slate-400 hover:text-amber-700 p-1 rounded-lg hover:bg-amber-50 transition-colors">
                     <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
                 </a>
             </div>
@@ -155,7 +155,7 @@
                     Rp {{ number_format($net, 0, ',', '.') }}
                 </div>
                 <div class="flex items-center gap-1.5">
-                    <span class="px-2 py-0.5 rounded-full font-mono text-[11px] font-bold bg-[#ecfdf5] text-[#065f46] border border-[#a7f3d0]">
+                    <span class="px-2 py-0.5 rounded-full font-mono text-[11px] font-bold bg-amber-500/15 text-amber-950 border border-amber-300">
                         {{ $isNetPositive ? '+' : '' }}{{ $summary['kpis']['net_margin_percentage'] ?? 0 }}%
                     </span>
                 </div>
@@ -207,28 +207,28 @@
                     </div>
                 </div>
 
-                <!-- Legend Indicators (Kombinasi Hijau & Kuning Seirama) -->
+                <!-- Legend Indicators (Executive Golden Yellow Palette) -->
                 <div class="mt-3 flex flex-wrap items-center gap-2.5 text-xs font-semibold">
-                    <span class="inline-flex items-center gap-1.5 text-emerald-950 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200/60">
-                        <span class="w-2.5 h-2.5 rounded-full bg-[#059669]"></span>
+                    <span class="inline-flex items-center gap-1.5 text-amber-950 bg-amber-50 px-2.5 py-0.5 rounded-md border border-amber-300">
+                        <span class="w-2.5 h-2.5 rounded-full bg-[#f59e0b]"></span>
                         Omzet Penjualan
                     </span>
-                    <span class="inline-flex items-center gap-1.5 text-amber-950 bg-amber-50 px-2.5 py-0.5 rounded-md border border-amber-200/60">
+                    <span class="inline-flex items-center gap-1.5 text-yellow-950 bg-yellow-50 px-2.5 py-0.5 rounded-md border border-yellow-200">
                         <span class="w-2.5 h-2.5 rounded-full bg-[#eab308]"></span>
                         HPP (COGS)
                     </span>
-                    <span class="inline-flex items-center gap-1.5 text-amber-900 bg-amber-50 px-2.5 py-0.5 rounded-md border border-amber-200/60">
+                    <span class="inline-flex items-center gap-1.5 text-amber-900 bg-amber-50 px-2.5 py-0.5 rounded-md border border-amber-200">
                         <span class="w-2.5 h-2.5 rounded-full bg-[#d97706]"></span>
                         Beban OPEX
                     </span>
-                    <span class="inline-flex items-center gap-1.5 text-[#065f46] bg-[#ecfdf5] px-2.5 py-0.5 rounded-md border border-[#a7f3d0]">
-                        <span class="w-2.5 h-2.5 rounded-full bg-[#059669]"></span>
+                    <span class="inline-flex items-center gap-1.5 text-amber-950 bg-amber-100/70 px-2.5 py-0.5 rounded-md border border-amber-300">
+                        <span class="w-2.5 h-2.5 rounded-full bg-[#b45309]"></span>
                         Laba Bersih
                     </span>
                 </div>
 
                 <!-- Micro Stats Strip -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 py-2.5 px-3 bg-[#fbfdfa] rounded-xl border border-[#edf0ee] my-3.5 text-xs">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 py-2.5 px-3 bg-[#faf9f5] rounded-xl border border-[#f0efe6] my-3.5 text-xs">
                     <div>
                         <span class="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Total Omzet Periode</span>
                         <span class="font-bold text-slate-900 font-mono text-xs sm:text-sm">Rp {{ number_format($summary['kpis']['revenue'] ?? 0, 0, ',', '.') }}</span>
@@ -244,7 +244,7 @@
                             $avgOmzet = count($summary['monthly_trends'] ?? []) > 0 ? array_sum(array_column($summary['monthly_trends'], 'revenue')) / count($summary['monthly_trends']) : 0;
                         @endphp
                         <span class="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Rata-rata/Bulan ({{ count($summary['monthly_trends']) }} Periode)</span>
-                        <span class="font-bold text-emerald-700 font-mono text-xs sm:text-sm">Rp {{ number_format($avgOmzet, 0, ',', '.') }}</span>
+                        <span class="font-bold text-amber-800 font-mono text-xs sm:text-sm">Rp {{ number_format($avgOmzet, 0, ',', '.') }}</span>
                     </div>
                 </div>
 
@@ -254,14 +254,14 @@
                 </div>
             </div>
 
-            <div class="pt-3 border-t border-[#edf0ee] flex items-center justify-between text-xs text-slate-500 mt-2">
+            <div class="pt-3 border-t border-[#f0efe6] flex items-center justify-between text-xs text-slate-500 mt-2">
                 <span>Data historis 12 periode pembukuan grup holding</span>
                 <span class="font-semibold text-slate-700 font-mono">Periode Aktif: {{ \Carbon\Carbon::parse($selectedPeriod)->translatedFormat('F Y') }}</span>
             </div>
         </div>
 
         <!-- DOUGHNUT BREAKDOWN: KOLOM KANAN (5 Kolom) -->
-        <div class="lg:col-span-5 bg-white rounded-2xl border border-[#edf0ee] p-5 sm:p-6 shadow-xs flex flex-col justify-between">
+        <div class="lg:col-span-5 bg-white rounded-2xl border border-[#f0efe6] p-5 sm:p-6 shadow-xs flex flex-col justify-between">
             <div>
                 <!-- Header -->
                 <div class="flex items-center justify-between mb-2">
@@ -269,7 +269,7 @@
                         <h2 class="text-base font-bold text-slate-900">Distribusi Unit Bisnis Holding</h2>
                         <p class="text-slate-500 text-xs mt-0.5">Proporsi kontribusi omzet per pilar usaha</p>
                     </div>
-                    <span class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-[#ecfdf5] text-[#065f46] border border-[#a7f3d0]">
+                    <span class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-amber-500/15 text-amber-950 border border-amber-300">
                         {{ count($summary['by_business_unit'] ?? []) }} Pilar Usaha
                     </span>
                 </div>
@@ -319,19 +319,19 @@
                 </div>
             </div>
 
-            <div class="pt-3 border-t border-[#edf0ee] flex items-center justify-between text-xs text-slate-500 mt-4">
+            <div class="pt-3 border-t border-[#f0efe6] flex items-center justify-between text-xs text-slate-500 mt-4">
                 <span>Total Omzet: <strong class="text-slate-800 font-mono">Rp {{ number_format($summary['kpis']['revenue'] ?? 0, 0, ',', '.') }}</strong></span>
-                <span class="text-[11px] text-emerald-700 font-bold">100% Terkonsolidasi</span>
+                <span class="text-[11px] text-amber-700 font-bold">100% Terkonsolidasi</span>
             </div>
         </div>
 
     </div>
 
     <!-- 3. PROFIT & LOSS MONITORING & BUSINESS UNIT BREAKDOWN -->
-    <div class="bg-white rounded-2xl border border-[#edf0ee] shadow-xs overflow-hidden">
+    <div class="bg-white rounded-2xl border border-[#f0efe6] shadow-xs overflow-hidden">
         
         <!-- Header with Time Filter Tabs -->
-        <div class="p-5 border-b border-[#edf0ee] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="p-5 border-b border-[#f0efe6] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
                 <h3 class="text-base font-bold text-slate-900 tracking-tight">Profit & Loss Monitoring</h3>
                 <p class="text-xs text-slate-400">Distribusi omzet, HPP, beban operasional dan margin per unit bisnis</p>
@@ -339,7 +339,7 @@
 
             <!-- Time Tabs (Flat Clean - NO GRADIENT) -->
             <div class="flex items-center gap-2">
-                <span class="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#f0fdf4] text-[#065f46] border border-[#a7f3d0]">
+                <span class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500/15 text-amber-950 border border-amber-300">
                     Monthly
                 </span>
                 <span class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-500 hover:text-slate-800 cursor-pointer">
@@ -352,15 +352,15 @@
         </div>
 
         <!-- Unit Bisnis Progress Bars (Solid Flat Colors) -->
-        <div class="p-5 border-b border-[#edf0ee] bg-[#fafcfa]">
+        <div class="p-5 border-b border-[#f0efe6] bg-[#faf9f5]">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 @foreach($summary['by_business_unit'] as $bu)
                 @php
                     $totalRev = $summary['kpis']['revenue'] ?? 1;
                     $pct = $totalRev > 0 ? round(($bu['revenue'] / $totalRev) * 100, 1) : 0;
-                    $toneColor = $bu['color'] ?: '#047857';
+                    $toneColor = $bu['color'] ?: '#d97706';
                 @endphp
-                <div class="bg-white p-3.5 rounded-xl border border-[#edf0ee]">
+                <div class="bg-white p-3.5 rounded-xl border border-[#f0efe6]">
                     <div class="flex items-center justify-between text-xs mb-2">
                         <span class="font-bold text-slate-800 truncate">{{ $bu['name'] }}</span>
                         <span class="font-mono font-bold text-slate-900">{{ $pct }}%</span>
@@ -380,7 +380,7 @@
         <div class="overflow-x-auto custom-scrollbar">
             <table class="w-full text-left border-collapse text-xs">
                 <thead>
-                    <tr class="bg-white text-slate-400 font-bold uppercase tracking-wider border-b border-[#edf0ee] text-[10px]">
+                    <tr class="bg-white text-slate-400 font-bold uppercase tracking-wider border-b border-[#f0efe6] text-[10px]">
                         <th class="p-4 pl-6">Unit Bisnis</th>
                         <th class="p-4 text-right">Pendapatan (Revenue)</th>
                         <th class="p-4 text-right">HPP (COGS)</th>
@@ -390,10 +390,10 @@
                         <th class="p-4 text-center pr-6">Net Margin</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-[#edf0ee] font-medium text-slate-700">
+                <tbody class="divide-y divide-[#f0efe6] font-medium text-slate-700">
                     @foreach($summary['by_business_unit'] as $bu)
-                    @php $tableTone = $bu['color'] ?: '#047857'; @endphp
-                    <tr class="hover:bg-[#fbfdfa] transition-colors">
+                    @php $tableTone = $bu['color'] ?: '#d97706'; @endphp
+                    <tr class="hover:bg-amber-50/40 transition-colors">
                         <td class="p-4 pl-6 font-bold text-slate-900 flex items-center gap-2.5">
                             <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color: {{ $tableTone }}"></span>
                             <span>{{ $bu['name'] }}</span>
@@ -406,7 +406,7 @@
                             Rp {{ number_format($bu['net_profit'], 0, ',', '.') }}
                         </td>
                         <td class="p-4 text-center pr-6">
-                            <span class="px-2.5 py-0.5 rounded-full font-bold text-[11px] {{ $bu['net_profit'] >= 0 ? 'bg-[#ecfdf5] text-[#065f46] border border-[#a7f3d0]' : 'bg-rose-50 text-rose-700 border border-rose-200' }}">
+                            <span class="px-2.5 py-0.5 rounded-full font-bold text-[11px] {{ $bu['net_profit'] >= 0 ? 'bg-amber-50 text-amber-900 border border-amber-200' : 'bg-rose-50 text-rose-700 border border-rose-200' }}">
                                 {{ $bu['net_margin'] }}%
                             </span>
                         </td>
@@ -414,9 +414,9 @@
                     @endforeach
 
                     <!-- TOTAL ROW -->
-                    <tr class="bg-[#f0fdf4] font-black text-slate-900 border-t-2 border-[#a7f3d0]">
+                    <tr class="bg-amber-50/70 font-black text-slate-900 border-t-2 border-amber-300">
                         <td class="p-4 pl-6 uppercase text-[11px] tracking-wider text-slate-900">TOTAL HOLDING TERKONSOLIDASI</td>
-                        <td class="p-4 text-right font-mono text-[#15803d]">Rp {{ number_format($summary['kpis']['revenue'] ?? 0, 0, ',', '.') }}</td>
+                        <td class="p-4 text-right font-mono text-slate-900 font-black">Rp {{ number_format($summary['kpis']['revenue'] ?? 0, 0, ',', '.') }}</td>
                         <td class="p-4 text-right font-mono">Rp {{ number_format($summary['kpis']['cogs'] ?? 0, 0, ',', '.') }}</td>
                         <td class="p-4 text-right font-mono">Rp {{ number_format($summary['kpis']['gross_profit'] ?? 0, 0, ',', '.') }}</td>
                         <td class="p-4 text-right font-mono">Rp {{ number_format($summary['kpis']['opex'] ?? 0, 0, ',', '.') }}</td>
@@ -424,7 +424,7 @@
                             Rp {{ number_format($summary['kpis']['net_profit'] ?? 0, 0, ',', '.') }}
                         </td>
                         <td class="p-4 text-center pr-6">
-                            <span class="px-2.5 py-1 rounded-full font-black text-xs bg-[#ecfdf5] text-[#065f46] border border-[#a7f3d0]">
+                            <span class="px-2.5 py-1 rounded-full font-black text-xs bg-amber-100 text-amber-950 border border-amber-300">
                                 {{ $summary['kpis']['net_margin_percentage'] ?? 0 }}%
                             </span>
                         </td>
@@ -477,11 +477,11 @@
 
         const isLine = type === 'line';
 
-        // Warna Harmonis (Kombinasi Hijau & Kuning Seirama)
-        // 1. Omzet Penjualan (Forest Emerald Green)
+        // Warna Harmonis (Executive Warm Golden Yellow Palette)
+        // 1. Omzet Penjualan (Golden Amber)
         const revGrad = ctx.createLinearGradient(0, 0, 0, 320);
-        revGrad.addColorStop(0, 'rgba(5, 150, 105, 0.95)');
-        revGrad.addColorStop(1, isLine ? 'rgba(5, 150, 105, 0.08)' : 'rgba(5, 150, 105, 0.45)');
+        revGrad.addColorStop(0, 'rgba(245, 158, 11, 0.95)');
+        revGrad.addColorStop(1, isLine ? 'rgba(245, 158, 11, 0.08)' : 'rgba(245, 158, 11, 0.45)');
 
         // 2. HPP (COGS) (Warm Golden Yellow)
         const cogsGrad = ctx.createLinearGradient(0, 0, 0, 320);
@@ -493,31 +493,31 @@
         opexGrad.addColorStop(0, 'rgba(217, 119, 6, 0.90)');
         opexGrad.addColorStop(1, isLine ? 'rgba(217, 119, 6, 0.08)' : 'rgba(217, 119, 6, 0.45)');
 
-        // 4. Laba Bersih (Vibrant Lime Green)
+        // 4. Laba Bersih (Rich Deep Gold/Bronze)
         const profitGrad = ctx.createLinearGradient(0, 0, 0, 320);
-        profitGrad.addColorStop(0, 'rgba(16, 229, 143, 0.95)');
-        profitGrad.addColorStop(1, isLine ? 'rgba(16, 229, 143, 0.08)' : 'rgba(16, 229, 143, 0.45)');
+        profitGrad.addColorStop(0, 'rgba(180, 83, 9, 0.95)');
+        profitGrad.addColorStop(1, isLine ? 'rgba(180, 83, 9, 0.08)' : 'rgba(180, 83, 9, 0.45)');
 
         const datasets = isLine ? [
             {
                 label: 'Omzet Penjualan',
                 data: revData,
-                borderColor: '#059669',
-                backgroundColor: '#059669',
+                borderColor: '#f59e0b',
+                backgroundColor: '#f59e0b',
                 borderWidth: 2.5,
                 tension: 0.3,
                 fill: false,
                 pointRadius: 4,
                 pointHoverRadius: 6,
-                pointBackgroundColor: '#059669',
+                pointBackgroundColor: '#f59e0b',
                 pointBorderColor: '#ffffff',
                 pointBorderWidth: 2,
             },
             {
                 label: 'HPP (COGS)',
                 data: cogsData,
-                borderColor: '#ca8a04',
-                backgroundColor: '#ca8a04',
+                borderColor: '#eab308',
+                backgroundColor: '#eab308',
                 borderWidth: 2,
                 tension: 0.3,
                 fill: false,
@@ -544,14 +544,14 @@
             {
                 label: 'Laba Bersih',
                 data: profitData,
-                borderColor: '#059669',
-                backgroundColor: '#059669',
+                borderColor: '#b45309',
+                backgroundColor: '#b45309',
                 borderWidth: 2.5,
                 tension: 0.3,
                 fill: false,
                 pointRadius: 4,
                 pointHoverRadius: 6,
-                pointBackgroundColor: '#059669',
+                pointBackgroundColor: '#b45309',
                 pointBorderColor: '#ffffff',
                 pointBorderWidth: 2,
             }
@@ -560,7 +560,7 @@
                 label: 'Omzet Penjualan',
                 data: revData,
                 backgroundColor: revGrad,
-                borderColor: '#059669',
+                borderColor: '#f59e0b',
                 borderWidth: 1,
                 borderRadius: { topLeft: 5, topRight: 5, bottomLeft: 0, bottomRight: 0 },
                 barPercentage: 0.7,
@@ -570,7 +570,7 @@
                 label: 'HPP (COGS)',
                 data: cogsData,
                 backgroundColor: cogsGrad,
-                borderColor: '#ca8a04',
+                borderColor: '#eab308',
                 borderWidth: 1,
                 borderRadius: { topLeft: 5, topRight: 5, bottomLeft: 0, bottomRight: 0 },
                 barPercentage: 0.7,
@@ -590,7 +590,7 @@
                 label: 'Laba Bersih',
                 data: profitData,
                 backgroundColor: profitGrad,
-                borderColor: '#059669',
+                borderColor: '#b45309',
                 borderWidth: 1,
                 borderRadius: { topLeft: 5, topRight: 5, bottomLeft: 0, bottomRight: 0 },
                 barPercentage: 0.7,

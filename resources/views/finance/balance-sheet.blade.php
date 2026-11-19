@@ -6,22 +6,22 @@
 <div class="space-y-6 pb-12">
 
     <!-- FILTER TABS & STATUS BAR -->
-    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-[#edf0ee] shadow-xs space-y-4">
+    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-[#f0efe6] shadow-xs space-y-4">
         <!-- TOP: Quick Tabs for Business Unit -->
         <div class="flex items-center justify-between flex-wrap gap-3">
             <div class="flex items-center gap-1.5 flex-wrap">
                 <!-- ALL / CONSOLIDATED TAB -->
                 <a href="{{ route('finance.balance-sheet', ['period' => $selectedPeriod]) }}"
-                   class="px-3.5 py-1.5 rounded-tl-[1rem] rounded-br-[1rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1rem] hover:rounded-bl-[1rem] hover:rounded-tl-none hover:rounded-br-none text-xs font-bold transition-all duration-300 cursor-pointer {{ empty($selectedBu) ? 'bg-[#ecfdf5] text-[#065f46] border border-[#a7f3d0] shadow-2xs' : 'bg-white hover:bg-[#ecfdf5]/50 text-slate-700 hover:text-[#065f46] border border-slate-200' }}">
+                   class="px-3.5 py-1.5 rounded-tl-[1rem] rounded-br-[1rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1rem] hover:rounded-bl-[1rem] hover:rounded-tl-none hover:rounded-br-none text-xs font-bold transition-all duration-300 cursor-pointer {{ empty($selectedBu) ? 'bg-amber-500/15 text-amber-950 border border-amber-300 shadow-2xs' : 'bg-white hover:bg-amber-50 text-slate-700 hover:text-amber-900 border border-slate-200' }}">
                     <span class="flex items-center gap-1.5">
-                        <i data-lucide="layers" class="w-3.5 h-3.5 {{ empty($selectedBu) ? 'text-[#065f46]' : 'text-slate-400' }}"></i>
+                        <i data-lucide="layers" class="w-3.5 h-3.5 {{ empty($selectedBu) ? 'text-amber-700' : 'text-slate-400' }}"></i>
                         <span>Semua (Konsolidasi Holding)</span>
                     </span>
                 </a>
 
                 @foreach($businessUnits as $bu)
                 <a href="{{ route('finance.balance-sheet', ['period' => $selectedPeriod, 'business_unit' => $bu['code']]) }}"
-                   class="px-3.5 py-1.5 rounded-tl-[1rem] rounded-br-[1rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1rem] hover:rounded-bl-[1rem] hover:rounded-tl-none hover:rounded-br-none text-xs font-bold transition-all duration-300 cursor-pointer {{ $selectedBu === $bu['code'] ? 'bg-[#ecfdf5] text-[#065f46] border border-[#a7f3d0] shadow-2xs' : 'bg-white hover:bg-[#ecfdf5]/50 text-slate-700 hover:text-[#065f46] border border-slate-200' }}">
+                   class="px-3.5 py-1.5 rounded-tl-[1rem] rounded-br-[1rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1rem] hover:rounded-bl-[1rem] hover:rounded-tl-none hover:rounded-br-none text-xs font-bold transition-all duration-300 cursor-pointer {{ $selectedBu === $bu['code'] ? 'bg-amber-500/15 text-amber-950 border border-amber-300 shadow-2xs' : 'bg-white hover:bg-amber-50 text-slate-700 hover:text-amber-900 border border-slate-200' }}">
                     <span class="flex items-center gap-1.5">
                         <span class="w-2 h-2 rounded-full shrink-0" style="background-color: {{ $bu['color'] }}"></span>
                         <span>{{ $bu['name'] }}</span>
@@ -39,8 +39,8 @@
                     @if($selectedEntity)
                         <input type="hidden" name="entity" value="{{ $selectedEntity }}">
                     @endif
-                    <div class="flex items-center gap-1.5 px-3 py-1.5 bg-[#f8faf8] border border-[#edf0ee] rounded-xl shadow-2xs">
-                        <i data-lucide="calendar" class="w-3.5 h-3.5 text-[#ffd800] shrink-0"></i>
+                    <div class="flex items-center gap-1.5 px-3 py-1.5 bg-[#faf9f5] border border-[#f0efe6] rounded-xl shadow-2xs">
+                        <i data-lucide="calendar" class="w-3.5 h-3.5 text-[#d97706] shrink-0"></i>
                         <label for="periodSelectBs" class="text-xs font-semibold text-slate-500">Periode:</label>
                         <select name="period" id="periodSelectBs" onchange="this.form.submit()" class="text-xs font-bold font-mono bg-transparent text-slate-900 focus:outline-none cursor-pointer">
                             @foreach($availablePeriods as $p)
@@ -53,8 +53,8 @@
                 </form>
 
                 @if($bs['is_balanced'])
-                <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#ecfdf5] text-[#065f46] border border-[#a7f3d0] text-xs font-black shadow-2xs">
-                    <i data-lucide="check-circle" class="w-4 h-4 text-[#16a34a]"></i>
+                <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/15 text-amber-950 border border-amber-300 text-xs font-black shadow-2xs">
+                    <i data-lucide="check-circle" class="w-4 h-4 text-amber-700"></i>
                     <span class="hidden sm:inline">NERACA SEIMBANG</span>
                     <span class="sm:hidden">BALANCED</span>
                 </div>
@@ -82,20 +82,20 @@
             };
         @endphp
         @if(count($entities) > 0)
-        <div class="pt-3 border-t border-[#edf0ee] flex items-center justify-between flex-wrap gap-3">
+        <div class="pt-3 border-t border-[#f0efe6] flex items-center justify-between flex-wrap gap-3">
             <div class="flex items-center gap-1.5 flex-wrap">
                 <span class="text-xs font-bold text-slate-700 mr-1 flex items-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full shrink-0" style="background-color: {{ $activeBu['color'] ?? '#059669' }}"></span>
+                    <span class="w-2 h-2 rounded-full shrink-0" style="background-color: {{ $activeBu['color'] ?? '#d97706' }}"></span>
                     <span>{{ $entityLabel }} ({{ count($entities) }}):</span>
                 </span>
                 <div class="flex items-center gap-1.5 flex-wrap">
                     <a href="{{ route('finance.balance-sheet', ['period' => $selectedPeriod, 'business_unit' => $selectedBu]) }}"
-                       class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all {{ empty($selectedEntity) ? 'bg-[#ecfdf5] text-[#065f46] border border-[#a7f3d0] shadow-2xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200' }}">
+                       class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all {{ empty($selectedEntity) ? 'bg-amber-500/15 text-amber-950 border border-amber-300 shadow-2xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200' }}">
                         Semua Cabang
                     </a>
                     @foreach($entities as $e)
                     <a href="{{ route('finance.balance-sheet', ['period' => $selectedPeriod, 'business_unit' => $selectedBu, 'entity' => $e['code']]) }}"
-                       class="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all {{ $selectedEntity === $e['code'] ? 'bg-[#ecfdf5] text-[#065f46] font-bold border border-[#a7f3d0] shadow-2xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200' }}">
+                       class="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all {{ $selectedEntity === $e['code'] ? 'bg-amber-500/15 text-amber-950 font-bold border border-amber-300 shadow-2xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200' }}">
                         {{ $e['name'] }}
                     </a>
                     @endforeach
@@ -118,12 +118,12 @@
         <!-- LEFT COLUMN: AKTIVA (ASSETS) -->
         <div class="bg-white rounded-2xl border border-[#edf0ee] shadow-xs flex flex-col justify-between overflow-hidden">
             <div>
-                <div class="p-4 bg-white border-b border-[#edf0ee] text-slate-900 flex items-center justify-between">
+                <div class="p-4 bg-white border-b border-[#f0efe6] text-slate-900 flex items-center justify-between">
                     <div class="flex items-center gap-2.5">
-                        <i data-lucide="briefcase" class="w-4 h-4 text-emerald-600"></i>
+                        <i data-lucide="briefcase" class="w-4 h-4 text-[#d97706]"></i>
                         <h4 class="font-bold text-sm tracking-wide uppercase">AKTIVA (ASSETS)</h4>
                     </div>
-                    <span class="text-xs font-mono text-emerald-700 font-semibold px-2.5 py-1 rounded-md bg-[#ecfdf5] border border-[#a7f3d0]">{{ $bs['period_label'] }}</span>
+                    <span class="text-xs font-mono text-amber-900 font-semibold px-2.5 py-1 rounded-md bg-amber-50 border border-amber-300">{{ $bs['period_label'] }}</span>
                 </div>
 
                 <div class="p-4 flex-1 overflow-y-auto max-h-[580px] pr-2 custom-balance-scroll">
@@ -138,7 +138,7 @@
                             </thead>
                             <tbody class="divide-y divide-slate-100 font-medium">
                                 @forelse($bs['assets']['items'] as $item)
-                                <tr class="hover:bg-[#fbfdfa]">
+                                <tr class="hover:bg-amber-50/40">
                                     <td class="py-2.5 font-mono text-[11px] text-slate-400">{{ $item->account_code ?? '1000' }}</td>
                                     <td class="py-2.5 text-slate-800">
                                         <div class="font-semibold">{{ $item->account_name }}</div>
@@ -160,14 +160,14 @@
             </div>
 
             <!-- Total Assets Footer (SOLID FLAT - NO GRADIENT) -->
-            <div class="p-4 bg-[#f0fdf4] border-t-2 border-[#a7f3d0] flex items-center justify-between text-slate-900 mt-auto">
+            <div class="p-4 bg-amber-50/70 border-t-2 border-amber-300 flex items-center justify-between text-slate-900 mt-auto">
                 <span class="font-black uppercase tracking-wide text-xs">TOTAL AKTIVA (ASSETS)</span>
-                <span class="text-base font-black font-mono text-[#15803d]">Rp {{ number_format($bs['assets']['total'], 0, ',', '.') }}</span>
+                <span class="text-base font-black font-mono text-slate-900">Rp {{ number_format($bs['assets']['total'], 0, ',', '.') }}</span>
             </div>
         </div>
 
         <!-- RIGHT COLUMN: PASIVA (LIABILITIES & EQUITY) -->
-        <div class="bg-white rounded-2xl border border-[#edf0ee] shadow-xs flex flex-col justify-between overflow-hidden">
+        <div class="bg-white rounded-2xl border border-[#f0efe6] shadow-xs flex flex-col justify-between overflow-hidden">
             <div class="flex-1 flex flex-col min-h-0">
                 <div class="p-4 bg-white border-b border-[#edf0ee] text-slate-900 flex items-center justify-between shrink-0">
                     <div class="flex items-center gap-2.5">
@@ -243,9 +243,9 @@
             </div>
 
             <!-- Total Liabilities & Equity Footer (SOLID FLAT - NO GRADIENT) -->
-            <div class="p-4 bg-[#fefce8] border-t-2 border-[#fef08a] flex items-center justify-between text-slate-900 mt-auto">
+            <div class="p-4 bg-amber-50/70 border-t-2 border-amber-300 flex items-center justify-between text-slate-900 mt-auto">
                 <span class="font-black uppercase tracking-wide text-xs">TOTAL PASIVA (KEWAJIBAN + EKUITAS)</span>
-                <span class="text-base font-black font-mono text-[#854d0e]">Rp {{ number_format($bs['total_liabilities_and_equity'], 0, ',', '.') }}</span>
+                <span class="text-base font-black font-mono text-slate-900">Rp {{ number_format($bs['total_liabilities_and_equity'], 0, ',', '.') }}</span>
             </div>
         </div>
 

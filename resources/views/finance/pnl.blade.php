@@ -6,22 +6,22 @@
 <div class="space-y-6 pb-12">
 
     <!-- FILTER BAR & QUICK TABS -->
-    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-[#edf0ee] shadow-xs space-y-4">
+    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-[#f0efe6] shadow-xs space-y-4">
         <!-- TOP: Quick Tabs for Business Unit -->
         <div class="flex items-center justify-between flex-wrap gap-3">
             <div class="flex items-center gap-1.5 flex-wrap">
                 <!-- ALL / CONSOLIDATED TAB -->
                 <a href="{{ route('finance.pnl', ['period' => $selectedPeriod]) }}"
-                   class="px-3.5 py-1.5 rounded-tl-[1rem] rounded-br-[1rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1rem] hover:rounded-bl-[1rem] hover:rounded-tl-none hover:rounded-br-none text-xs font-bold transition-all duration-300 cursor-pointer {{ empty($selectedBu) ? 'bg-[#ecfdf5] text-[#065f46] border border-[#a7f3d0] shadow-2xs' : 'bg-white hover:bg-[#ecfdf5]/50 text-slate-700 hover:text-[#065f46] border border-slate-200' }}">
+                   class="px-3.5 py-1.5 rounded-tl-[1rem] rounded-br-[1rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1rem] hover:rounded-bl-[1rem] hover:rounded-tl-none hover:rounded-br-none text-xs font-bold transition-all duration-300 cursor-pointer {{ empty($selectedBu) ? 'bg-amber-500/15 text-amber-950 border border-amber-300 shadow-2xs' : 'bg-white hover:bg-amber-50 text-slate-700 hover:text-amber-900 border border-slate-200' }}">
                     <span class="flex items-center gap-1.5">
-                        <i data-lucide="layers" class="w-3.5 h-3.5 {{ empty($selectedBu) ? 'text-[#065f46]' : 'text-slate-400' }}"></i>
+                        <i data-lucide="layers" class="w-3.5 h-3.5 {{ empty($selectedBu) ? 'text-amber-700' : 'text-slate-400' }}"></i>
                         <span>Semua (Konsolidasi Holding)</span>
                     </span>
                 </a>
 
                 @foreach($businessUnits as $bu)
                 <a href="{{ route('finance.pnl', ['period' => $selectedPeriod, 'business_unit' => $bu['code']]) }}"
-                   class="px-3.5 py-1.5 rounded-tl-[1rem] rounded-br-[1rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1rem] hover:rounded-bl-[1rem] hover:rounded-tl-none hover:rounded-br-none text-xs font-bold transition-all duration-300 cursor-pointer {{ $selectedBu === $bu['code'] ? 'bg-[#ecfdf5] text-[#065f46] border border-[#a7f3d0] shadow-2xs' : 'bg-white hover:bg-[#ecfdf5]/50 text-slate-700 hover:text-[#065f46] border border-slate-200' }}">
+                   class="px-3.5 py-1.5 rounded-tl-[1rem] rounded-br-[1rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1rem] hover:rounded-bl-[1rem] hover:rounded-tl-none hover:rounded-br-none text-xs font-bold transition-all duration-300 cursor-pointer {{ $selectedBu === $bu['code'] ? 'bg-amber-500/15 text-amber-950 border border-amber-300 shadow-2xs' : 'bg-white hover:bg-amber-50 text-slate-700 hover:text-amber-900 border border-slate-200' }}">
                     <span class="flex items-center gap-1.5">
                         <span class="w-2 h-2 rounded-full shrink-0" style="background-color: {{ $bu['color'] }}"></span>
                         <span>{{ $bu['name'] }}</span>
@@ -39,8 +39,8 @@
                     @if($selectedEntity)
                         <input type="hidden" name="entity" value="{{ $selectedEntity }}">
                     @endif
-                    <div class="flex items-center gap-1.5 px-3 py-1.5 bg-[#f8faf8] border border-[#edf0ee] rounded-xl shadow-2xs">
-                        <i data-lucide="calendar" class="w-3.5 h-3.5 text-[#059669] shrink-0"></i>
+                    <div class="flex items-center gap-1.5 px-3 py-1.5 bg-[#faf9f5] border border-[#f0efe6] rounded-xl shadow-2xs">
+                        <i data-lucide="calendar" class="w-3.5 h-3.5 text-[#d97706] shrink-0"></i>
                         <label for="periodSelectPnl" class="text-xs font-semibold text-slate-500">Periode:</label>
                         <select name="period" id="periodSelectPnl" onchange="this.form.submit()" class="text-xs font-bold font-mono bg-transparent text-slate-900 focus:outline-none cursor-pointer">
                             @foreach($availablePeriods as $p)
@@ -73,20 +73,20 @@
             };
         @endphp
         @if(count($entities) > 0)
-        <div class="pt-3 border-t border-[#edf0ee] space-y-2">
+        <div class="pt-3 border-t border-[#f0efe6] space-y-2">
             <div class="flex items-center justify-between flex-wrap gap-2">
                 <div class="flex items-center gap-1.5 flex-wrap">
                     <span class="text-xs font-bold text-slate-700 mr-1 flex items-center gap-1.5">
-                        <span class="w-2 h-2 rounded-full shrink-0" style="background-color: {{ $activeBu['color'] ?? '#059669' }}"></span>
+                        <span class="w-2 h-2 rounded-full shrink-0" style="background-color: {{ $activeBu['color'] ?? '#d97706' }}"></span>
                         <span>{{ $entityLabel }} ({{ count($entities) }}):</span>
                     </span>
                     <a href="{{ route('finance.pnl', ['period' => $selectedPeriod, 'business_unit' => $selectedBu]) }}"
-                       class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all {{ empty($selectedEntity) ? 'bg-[#ecfdf5] text-[#065f46] border border-[#a7f3d0] shadow-2xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200' }}">
+                       class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all {{ empty($selectedEntity) ? 'bg-amber-500/15 text-amber-950 border border-amber-300 shadow-2xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200' }}">
                         Semua Cabang
                     </a>
                     @foreach($entities as $e)
                     <a href="{{ route('finance.pnl', ['period' => $selectedPeriod, 'business_unit' => $selectedBu, 'entity' => $e['code']]) }}"
-                       class="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all {{ $selectedEntity === $e['code'] ? 'bg-[#ecfdf5] text-[#065f46] font-bold border border-[#a7f3d0] shadow-2xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200' }}">
+                       class="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all {{ $selectedEntity === $e['code'] ? 'bg-amber-500/15 text-amber-950 font-bold border border-amber-300 shadow-2xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200' }}">
                         {{ $e['name'] }}
                     </a>
                     @endforeach
@@ -139,22 +139,22 @@
             </div>
         </div>
 
-        <!-- Legend Indicators (Kombinasi Hijau & Kuning Seirama) -->
+        <!-- Legend Indicators (Executive Golden Yellow Palette) -->
         <div class="mt-2 flex flex-wrap items-center gap-2.5 text-xs font-semibold">
-            <span class="inline-flex items-center gap-1.5 text-emerald-950 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200/60">
-                <span class="w-2.5 h-2.5 rounded-full bg-[#059669]"></span>
+            <span class="inline-flex items-center gap-1.5 text-amber-950 bg-amber-50 px-2.5 py-0.5 rounded-md border border-amber-300">
+                <span class="w-2.5 h-2.5 rounded-full bg-[#f59e0b]"></span>
                 Pendapatan
             </span>
-            <span class="inline-flex items-center gap-1.5 text-amber-950 bg-amber-50 px-2.5 py-0.5 rounded-md border border-amber-200/60">
+            <span class="inline-flex items-center gap-1.5 text-yellow-950 bg-yellow-50 px-2.5 py-0.5 rounded-md border border-yellow-200">
                 <span class="w-2.5 h-2.5 rounded-full bg-[#eab308]"></span>
                 HPP (COGS)
             </span>
-            <span class="inline-flex items-center gap-1.5 text-amber-900 bg-amber-50 px-2.5 py-0.5 rounded-md border border-amber-200/60">
+            <span class="inline-flex items-center gap-1.5 text-amber-900 bg-amber-50 px-2.5 py-0.5 rounded-md border border-amber-200">
                 <span class="w-2.5 h-2.5 rounded-full bg-[#d97706]"></span>
                 Biaya Operasional
             </span>
-            <span class="inline-flex items-center gap-1.5 text-[#065f46] bg-[#ecfdf5] px-2.5 py-0.5 rounded-md border border-[#a7f3d0]">
-                <span class="w-2.5 h-2.5 rounded-full bg-[#059669]"></span>
+            <span class="inline-flex items-center gap-1.5 text-amber-950 bg-amber-100/70 px-2.5 py-0.5 rounded-md border border-amber-300">
+                <span class="w-2.5 h-2.5 rounded-full bg-[#b45309]"></span>
                 Laba Bersih
             </span>
         </div>
@@ -170,7 +170,7 @@
     <div class="space-y-3">
         <div class="flex items-center justify-between">
             <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <i data-lucide="pie-chart" class="w-4 h-4 text-emerald-600"></i>
+                <i data-lucide="pie-chart" class="w-4 h-4 text-[#d97706]"></i>
                 Ringkasan Laba Rugi per Unit Bisnis (Periode {{ $pnl['period_label'] }})
             </h3>
             <span class="text-xs text-slate-400">Klik unit untuk melihat rincian buku besar</span>
@@ -178,11 +178,11 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             @foreach($pnl['by_business_unit'] as $buItem)
-            <div class="bg-white rounded-2xl border border-[#edf0ee] p-4 shadow-xs space-y-3 hover:border-slate-300 transition">
+            <div class="bg-white rounded-2xl border border-[#f0efe6] p-4 shadow-xs space-y-3 hover:border-slate-300 transition">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <div class="w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs shadow-2xs"
-                             style="background-color: {{ $buItem['color'] ?: '#ecfdf5' }}20; border: 1.5px solid {{ $buItem['color'] ?: '#059669' }}; color: {{ $buItem['color'] ?: '#166534' }};">
+                             style="background-color: {{ $buItem['color'] ?: '#fffbeb' }}20; border: 1.5px solid {{ $buItem['color'] ?: '#d97706' }}; color: {{ $buItem['color'] ?: '#b45309' }};">
                             <i data-lucide="{{ $buItem['icon'] ?: 'building-2' }}" class="w-4 h-4"></i>
                         </div>
                         <div>
@@ -191,7 +191,7 @@
                         </div>
                     </div>
                     <a href="{{ route('finance.pnl', ['period' => $selectedPeriod, 'business_unit' => $buItem['code']]) }}"
-                       class="text-[11px] font-bold text-emerald-600 hover:text-emerald-800 flex items-center gap-0.5"
+                       class="text-[11px] font-bold text-amber-700 hover:text-amber-900 flex items-center gap-0.5"
                        title="Buka Rincian P&L {{ $buItem['name'] }}">
                         Rincian &rarr;
                     </a>
@@ -229,7 +229,7 @@
         <div class="p-5 border-b border-[#edf0ee] flex items-center justify-between bg-white flex-wrap gap-2">
             <div>
                 <h3 class="text-sm sm:text-base font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
-                    <i data-lucide="building" class="w-4 h-4 text-emerald-600"></i>
+                    <i data-lucide="building" class="w-4 h-4 text-[#d97706]"></i>
                     Perbandingan Kinerja Antar Cabang / Departemen (Periode {{ $pnl['period_label'] }})
                 </h3>
                 <p class="text-xs text-slate-400">Ringkasan performa pendapatan, HPP, beban operasional, dan laba bersih tiap unit</p>
@@ -273,7 +273,7 @@
                         <tr class="hover:bg-slate-50/80 transition-colors">
                             <td class="p-3 pl-6 font-sans">
                                 <div class="flex items-center gap-2">
-                                    <span class="w-2 h-2 rounded-full shrink-0" style="background-color: {{ $entItem['color'] ?? ($activeBu['color'] ?? '#059669') }}"></span>
+                                    <span class="w-2 h-2 rounded-full shrink-0" style="background-color: {{ $entItem['color'] ?? ($activeBu['color'] ?? '#d97706') }}"></span>
                                     <div>
                                         <div class="font-bold text-slate-900">{{ $entItem['name'] }}</div>
                                         <div class="text-[10px] text-slate-400 font-mono uppercase">{{ $entItem['code'] }} &bull; {{ $entItem['location'] }}</div>
@@ -290,7 +290,7 @@
                                 Rp {{ number_format($entItem['gross_profit'], 0, ',', '.') }}
                             </td>
                             <td class="p-3 text-center">
-                                <span class="px-2 py-0.5 rounded text-[11px] font-bold {{ $entItem['gross_margin'] >= 10 ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600' }}">
+                                <span class="px-2 py-0.5 rounded text-[11px] font-bold {{ $entItem['gross_margin'] >= 10 ? 'bg-amber-50 text-amber-900 border border-amber-200' : 'bg-slate-100 text-slate-600' }}">
                                     {{ $entItem['gross_margin'] }}%
                                 </span>
                             </td>
@@ -301,7 +301,7 @@
                                 Rp {{ number_format($entItem['net_profit'], 0, ',', '.') }}
                             </td>
                             <td class="p-3 text-center">
-                                <span class="px-2 py-0.5 rounded text-[11px] font-bold {{ $entItem['net_margin'] >= 0 ? 'bg-[#ecfdf5] text-[#065f46]' : 'bg-rose-50 text-rose-700' }}">
+                                <span class="px-2 py-0.5 rounded text-[11px] font-bold {{ $entItem['net_margin'] >= 0 ? 'bg-amber-50 text-amber-900 border border-amber-200' : 'bg-rose-50 text-rose-700' }}">
                                     {{ $entItem['net_margin'] }}%
                                 </span>
                             </td>
@@ -366,16 +366,16 @@
                     
                     @foreach($pnl['sections'] as $secKey => $section)
                         <!-- Section Header -->
-                        <tr class="bg-[#f8faf8] font-extrabold text-slate-900">
+                        <tr class="bg-[#faf9f5] font-extrabold text-slate-900">
                             <td colspan="6" class="p-3 pl-6 tracking-wide text-[11px] uppercase text-slate-900 flex items-center gap-2">
-                                <span class="w-2 h-2 rounded-full bg-[#059669]"></span>
+                                <span class="w-2 h-2 rounded-full bg-[#d97706]"></span>
                                 {{ $section['title'] }}
                             </td>
                         </tr>
 
                         <!-- Section Items -->
                         @forelse($section['items'] as $item)
-                        <tr class="hover:bg-[#fbfdfa] transition-colors">
+                        <tr class="hover:bg-amber-50/40 transition-colors">
                             <td class="p-2.5 pl-6 font-mono text-[11px] text-slate-400">{{ $item['account_code'] ?? '-' }}</td>
                             <td class="p-2.5 text-slate-800">
                                 <div class="flex items-center gap-2">
@@ -399,7 +399,7 @@
                                 {{ $item['variance'] >= 0 ? '+' : '' }}{{ number_format($item['variance'], 0, ',', '.') }}
                             </td>
                             <td class="p-2.5 text-center">
-                                <span class="px-2 py-0.5 rounded-md font-mono text-[10px] font-bold {{ $item['growth_pct'] >= 0 ? 'bg-[#ecfdf5] text-[#065f46]' : 'bg-rose-50 text-rose-700' }}">
+                                <span class="px-2 py-0.5 rounded-md font-mono text-[10px] font-bold {{ $item['growth_pct'] >= 0 ? 'bg-amber-50 text-amber-900 border border-amber-200' : 'bg-rose-50 text-rose-700 border border-rose-200' }}">
                                     {{ $item['growth_pct'] >= 0 ? '+' : '' }}{{ $item['growth_pct'] }}%
                                 </span>
                             </td>
@@ -420,7 +420,7 @@
                                 {{ $section['variance'] >= 0 ? '+' : '' }}{{ number_format($section['variance'], 0, ',', '.') }}
                             </td>
                             <td class="p-3 text-center">
-                                <span class="px-2 py-0.5 rounded-md font-extrabold font-mono text-[10px] {{ $section['growth_pct'] >= 0 ? 'bg-[#ecfdf5] text-[#065f46]' : 'bg-rose-100 text-rose-800' }}">
+                                <span class="px-2 py-0.5 rounded-md font-extrabold font-mono text-[10px] {{ $section['growth_pct'] >= 0 ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-rose-100 text-rose-800' }}">
                                     {{ $section['growth_pct'] >= 0 ? '+' : '' }}{{ $section['growth_pct'] }}%
                                 </span>
                             </td>
@@ -428,10 +428,10 @@
 
                         <!-- Insert Gross Profit row after COGS (SOLID FLAT - NO GRADIENT) -->
                         @if($secKey === 'cogs')
-                        <tr class="bg-[#f0fdf4] font-black text-slate-900 border-t-2 border-b-2 border-[#a7f3d0]">
-                            <td class="p-3.5 pl-6 font-mono text-[11px] text-[#065f46]">GP</td>
+                        <tr class="bg-amber-50/70 font-black text-slate-900 border-t-2 border-b-2 border-amber-300">
+                            <td class="p-3.5 pl-6 font-mono text-[11px] text-amber-800">GP</td>
                             <td class="p-3.5 uppercase tracking-wide">LABA KOTOR (GROSS PROFIT)</td>
-                            <td class="p-3.5 text-right font-black font-mono tracking-tight text-[#15803d]">Rp {{ number_format($pnl['summary']['gross_profit_current'], 0, ',', '.') }}</td>
+                            <td class="p-3.5 text-right font-black font-mono tracking-tight text-slate-900">Rp {{ number_format($pnl['summary']['gross_profit_current'], 0, ',', '.') }}</td>
                             <td class="p-3.5 text-right font-mono tracking-tight text-slate-500">Rp {{ number_format($pnl['summary']['gross_profit_previous'], 0, ',', '.') }}</td>
                             @php $gpVar = $pnl['summary']['gross_profit_current'] - $pnl['summary']['gross_profit_previous']; @endphp
                             <td class="p-3.5 text-right font-mono tracking-tight {{ $gpVar >= 0 ? 'text-[#16a34a]' : 'text-rose-600' }}">
@@ -439,7 +439,7 @@
                             </td>
                             <td class="p-3.5 text-center">
                                 @php $gpGrow = $pnl['summary']['gross_profit_previous'] != 0 ? round(($gpVar / abs($pnl['summary']['gross_profit_previous'])) * 100, 2) : 0; @endphp
-                                <span class="px-2.5 py-1 rounded-md font-mono font-bold text-[10px] {{ $gpGrow >= 0 ? 'bg-[#ecfdf5] text-[#065f46]' : 'bg-rose-100 text-rose-800' }}">
+                                <span class="px-2.5 py-1 rounded-md font-mono font-bold text-[10px] {{ $gpGrow >= 0 ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-rose-100 text-rose-800' }}">
                                     {{ $gpGrow >= 0 ? '+' : '' }}{{ $gpGrow }}%
                                 </span>
                             </td>
@@ -475,20 +475,20 @@
                         $netVar = $pnl['summary']['net_profit_variance'];
                         $netGrow = $pnl['summary']['net_profit_growth'];
                     @endphp
-                    <tr class="bg-white text-slate-900 font-black text-sm border-t-2 border-b-2 border-emerald-500 shadow-xs">
-                        <td class="p-4 pl-6 font-mono text-xs text-emerald-600">NET</td>
+                    <tr class="bg-amber-50/30 text-slate-900 font-black text-sm border-t-2 border-b-2 border-amber-400 shadow-xs">
+                        <td class="p-4 pl-6 font-mono text-xs text-amber-700">NET</td>
                         <td class="p-4 uppercase tracking-wider text-slate-900">LABA BERSIH HOLDING (NET PROFIT)</td>
-                        <td class="p-4 text-right font-black font-mono tracking-tight {{ $netCur >= 0 ? 'text-emerald-600' : 'text-rose-600' }}">
+                        <td class="p-4 text-right font-black font-mono tracking-tight {{ $netCur >= 0 ? 'text-emerald-700' : 'text-rose-600' }}">
                             Rp {{ number_format($netCur, 0, ',', '.') }}
                         </td>
                         <td class="p-4 text-right font-mono tracking-tight text-slate-500">
                             Rp {{ number_format($netPrev, 0, ',', '.') }}
                         </td>
-                        <td class="p-4 text-right font-mono tracking-tight {{ $netVar >= 0 ? 'text-emerald-600' : 'text-rose-600' }}">
+                        <td class="p-4 text-right font-mono tracking-tight {{ $netVar >= 0 ? 'text-emerald-700' : 'text-rose-600' }}">
                             {{ $netVar >= 0 ? '+' : '' }}{{ number_format($netVar, 0, ',', '.') }}
                         </td>
                         <td class="p-4 text-center">
-                            <span class="px-2.5 py-1 rounded-md font-mono font-bold text-xs {{ $netGrow >= 0 ? 'bg-[#ecfdf5] text-[#065f46]' : 'bg-rose-100 text-rose-800' }}">
+                            <span class="px-2.5 py-1 rounded-md font-mono font-bold text-xs {{ $netGrow >= 0 ? 'bg-amber-100 text-amber-950 border border-amber-300' : 'bg-rose-100 text-rose-800' }}">
                                 {{ $netGrow >= 0 ? '+' : '' }}{{ $netGrow }}%
                             </span>
                         </td>
@@ -531,11 +531,11 @@
 
         const isLine = type === 'line';
 
-        // Warna Harmonis (Kombinasi Hijau & Kuning Seirama)
-        // 1. Pendapatan (Forest Emerald Green)
+        // Warna Harmonis (Executive Warm Golden Yellow Palette)
+        // 1. Pendapatan (Golden Amber)
         const revGrad = ctx.createLinearGradient(0, 0, 0, 280);
-        revGrad.addColorStop(0, 'rgba(5, 150, 105, 0.95)');
-        revGrad.addColorStop(1, isLine ? 'rgba(5, 150, 105, 0.08)' : 'rgba(5, 150, 105, 0.45)');
+        revGrad.addColorStop(0, 'rgba(245, 158, 11, 0.95)');
+        revGrad.addColorStop(1, isLine ? 'rgba(245, 158, 11, 0.08)' : 'rgba(245, 158, 11, 0.45)');
 
         // 2. HPP (COGS) (Warm Golden Yellow)
         const cogsGrad = ctx.createLinearGradient(0, 0, 0, 280);
@@ -547,31 +547,31 @@
         opexGrad.addColorStop(0, 'rgba(217, 119, 6, 0.90)');
         opexGrad.addColorStop(1, isLine ? 'rgba(217, 119, 6, 0.08)' : 'rgba(217, 119, 6, 0.45)');
 
-        // 4. Laba Bersih (Vibrant Lime Green)
+        // 4. Laba Bersih (Rich Deep Gold/Bronze)
         const profitGrad = ctx.createLinearGradient(0, 0, 0, 280);
-        profitGrad.addColorStop(0, 'rgba(16, 229, 143, 0.95)');
-        profitGrad.addColorStop(1, isLine ? 'rgba(16, 229, 143, 0.08)' : 'rgba(16, 229, 143, 0.45)');
+        profitGrad.addColorStop(0, 'rgba(180, 83, 9, 0.95)');
+        profitGrad.addColorStop(1, isLine ? 'rgba(180, 83, 9, 0.08)' : 'rgba(180, 83, 9, 0.45)');
 
         const datasets = isLine ? [
             {
                 label: 'Pendapatan',
                 data: pnlRevData,
-                borderColor: '#059669',
-                backgroundColor: '#059669',
+                borderColor: '#f59e0b',
+                backgroundColor: '#f59e0b',
                 borderWidth: 2.5,
                 tension: 0.3,
                 fill: false,
                 pointRadius: 4,
                 pointHoverRadius: 6,
-                pointBackgroundColor: '#059669',
+                pointBackgroundColor: '#f59e0b',
                 pointBorderColor: '#ffffff',
                 pointBorderWidth: 2,
             },
             {
                 label: 'HPP',
                 data: pnlCogsData,
-                borderColor: '#ca8a04',
-                backgroundColor: '#ca8a04',
+                borderColor: '#eab308',
+                backgroundColor: '#eab308',
                 borderWidth: 2,
                 tension: 0.3,
                 fill: false,
@@ -598,14 +598,14 @@
             {
                 label: 'Laba Bersih',
                 data: pnlProfitData,
-                borderColor: '#059669',
-                backgroundColor: '#059669',
+                borderColor: '#b45309',
+                backgroundColor: '#b45309',
                 borderWidth: 2.5,
                 tension: 0.3,
                 fill: false,
                 pointRadius: 4,
                 pointHoverRadius: 6,
-                pointBackgroundColor: '#059669',
+                pointBackgroundColor: '#b45309',
                 pointBorderColor: '#ffffff',
                 pointBorderWidth: 2,
             }
@@ -614,7 +614,7 @@
                 label: 'Pendapatan',
                 data: pnlRevData,
                 backgroundColor: revGrad,
-                borderColor: '#059669',
+                borderColor: '#f59e0b',
                 borderWidth: 1,
                 borderRadius: { topLeft: 5, topRight: 5, bottomLeft: 0, bottomRight: 0 },
                 barPercentage: 0.7,
@@ -624,7 +624,7 @@
                 label: 'HPP',
                 data: pnlCogsData,
                 backgroundColor: cogsGrad,
-                borderColor: '#ca8a04',
+                borderColor: '#eab308',
                 borderWidth: 1,
                 borderRadius: { topLeft: 5, topRight: 5, bottomLeft: 0, bottomRight: 0 },
                 barPercentage: 0.7,
@@ -644,7 +644,7 @@
                 label: 'Laba Bersih',
                 data: pnlProfitData,
                 backgroundColor: profitGrad,
-                borderColor: '#059669',
+                borderColor: '#b45309',
                 borderWidth: 1,
                 borderRadius: { topLeft: 5, topRight: 5, bottomLeft: 0, bottomRight: 0 },
                 barPercentage: 0.7,

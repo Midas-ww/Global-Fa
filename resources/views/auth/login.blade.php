@@ -30,12 +30,12 @@
                     },
                     colors: {
                         brand: {
-                            green: '#059669',
-                            yellow: '#ffd800',
-                            lime: '#ecfdf5',
-                            'lime-dark': '#065f46',
-                            surface: '#f8faf8',
-                            border: '#edf0ee',
+                            yellow: '#f59e0b',
+                            gold: '#d97706',
+                            warm: '#fffbeb',
+                            'warm-dark': '#78350f',
+                            surface: '#faf9f5',
+                            border: '#f0efe6',
                         }
                     }
                 }
@@ -60,13 +60,13 @@
         }
     </style>
 </head>
-<body class="bg-[#f8faf8] min-h-screen flex items-center justify-center p-4 relative font-sans text-slate-800">
+<body class="bg-[#faf9f5] min-h-screen flex items-center justify-center p-4 relative font-sans text-slate-800">
 
     <div class="w-full max-w-md relative z-10">
 
         <!-- LOGO & BRAND -->
         <div class="text-center mb-8">
-            <div class="inline-flex items-center justify-center p-3 rounded-2xl bg-white shadow-xs mb-3 border border-[#edf0ee]">
+            <div class="inline-flex items-center justify-center p-3 rounded-2xl bg-white shadow-xs mb-3 border border-[#f0efe6]">
                 <img src="/assets/images/logo-full.png" alt="Mekar Jaya Group" class="h-11 sm:h-12 w-auto object-contain max-w-[220px]" />
             </div>
             <h1 class="text-2xl font-black text-slate-900 tracking-tight">GLOBAL-FA</h1>
@@ -83,7 +83,7 @@
         </div>
 
         <!-- LOGIN CARD (SOLID FLAT - NO GRADIENT) -->
-        <div class="bg-white border border-[#edf0ee] rounded-3xl p-7 shadow-xs space-y-6">
+        <div class="bg-white border border-[#f0efe6] rounded-3xl p-7 shadow-xs space-y-6">
 
             <!-- ALERTS -->
             @if(session('error'))
@@ -94,8 +94,8 @@
             @endif
 
             @if(session('success'))
-            <div class="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
-                <i data-lucide="check-circle" class="w-4 h-4 shrink-0 text-emerald-600"></i>
+            <div class="p-3.5 rounded-xl bg-amber-50 border border-amber-300 text-amber-950 text-xs flex items-center gap-2 shadow-2xs">
+                <i data-lucide="check-circle" class="w-4 h-4 shrink-0 text-amber-600"></i>
                 <span>{{ session('success') }}</span>
             </div>
             @endif
@@ -109,8 +109,8 @@
 
             <!-- SSO BUTTON (SOLID FLAT - NO GRADIENT) -->
             <div>
-                <a href="{{ rtrim(config('services.mkj_superapp.url', env('SUPERAPP_URL', 'http://localhost:8000')), '/') }}/login" class="w-full py-3 px-4 rounded-xl bg-[#ecfdf5] hover:bg-[#d1fae5] text-[#065f46] font-bold text-xs border border-[#a7f3d0] flex items-center justify-center gap-2 transition duration-150 cursor-pointer shadow-2xs">
-                    <svg class="w-4 h-4 text-[#065f46]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <a href="{{ rtrim(config('services.mkj_superapp.url', env('SUPERAPP_URL', 'http://localhost:8000')), '/') }}/login" class="w-full py-3 px-4 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-950 font-bold text-xs border border-amber-300 flex items-center justify-center gap-2 transition duration-150 cursor-pointer shadow-2xs">
+                    <svg class="w-4 h-4 text-amber-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z" />
                         <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65" />
                         <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65" />
@@ -122,7 +122,7 @@
 
             <!-- DIVIDER -->
             <div class="relative flex items-center justify-center">
-                <div class="border-t border-[#edf0ee] w-full"></div>
+                <div class="border-t border-[#f0efe6] w-full"></div>
                 <span class="bg-white px-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider absolute">atau akun lokal</span>
             </div>
 
@@ -133,7 +133,7 @@
                     <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Email Akun</label>
                     <div class="relative">
                         <i data-lucide="mail" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 pointer-events-none"></i>
-                        <input type="email" name="email" value="{{ old('email', 'admin@mekarjaya.com') }}" required class="w-full bg-[#f8faf8] border border-[#edf0ee] rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]">
+                        <input type="email" name="email" value="{{ old('email', 'admin@mekarjaya.com') }}" required class="w-full bg-[#faf9f5] border border-[#f0efe6] rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500">
                     </div>
                 </div>
 
@@ -141,20 +141,20 @@
                     <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Kata Sandi</label>
                     <div class="relative">
                         <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 pointer-events-none"></i>
-                        <input type="password" name="password" value="password" required class="w-full bg-[#f8faf8] border border-[#edf0ee] rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]">
+                        <input type="password" name="password" value="password" required class="w-full bg-[#faf9f5] border border-[#f0efe6] rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500">
                     </div>
                 </div>
 
                 <div class="flex items-center justify-between text-xs text-slate-500">
                     <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" name="remember" checked class="rounded border-slate-300 text-slate-900 focus:ring-[#059669]">
+                        <input type="checkbox" name="remember" checked class="rounded border-slate-300 text-amber-500 focus:ring-amber-400">
                         <span>Ingat saya</span>
                     </label>
                     <span class="text-[11px] text-slate-400 font-mono">admin / password</span>
                 </div>
 
-                <button type="submit" class="w-full py-3 px-4 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-bold text-xs transition duration-150 flex items-center justify-center gap-2 shadow-xs cursor-pointer">
-                    <i data-lucide="log-in" class="w-4 h-4 text-emerald-600"></i>
+                <button type="submit" class="w-full py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-slate-950 font-black text-xs transition duration-150 flex items-center justify-center gap-2 shadow-xs cursor-pointer">
+                    <i data-lucide="log-in" class="w-4 h-4 text-slate-950"></i>
                     Masuk ke Global-FA
                 </button>
             </form>

@@ -29,12 +29,12 @@ class GlobalFinanceSeeder extends Seeder
             ]
         );
 
-        // 1. Business Units (Harmonious Executive Color Palette ala Mekar Jaya & SIR-IQOS)
+        // 1. Business Units (Format Bersih & Jelas ala SPBU & IQOS)
         $buFmcg = GlobalBusinessUnit::updateOrCreate(
             ['code' => 'fmcg'],
             [
-                'name' => 'MJS (FMCG)',
-                'description' => 'CV Mekar Jaya Sentosa - Jaringan distribusi barang konsumen (FMCG) 9 depo di Jawa Tengah.',
+                'name' => 'Unilever',
+                'description' => 'CV Mekar Jaya Perkasa - Jaringan distribusi barang konsumen Unilever 9 depo di Jawa Tengah.',
                 'icon' => 'box',
                 'color' => '#059669',
                 'data_source' => 'excel',
@@ -43,15 +43,41 @@ class GlobalFinanceSeeder extends Seeder
             ]
         );
 
+        $buAqua = GlobalBusinessUnit::updateOrCreate(
+            ['code' => 'aqua'],
+            [
+                'name' => 'AQUA',
+                'description' => 'CV Mekar Jaya Sentosa - Distributor resmi air minum dalam kemasan Danone AQUA & VIT.',
+                'icon' => 'droplet',
+                'color' => '#0284C7',
+                'data_source' => 'excel',
+                'sort_order' => 2,
+                'is_active' => true,
+            ]
+        );
+
+        $buCcod = GlobalBusinessUnit::updateOrCreate(
+            ['code' => 'ccod'],
+            [
+                'name' => 'CCOD',
+                'description' => 'PT Mekar Jaya Sentosa Multikarya - Jasa dan distribusi Cash Collection on Delivery (CCOD) Heinz ABC 12 cabang.',
+                'icon' => 'shopping-bag',
+                'color' => '#6366F1',
+                'data_source' => 'excel',
+                'sort_order' => 3,
+                'is_active' => true,
+            ]
+        );
+
         $buXtrans = GlobalBusinessUnit::updateOrCreate(
             ['code' => 'xtrans'],
             [
-                'name' => 'MJX (Ekspedisi)',
+                'name' => 'Ekspedisi',
                 'description' => 'PT Mekar Jaya Xtrans Jaya - Jasa logistik dan angkutan armada truk ekspedisi.',
                 'icon' => 'truck',
                 'color' => '#2563EB',
                 'data_source' => 'excel',
-                'sort_order' => 2,
+                'sort_order' => 4,
                 'is_active' => true,
             ]
         );
@@ -64,7 +90,7 @@ class GlobalFinanceSeeder extends Seeder
                 'icon' => 'fuel',
                 'color' => '#E11D48',
                 'data_source' => 'database',
-                'sort_order' => 3,
+                'sort_order' => 5,
                 'is_active' => true,
             ]
         );
@@ -72,25 +98,12 @@ class GlobalFinanceSeeder extends Seeder
         $buIqos = GlobalBusinessUnit::updateOrCreate(
             ['code' => 'iqos'],
             [
-                'name' => 'IQOS (Retail)',
+                'name' => 'IQOS',
                 'description' => 'PT Mekar Retail Jaya - Retail modern dan toko resmi penjualan IQOS.',
                 'icon' => 'store',
                 'color' => '#0D9488',
                 'data_source' => 'database',
-                'sort_order' => 4,
-                'is_active' => true,
-            ]
-        );
-
-        $buCcod = GlobalBusinessUnit::updateOrCreate(
-            ['code' => 'ccod'],
-            [
-                'name' => 'MJS Multikarya (CCOD)',
-                'description' => 'PT Mekar Jaya Sentosa Multikarya - Jasa dan distribusi Cash Collection on Delivery (CCOD) 12 cabang.',
-                'icon' => 'shopping-bag',
-                'color' => '#6366F1',
-                'data_source' => 'excel',
-                'sort_order' => 5,
+                'sort_order' => 6,
                 'is_active' => true,
             ]
         );
@@ -182,6 +195,17 @@ class GlobalFinanceSeeder extends Seeder
             ]
         );
 
+        GlobalEntity::updateOrCreate(
+            ['code' => 'MJS'],
+            [
+                'business_unit_id' => $buAqua->id,
+                'name' => 'CV Mekar Jaya Sentosa (AQUA)',
+                'location' => 'Pekalongan / Jawa Tengah',
+                'sort_order' => 1,
+                'is_active' => true,
+            ]
+        );
+
         // 3. Intercompany Eliminations (Sample)
         GlobalIntercompanyElimination::updateOrCreate(
             [
@@ -249,6 +273,24 @@ class GlobalFinanceSeeder extends Seeder
                     echo 'Xtrans Ingested: '.($resXtrans['records_inserted'] ?? 0)." records\n";
                 } catch (\Throwable $e) {
                     echo 'Xtrans Ingest Warning: '.$e->getMessage()."\n";
+                }
+                break;
+            }
+        }
+
+        $aquaCandidates = [
+            'D:/BKU MJS/MJS SEPT 26.xlsx',
+            storage_path('app/private/imports/MJS SEPT 26.xlsx'),
+            storage_path('app/private/imports/1794989361_MJS SEPT 26.xlsx'),
+        ];
+        foreach ($aquaCandidates as $path) {
+            if (file_exists($path)) {
+                echo "Ingesting AQUA (CV Mekar Jaya Sentosa) from {$path}...\n";
+                try {
+                    $resAqua = $excelService->ingestAquaFile($path);
+                    echo 'AQUA Ingested: '.($resAqua['records_inserted'] ?? 0)." records\n";
+                } catch (\Throwable $e) {
+                    echo 'AQUA Ingest Warning: '.$e->getMessage()."\n";
                 }
                 break;
             }

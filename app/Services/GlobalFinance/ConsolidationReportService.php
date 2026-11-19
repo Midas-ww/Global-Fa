@@ -383,7 +383,7 @@ class ConsolidationReportService
                     'name' => $ent->name,
                     'location' => $ent->location,
                     'group' => str_starts_with($ent->code, 'CCOD') ? 'ccod' : 'depo',
-                    'color' => $ent->businessUnit->color ?? '#059669',
+                    'color' => $ent->businessUnit->color ?? '#d97706',
                     'revenue' => $eRev,
                     'cogs' => $eCogs,
                     'gross_profit' => $eGp,

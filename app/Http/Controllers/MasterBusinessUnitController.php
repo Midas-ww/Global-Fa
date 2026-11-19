@@ -57,7 +57,7 @@ class MasterBusinessUnitController extends Controller
             'code' => strtolower($validated['code']),
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
-            'color' => $validated['color'] ?: '#059669',
+            'color' => $validated['color'] ?: '#d97706',
             'icon' => $validated['icon'] ?: 'building-2',
             'data_source' => $validated['data_source'],
             'sort_order' => $maxOrder + 1,
