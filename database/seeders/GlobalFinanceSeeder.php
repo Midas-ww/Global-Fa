@@ -216,20 +216,42 @@ class GlobalFinanceSeeder extends Seeder
             echo 'SPBU Sync Warning: '.$e->getMessage()."\n";
         }
 
-        // 5. Ingest FMCG & Xtrans if file exists
+        // 5. Ingest FMCG & Xtrans initial files if available
         $excelService = new ExcelIngestionService;
-        $fmcgPath = 'C:/Users/arisc/.gemini/antigravity/brain/5f57d2e4-2ff0-42a5-a3c8-369db83bcf9b/.user_uploaded/media_1794797514184_a54cffc9.xlsx';
-        if (file_exists($fmcgPath)) {
-            echo "Ingesting FMCG 9-Depot file...\n";
-            $resFmcg = $excelService->ingestFmcgFile($fmcgPath);
-            echo 'FMCG Ingested: '.$resFmcg['records_inserted']." records\n";
+        $fmcgCandidates = [
+            'D:/BKU MJS/PL Depo Persentase MJP Jan 24 - Dec 26.xlsx',
+            storage_path('app/private/imports/PL_Depo_FMCG.xlsx'),
+            'C:/Users/arisc/.gemini/antigravity/brain/5f57d2e4-2ff0-42a5-a3c8-369db83bcf9b/.user_uploaded/media_1794797514184_a54cffc9.xlsx',
+        ];
+        foreach ($fmcgCandidates as $path) {
+            if (file_exists($path)) {
+                echo "Ingesting FMCG 9-Depot file from {$path}...\n";
+                try {
+                    $resFmcg = $excelService->ingestFmcgFile($path);
+                    echo 'FMCG Ingested: '.($resFmcg['records_inserted'] ?? 0)." records\n";
+                } catch (\Throwable $e) {
+                    echo 'FMCG Ingest Warning: '.$e->getMessage()."\n";
+                }
+                break;
+            }
         }
 
-        $xtransPath = 'C:/Users/arisc/.gemini/antigravity/brain/5f57d2e4-2ff0-42a5-a3c8-369db83bcf9b/.user_uploaded/media_1794798564677_92f0e307.xlsx';
-        if (file_exists($xtransPath)) {
-            echo "Ingesting Xtrans file...\n";
-            $resXtrans = $excelService->ingestXtransFile($xtransPath);
-            echo 'Xtrans Ingested: '.$resXtrans['records_inserted']." records\n";
+        $xtransCandidates = [
+            'D:/BKU MJS/PL & BS Detail MJX Sept 26.xlsx',
+            storage_path('app/private/imports/MJX_Ekspedisi.xlsx'),
+            'C:/Users/arisc/.gemini/antigravity/brain/5f57d2e4-2ff0-42a5-a3c8-369db83bcf9b/.user_uploaded/media_1794798564677_92f0e307.xlsx',
+        ];
+        foreach ($xtransCandidates as $path) {
+            if (file_exists($path)) {
+                echo "Ingesting Xtrans file from {$path}...\n";
+                try {
+                    $resXtrans = $excelService->ingestXtransFile($path);
+                    echo 'Xtrans Ingested: '.($resXtrans['records_inserted'] ?? 0)." records\n";
+                } catch (\Throwable $e) {
+                    echo 'Xtrans Ingest Warning: '.$e->getMessage()."\n";
+                }
+                break;
+            }
         }
     }
 }
