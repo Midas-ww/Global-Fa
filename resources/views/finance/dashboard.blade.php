@@ -210,7 +210,7 @@
                 <!-- Legend Indicators (Kombinasi Hijau & Kuning Seirama) -->
                 <div class="mt-3 flex flex-wrap items-center gap-2.5 text-xs font-semibold">
                     <span class="inline-flex items-center gap-1.5 text-emerald-950 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200/60">
-                        <span class="w-2.5 h-2.5 rounded-full bg-[#047857]"></span>
+                        <span class="w-2.5 h-2.5 rounded-full bg-[#059669]"></span>
                         Omzet Penjualan
                     </span>
                     <span class="inline-flex items-center gap-1.5 text-amber-950 bg-amber-50 px-2.5 py-0.5 rounded-md border border-amber-200/60">
@@ -480,8 +480,8 @@
         // Warna Harmonis (Kombinasi Hijau & Kuning Seirama)
         // 1. Omzet Penjualan (Forest Emerald Green)
         const revGrad = ctx.createLinearGradient(0, 0, 0, 320);
-        revGrad.addColorStop(0, 'rgba(4, 120, 87, 0.95)');
-        revGrad.addColorStop(1, isLine ? 'rgba(4, 120, 87, 0.08)' : 'rgba(4, 120, 87, 0.45)');
+        revGrad.addColorStop(0, 'rgba(5, 150, 105, 0.95)');
+        revGrad.addColorStop(1, isLine ? 'rgba(5, 150, 105, 0.08)' : 'rgba(5, 150, 105, 0.45)');
 
         // 2. HPP (COGS) (Warm Golden Yellow)
         const cogsGrad = ctx.createLinearGradient(0, 0, 0, 320);
@@ -502,14 +502,14 @@
             {
                 label: 'Omzet Penjualan',
                 data: revData,
-                borderColor: '#047857',
-                backgroundColor: '#047857',
+                borderColor: '#059669',
+                backgroundColor: '#059669',
                 borderWidth: 2.5,
                 tension: 0.3,
                 fill: false,
                 pointRadius: 4,
                 pointHoverRadius: 6,
-                pointBackgroundColor: '#047857',
+                pointBackgroundColor: '#059669',
                 pointBorderColor: '#ffffff',
                 pointBorderWidth: 2,
             },
@@ -560,7 +560,7 @@
                 label: 'Omzet Penjualan',
                 data: revData,
                 backgroundColor: revGrad,
-                borderColor: '#047857',
+                borderColor: '#059669',
                 borderWidth: 1,
                 borderRadius: { topLeft: 5, topRight: 5, bottomLeft: 0, bottomRight: 0 },
                 barPercentage: 0.7,
@@ -690,13 +690,18 @@
 
         const labels = buList.map(b => b.name);
         const data = buList.map(b => Number(b.revenue || 0));
-        const fallbackPalette = ['#047857', '#d97706', '#b91c1c', '#0d9488', '#475569'];
+        const fallbackPalette = ['#059669', '#2563EB', '#E11D48', '#0D9488', '#6366F1'];
         const legacyColorMap = {
-            '#0ea5e9': '#047857', // FMCG: Emerald
-            '#ffd800': '#d97706', // Ekspedisi: Warm Amber
-            '#f43f5e': '#b91c1c', // SPBU: Deep Crimson
-            '#10e58f': '#0d9488', // IQOS: Refined Teal
-            '#6366f1': '#475569', // CCOD: Slate Steel
+            '#0ea5e9': '#059669', // FMCG: Emerald
+            '#047857': '#059669', // FMCG: Emerald
+            '#ffd800': '#2563EB', // Ekspedisi: Royal Blue
+            '#d97706': '#2563EB', // Ekspedisi: Royal Blue
+            '#f43f5e': '#E11D48', // SPBU: Ruby Crimson
+            '#b91c1c': '#E11D48', // SPBU: Ruby Crimson
+            '#10e58f': '#0D9488', // IQOS: Deep Teal
+            '#0d9488': '#0D9488', // IQOS: Deep Teal
+            '#475569': '#6366F1', // CCOD: Soft Indigo
+            '#6366f1': '#6366F1', // CCOD: Soft Indigo
         };
 
         const colors = buList.map((b, idx) => {

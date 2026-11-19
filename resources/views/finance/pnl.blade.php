@@ -142,7 +142,7 @@
         <!-- Legend Indicators (Kombinasi Hijau & Kuning Seirama) -->
         <div class="mt-2 flex flex-wrap items-center gap-2.5 text-xs font-semibold">
             <span class="inline-flex items-center gap-1.5 text-emerald-950 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200/60">
-                <span class="w-2.5 h-2.5 rounded-full bg-[#047857]"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-[#059669]"></span>
                 Pendapatan
             </span>
             <span class="inline-flex items-center gap-1.5 text-amber-950 bg-amber-50 px-2.5 py-0.5 rounded-md border border-amber-200/60">
@@ -534,8 +534,8 @@
         // Warna Harmonis (Kombinasi Hijau & Kuning Seirama)
         // 1. Pendapatan (Forest Emerald Green)
         const revGrad = ctx.createLinearGradient(0, 0, 0, 280);
-        revGrad.addColorStop(0, 'rgba(4, 120, 87, 0.95)');
-        revGrad.addColorStop(1, isLine ? 'rgba(4, 120, 87, 0.08)' : 'rgba(4, 120, 87, 0.45)');
+        revGrad.addColorStop(0, 'rgba(5, 150, 105, 0.95)');
+        revGrad.addColorStop(1, isLine ? 'rgba(5, 150, 105, 0.08)' : 'rgba(5, 150, 105, 0.45)');
 
         // 2. HPP (COGS) (Warm Golden Yellow)
         const cogsGrad = ctx.createLinearGradient(0, 0, 0, 280);
@@ -556,14 +556,14 @@
             {
                 label: 'Pendapatan',
                 data: pnlRevData,
-                borderColor: '#047857',
-                backgroundColor: '#047857',
+                borderColor: '#059669',
+                backgroundColor: '#059669',
                 borderWidth: 2.5,
                 tension: 0.3,
                 fill: false,
                 pointRadius: 4,
                 pointHoverRadius: 6,
-                pointBackgroundColor: '#047857',
+                pointBackgroundColor: '#059669',
                 pointBorderColor: '#ffffff',
                 pointBorderWidth: 2,
             },
@@ -614,7 +614,7 @@
                 label: 'Pendapatan',
                 data: pnlRevData,
                 backgroundColor: revGrad,
-                borderColor: '#047857',
+                borderColor: '#059669',
                 borderWidth: 1,
                 borderRadius: { topLeft: 5, topRight: 5, bottomLeft: 0, bottomRight: 0 },
                 barPercentage: 0.7,
