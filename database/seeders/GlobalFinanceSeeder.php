@@ -97,7 +97,7 @@ class GlobalFinanceSeeder extends Seeder
 
         // 2. Entities
         $fmcgEntities = [
-            ['code' => 'BMG', 'name' => 'Depo Bumiayu (BMG)', 'location' => 'Bumiayu'],
+            ['code' => 'BMG', 'name' => 'Depo Banyumas (BMG)', 'location' => 'Banyumas'],
             ['code' => 'PWT', 'name' => 'Depo Purwokerto (PWT)', 'location' => 'Purwokerto'],
             ['code' => 'PML_GT', 'name' => 'Depo Pemalang GT', 'location' => 'Pemalang'],
             ['code' => 'PML_MT', 'name' => 'Depo Pemalang MT', 'location' => 'Pemalang'],

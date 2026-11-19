@@ -211,7 +211,7 @@
                         </div>
                         <div>
                             <h4 class="text-sm font-bold text-slate-900">MJS (FMCG) - 9 Depo Cabang / CV Mekar Jaya Sentosa</h4>
-                            <p class="text-[11px] text-slate-400">Pekalongan, Bumiayu, Purwokerto, Pemalang, Weleri, Randudongkal, Purworejo, Kebumen & Laporan Resmi MJS</p>
+                            <p class="text-[11px] text-slate-400">Pekalongan, Banyumas, Purwokerto, Pemalang, Weleri, Randudongkal, Purworejo, Kebumen & Laporan Resmi MJS</p>
                         </div>
                     </div>
                 </div>
