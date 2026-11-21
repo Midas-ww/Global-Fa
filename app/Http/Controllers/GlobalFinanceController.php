@@ -157,14 +157,17 @@ class GlobalFinanceController extends Controller
             if ($target === 'all' || $target === 'spbu') {
                 $spbu = new SpbuSyncService;
                 $resSpbu = $spbu->sync($period);
-                $results[] = "SPBU ({$period}): {$resSpbu['records_count']} akun finansial diserap (Omzet: Rp ".number_format($resSpbu['revenue_total'], 0, ',', '.').').';
+                $isReconciled = $resSpbu['reconciled'] ?? true;
+                $statusLog = $isReconciled ? 'success' : 'warning';
+                $reconcileNote = $isReconciled ? ' (Rekonsiliasi 100% Cocok)' : ' (Perhatian: Selisih Rekonsiliasi Rp '.number_format((float) ($resSpbu['variance'] ?? 0), 2, ',', '.').')';
+                $results[] = "SPBU ({$period}): {$resSpbu['records_count']} akun finansial diserap (Omzet: Rp ".number_format($resSpbu['revenue_total'], 0, ',', '.')."){$reconcileNote}.";
 
                 GlobalIngestionLog::create([
                     'business_unit_code' => 'spbu',
                     'source_type' => 'database_sync',
                     'filename' => "api_air.shift_sales ({$period})",
                     'records_count' => $resSpbu['records_count'] ?? 0,
-                    'status' => 'success',
+                    'status' => $statusLog,
                     'details' => json_encode($resSpbu),
                 ]);
             }
@@ -273,7 +276,7 @@ class GlobalFinanceController extends Controller
                 $msg = "CCOD: Berhasil mengimpor {$res['records_inserted']} data transaksi dari ".($res['departments_count'] ?? 12).' cabang.';
             } elseif ($type === 'xtrans') {
                 $res = $service->ingestXtransFile($fullPath, $filename);
-                $msg = "Ekspedisi: Berhasil mengimpor {$res['records_inserted']} data P&L dan Neraca armada ekspedisi.";
+                $msg = "Xtrans: Berhasil mengimpor {$res['records_inserted']} data P&L dan Neraca armada Xtrans.";
             } else {
                 $res = $service->ingestUniversalTemplate($fullPath, $type, $filename);
                 $unitName = GlobalBusinessUnit::where('code', $type)->value('name') ?? strtoupper($type);

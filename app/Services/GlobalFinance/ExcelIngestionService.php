@@ -60,7 +60,7 @@ class ExcelIngestionService
             ];
         }
 
-        // 1. Deteksi Ekspedisi (PT Mekar Jaya Xtrans Jaya)
+        // 1. Deteksi Xtrans (PT Mekar Jaya Xtrans Jaya)
         if (
             str_contains($upperHeader, 'XTRANS') ||
             str_contains($upperHeader, 'PT MEKAR JAYA XTRANS') ||
@@ -69,7 +69,7 @@ class ExcelIngestionService
         ) {
             return [
                 'type' => 'xtrans',
-                'label' => 'Ekspedisi (PT Mekar Jaya Xtrans Jaya)',
+                'label' => 'Xtrans (PT Mekar Jaya Xtrans Jaya)',
                 'sheets' => $sheetNames,
             ];
         }
@@ -160,7 +160,7 @@ class ExcelIngestionService
         $selectedLabel = match ($selectedType) {
             'fmcg' => 'Unilever (9 Depo Cabang)',
             'aqua' => 'AQUA (CV Mekar Jaya Sentosa)',
-            'xtrans' => 'Ekspedisi (PT Mekar Jaya Xtrans Jaya)',
+            'xtrans' => 'Xtrans (PT Mekar Jaya Xtrans Jaya)',
             'ccod' => 'CCOD (12 Cabang)',
             default => strtoupper($selectedType),
         };

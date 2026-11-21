@@ -25,7 +25,7 @@ class ExcelIngestionValidationTest extends TestCase
 
             // Harus melempar exception jika dipaksa validasi ke FMCG
             $this->expectException(\InvalidArgumentException::class);
-            $this->expectExceptionMessage('Validasi Format Gagal: File ini terdeteksi sebagai Ekspedisi');
+            $this->expectExceptionMessage('Validasi Format Gagal: File ini terdeteksi sebagai Xtrans');
             $service->validateBusinessUnit($xtransFile, 'fmcg');
         } else {
             $this->markTestSkipped('Sample file not found');

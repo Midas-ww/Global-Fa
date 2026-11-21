@@ -5,15 +5,12 @@
 @section('content')
 <div class="space-y-6 pb-12 w-full">
 
-    <!-- 1. GREETING & HEADER ROW -->
+    <!-- 1. HEADER ROW -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
             <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                Good Morning, {{ auth()->user()->name ?? 'Executive' }}!
+                Overview
             </h1>
-            <p class="text-xs text-slate-500 mt-1">
-                Take a look at a glance of all your business how going &bull; Konsolidasi {{ count($summary['by_business_unit'] ?? []) }} Pilar Bisnis Mekar Jaya Group
-            </p>
         </div>
 
         <div class="flex items-center gap-2 flex-wrap">
@@ -38,8 +35,8 @@
                 <span>Data Ingestion</span>
             </a>
             <a href="{{ route('finance.pnl', ['period' => $selectedPeriod]) }}"
-               class="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold border border-amber-400 rounded-xl text-xs transition-all flex items-center gap-1.5 shadow-xs cursor-pointer">
-                <i data-lucide="file-text" class="w-3.5 h-3.5 text-slate-950"></i>
+               class="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold border border-amber-500 rounded-xl text-xs transition-all flex items-center gap-1.5 shadow-xs cursor-pointer">
+                <i data-lucide="file-text" class="w-3.5 h-3.5 text-white"></i>
                 <span>Laporan P&L</span>
             </a>
         </div>
@@ -275,43 +272,59 @@
                 </div>
 
                 <!-- Doughnut + Breakdown Grid -->
-                <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center mt-3">
+                <div class="grid grid-cols-1 sm:grid-cols-12 gap-5 items-center mt-3">
                     <!-- Doughnut Chart Container with Center Summary -->
-                    <div class="sm:col-span-6 relative h-60 sm:h-64 flex items-center justify-center">
+                    <div class="sm:col-span-5 relative h-72 sm:h-80 flex items-center justify-center">
                         <canvas id="buDoughnutChart"></canvas>
                         <!-- Center Summary Inside Doughnut Hole -->
                         <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center px-4">
-                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                                 Total Omzet
                             </span>
-                            <span class="text-xs sm:text-sm font-black text-slate-900 mt-0.5 font-mono">
+                            <span class="text-sm sm:text-base font-black text-slate-900 mt-0.5 font-mono">
                                 Rp {{ number_format(($summary['kpis']['revenue'] ?? 0) / 1000000000, 1, ',', '.') }} M
                             </span>
-                            <span class="text-[10px] text-slate-500 font-medium">
+                            <span class="text-[11px] text-amber-800 font-semibold mt-0.5">
                                 {{ count($summary['by_business_unit'] ?? []) }} Unit Bisnis
                             </span>
                         </div>
                     </div>
 
-                    <!-- Breakdown List Per Unit Bisnis -->
-                    <div class="sm:col-span-6 space-y-2 max-h-64 overflow-y-auto pr-1 no-scrollbar">
-                        @foreach($summary['by_business_unit'] as $bu)
+                    <!-- Breakdown List Per Unit Bisnis (Panjang & Mengisi Ruang Vertikal) -->
+                    <div class="sm:col-span-7 space-y-2.5 max-h-[440px] overflow-y-auto pr-1 custom-scrollbar">
+                        @php
+                            $amberPalette = [
+                                '#d97706', // Rich Honey Amber (Amber 600)
+                                '#f59e0b', // Vibrant Gold (Amber 500)
+                                '#b45309', // Warm Bronze (Amber 700)
+                                '#fbbf24', // Sun Gold (Amber 400)
+                                '#78350f', // Deep Amber / Mocha (Amber 900)
+                                '#fcd34d', // Soft Champagne (Amber 300)
+                                '#92400e', // Dark Bronze (Amber 800)
+                                '#fde68a', // Pale Gold (Amber 200)
+                            ];
+                        @endphp
+                        @foreach($summary['by_business_unit'] as $idx => $bu)
                         @php
                             $totalRev = $summary['kpis']['revenue'] ?? 1;
                             $pct = $totalRev > 0 ? round(($bu['revenue'] / $totalRev) * 100, 1) : 0;
-                            $buTone = $bu['color'] ?: '#047857';
+                            $buTone = $amberPalette[$idx % count($amberPalette)];
                         @endphp
-                        <div class="p-2.5 rounded-xl border border-[#edf0ee] hover:border-slate-300 transition-colors bg-[#fbfdfa] flex items-center justify-between">
-                            <div class="flex items-center gap-2 min-w-0">
-                                <span class="w-3 h-3 rounded-full shrink-0" style="background-color: {{ $buTone }}"></span>
+                        <div class="p-3 rounded-xl border border-[#f0efe6] hover:border-amber-300 transition-colors bg-[#faf9f5] flex items-center justify-between shadow-2xs">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <span class="w-3.5 h-3.5 rounded-full shrink-0 shadow-2xs" style="background-color: {{ $buTone }}"></span>
                                 <div class="truncate">
                                     <p class="text-xs font-bold text-slate-800 truncate">{{ $bu['name'] }}</p>
-                                    <p class="text-[10px] text-slate-400 uppercase font-mono">{{ $bu['code'] }}</p>
+                                    <div class="flex items-center gap-1.5 mt-0.5">
+                                        <span class="text-[10px] text-slate-400 uppercase font-mono">{{ $bu['code'] }}</span>
+                                        <span class="text-[10px] text-slate-300">&bull;</span>
+                                        <span class="text-[10px] font-semibold {{ ($bu['net_profit'] ?? 0) >= 0 ? 'text-amber-800' : 'text-rose-600' }}">Margin {{ $bu['net_margin'] ?? 0 }}%</span>
+                                    </div>
                                 </div>
                             </div>
                             <div class="text-right shrink-0">
                                 <p class="text-xs font-bold text-slate-900 font-mono">Rp {{ number_format($bu['revenue'] / 1000000, 0, ',', '.') }} Jt</p>
-                                <span class="text-[10px] font-bold text-[#15803d] font-mono">{{ $pct }}%</span>
+                                <span class="inline-block mt-0.5 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-950 font-mono border border-amber-300">{{ $pct }}%</span>
                             </div>
                         </div>
                         @endforeach
@@ -354,11 +367,11 @@
         <!-- Unit Bisnis Progress Bars (Solid Flat Colors) -->
         <div class="p-5 border-b border-[#f0efe6] bg-[#faf9f5]">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                @foreach($summary['by_business_unit'] as $bu)
+                @foreach($summary['by_business_unit'] as $idx => $bu)
                 @php
                     $totalRev = $summary['kpis']['revenue'] ?? 1;
                     $pct = $totalRev > 0 ? round(($bu['revenue'] / $totalRev) * 100, 1) : 0;
-                    $toneColor = $bu['color'] ?: '#d97706';
+                    $toneColor = $amberPalette[$idx % count($amberPalette)];
                 @endphp
                 <div class="bg-white p-3.5 rounded-xl border border-[#f0efe6]">
                     <div class="flex items-center justify-between text-xs mb-2">
@@ -391,8 +404,8 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-[#f0efe6] font-medium text-slate-700">
-                    @foreach($summary['by_business_unit'] as $bu)
-                    @php $tableTone = $bu['color'] ?: '#d97706'; @endphp
+                    @foreach($summary['by_business_unit'] as $idx => $bu)
+                    @php $tableTone = $amberPalette[$idx % count($amberPalette)]; @endphp
                     <tr class="hover:bg-amber-50/40 transition-colors">
                         <td class="p-4 pl-6 font-bold text-slate-900 flex items-center gap-2.5">
                             <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color: {{ $tableTone }}"></span>
@@ -690,24 +703,20 @@
 
         const labels = buList.map(b => b.name);
         const data = buList.map(b => Number(b.revenue || 0));
-        const fallbackPalette = ['#059669', '#2563EB', '#E11D48', '#0D9488', '#6366F1'];
-        const legacyColorMap = {
-            '#0ea5e9': '#059669', // FMCG: Emerald
-            '#047857': '#059669', // FMCG: Emerald
-            '#ffd800': '#2563EB', // Ekspedisi: Royal Blue
-            '#d97706': '#2563EB', // Ekspedisi: Royal Blue
-            '#f43f5e': '#E11D48', // SPBU: Ruby Crimson
-            '#b91c1c': '#E11D48', // SPBU: Ruby Crimson
-            '#10e58f': '#0D9488', // IQOS: Deep Teal
-            '#0d9488': '#0D9488', // IQOS: Deep Teal
-            '#475569': '#6366F1', // CCOD: Soft Indigo
-            '#6366f1': '#6366F1', // CCOD: Soft Indigo
-        };
 
-        const colors = buList.map((b, idx) => {
-            const raw = (b.color || '').toLowerCase();
-            return legacyColorMap[raw] || b.color || fallbackPalette[idx % fallbackPalette.length];
-        });
+        // Palet Harmoni Golden Amber / Honey Gold (Setema dengan sistem)
+        const amberPalette = [
+            '#d97706', // Rich Honey Amber (Amber 600)
+            '#f59e0b', // Vibrant Gold (Amber 500)
+            '#b45309', // Warm Bronze (Amber 700)
+            '#fbbf24', // Sun Gold (Amber 400)
+            '#78350f', // Deep Amber / Mocha (Amber 900)
+            '#fcd34d', // Soft Champagne (Amber 300)
+            '#92400e', // Dark Bronze (Amber 800)
+            '#fde68a', // Pale Gold (Amber 200)
+        ];
+
+        const colors = buList.map((b, idx) => amberPalette[idx % amberPalette.length]);
 
         new Chart(ctx, {
             type: 'doughnut',

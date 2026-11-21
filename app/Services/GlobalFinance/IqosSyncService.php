@@ -23,9 +23,34 @@ class IqosSyncService
             $query->where('period', $targetPeriod);
         }
 
-        $reports = $query->get();
+        $reports = $query->get()->all();
+
+        // Sertakan periode berjalan (live unfinalized) dari SIR-IQOS jika belum tercatat di iqos_monthly_reports
+        $existingPeriods = array_map(fn ($r) => $r->period, $reports);
+        $candidatePeriods = $targetPeriod ? [$targetPeriod] : ['2026-09', '2026-10', '2026-11'];
+
+        foreach ($candidatePeriods as $cp) {
+            if (! in_array($cp, $existingPeriods)) {
+                $liveRep = $this->fetchLiveReport($cp);
+                if ($liveRep) {
+                    $reports[] = $liveRep;
+                }
+            }
+        }
+
         $syncedCount = 0;
         $periods = [];
+
+        $parseItems = function ($val) {
+            if (is_array($val)) {
+                return $val;
+            }
+            if (is_string($val)) {
+                return json_decode($val, true) ?: [];
+            }
+
+            return [];
+        };
 
         foreach ($reports as $rep) {
             $periodDate = Carbon::createFromFormat('Y-m', $rep->period)->startOfMonth()->format('Y-m-d');
@@ -38,7 +63,7 @@ class IqosSyncService
                 ->delete();
 
             $records = [];
-            $status = $rep->is_finalized ? 'final' : 'running';
+            $status = ($rep->is_finalized ?? false) ? 'final' : 'running';
 
             // --- 1. PNL: REVENUE ---
             $records[] = [
@@ -50,7 +75,7 @@ class IqosSyncService
                 'sub_category' => 'regular_sales',
                 'account_code' => '4001',
                 'account_name' => 'Penjualan Reguler Retail Store',
-                'amount' => (float) $rep->sales_regular,
+                'amount' => (float) ($rep->sales_regular ?? 0),
                 'status' => $status,
                 'source_type' => 'database_sync',
                 'created_at' => now(),
@@ -58,9 +83,10 @@ class IqosSyncService
             ];
 
             // Promo items revenue
-            $promoItems = json_decode($rep->sales_promo_items ?? '[]', true) ?: [];
+            $promoItems = $parseItems($rep->sales_promo_items ?? '[]');
             foreach ($promoItems as $item) {
-                if (! empty($item['amount'])) {
+                $itemArr = (array) $item;
+                if (! empty($itemArr['amount'])) {
                     $records[] = [
                         'business_unit_code' => 'iqos',
                         'entity_code' => 'IQOS_RETAIL',
@@ -69,8 +95,8 @@ class IqosSyncService
                         'category' => 'revenue',
                         'sub_category' => 'promo_sales',
                         'account_code' => '4002',
-                        'account_name' => $item['name'] ?? 'Penjualan Promo Exclusive',
-                        'amount' => (float) $item['amount'],
+                        'account_name' => $itemArr['name'] ?? 'Penjualan Promo Exclusive',
+                        'amount' => (float) $itemArr['amount'],
                         'status' => $status,
                         'source_type' => 'database_sync',
                         'created_at' => now(),
@@ -89,7 +115,7 @@ class IqosSyncService
                 'sub_category' => 'product_cost',
                 'account_code' => '5001',
                 'account_name' => 'HPP Produk Retail (Consumable & Goods)',
-                'amount' => (float) $rep->cogs,
+                'amount' => (float) ($rep->cogs ?? 0),
                 'status' => $status,
                 'source_type' => 'database_sync',
                 'created_at' => now(),
@@ -97,19 +123,20 @@ class IqosSyncService
             ];
 
             // --- 3. PNL: OPEX ---
-            $opexDetails = json_decode($rep->operating_expenses_detail ?? '[]', true) ?: [];
+            $opexDetails = $parseItems($rep->operating_expenses_detail ?? '[]');
             if (! empty($opexDetails)) {
                 foreach ($opexDetails as $idx => $exp) {
+                    $expArr = (array) $exp;
                     $records[] = [
                         'business_unit_code' => 'iqos',
                         'entity_code' => 'IQOS_RETAIL',
                         'period' => $periodDate,
                         'report_type' => 'pnl',
                         'category' => 'opex',
-                        'sub_category' => $exp['category'] ?? 'Operasional Toko',
+                        'sub_category' => $expArr['category'] ?? 'Operasional Toko',
                         'account_code' => '60'.str_pad((string) ($idx + 1), 2, '0', STR_PAD_LEFT),
-                        'account_name' => $exp['name'] ?? 'Beban Operasional',
-                        'amount' => (float) ($exp['amount'] ?? 0),
+                        'account_name' => $expArr['name'] ?? 'Beban Operasional',
+                        'amount' => (float) ($expArr['amount'] ?? 0),
                         'status' => $status,
                         'source_type' => 'database_sync',
                         'created_at' => now(),
@@ -126,7 +153,7 @@ class IqosSyncService
                     'sub_category' => 'Operasional Toko',
                     'account_code' => '6001',
                     'account_name' => 'Beban Operasional Retail Store',
-                    'amount' => (float) $rep->operating_expenses,
+                    'amount' => (float) ($rep->operating_expenses ?? 0),
                     'status' => $status,
                     'source_type' => 'database_sync',
                     'created_at' => now(),
@@ -135,9 +162,10 @@ class IqosSyncService
             }
 
             // --- 4. PNL: OTHER INCOME (PROGRAM PRINCIPAL) ---
-            $programIncomes = json_decode($rep->program_incomes ?? '[]', true) ?: [];
+            $programIncomes = $parseItems($rep->program_incomes ?? '[]');
             foreach ($programIncomes as $idx => $inc) {
-                if (! empty($inc['amount'])) {
+                $incArr = (array) $inc;
+                if (! empty($incArr['amount'])) {
                     $records[] = [
                         'business_unit_code' => 'iqos',
                         'entity_code' => 'IQOS_RETAIL',
@@ -146,8 +174,8 @@ class IqosSyncService
                         'category' => 'other_income',
                         'sub_category' => 'principal_support',
                         'account_code' => '90'.str_pad((string) ($idx + 1), 2, '0', STR_PAD_LEFT),
-                        'account_name' => $inc['name'] ?? 'Pendapatan Program Principal',
-                        'amount' => (float) $inc['amount'],
+                        'account_name' => $incArr['name'] ?? 'Pendapatan Program Principal',
+                        'amount' => (float) $incArr['amount'],
                         'status' => $status,
                         'source_type' => 'database_sync',
                         'created_at' => now(),
@@ -213,9 +241,10 @@ class IqosSyncService
             }
 
             // Inflow Pending Items (Kas Masuk Tertunda)
-            $inflows = json_decode($rep->inflow_pending_items ?? '[]', true) ?: [];
+            $inflows = $parseItems($rep->inflow_pending_items ?? '[]');
             foreach ($inflows as $idx => $inf) {
-                if (! empty($inf['amount'])) {
+                $infArr = (array) $inf;
+                if (! empty($infArr['amount'])) {
                     $records[] = [
                         'business_unit_code' => 'iqos',
                         'entity_code' => 'IQOS_RETAIL',
@@ -224,8 +253,8 @@ class IqosSyncService
                         'category' => 'asset',
                         'sub_category' => 'cash_and_bank',
                         'account_code' => '111'.($idx + 1),
-                        'account_name' => $inf['name'] ?? 'Inflow Pending',
-                        'amount' => (float) $inf['amount'],
+                        'account_name' => $infArr['name'] ?? 'Inflow Pending',
+                        'amount' => (float) $infArr['amount'],
                         'status' => $status,
                         'source_type' => 'database_sync',
                         'created_at' => now(),
@@ -235,7 +264,7 @@ class IqosSyncService
             }
 
             // Selisih Kasir Bobi (Bisa bernilai negatif atau positif)
-            if ((float) $rep->selisih_bobi != 0) {
+            if ((float) ($rep->selisih_bobi ?? 0) != 0) {
                 $records[] = [
                     'business_unit_code' => 'iqos',
                     'entity_code' => 'IQOS_RETAIL',
@@ -254,7 +283,7 @@ class IqosSyncService
             }
 
             // 5.2 Persediaan Stok
-            if ((float) $rep->stock_value != 0) {
+            if ((float) ($rep->stock_value ?? 0) != 0) {
                 $records[] = [
                     'business_unit_code' => 'iqos',
                     'entity_code' => 'IQOS_RETAIL',
@@ -273,9 +302,10 @@ class IqosSyncService
             }
 
             // 5.3 Piutang Usaha & Insentif Resmi (Program Principal)
-            $recPrograms = json_decode($rep->receivables_program_items ?? '[]', true) ?: [];
+            $recPrograms = $parseItems($rep->receivables_program_items ?? '[]');
             foreach ($recPrograms as $idx => $pItem) {
-                if (! empty($pItem['amount'])) {
+                $pItemArr = (array) $pItem;
+                if (! empty($pItemArr['amount'])) {
                     $records[] = [
                         'business_unit_code' => 'iqos',
                         'entity_code' => 'IQOS_RETAIL',
@@ -284,8 +314,8 @@ class IqosSyncService
                         'category' => 'asset',
                         'sub_category' => 'accounts_receivable',
                         'account_code' => '12'.str_pad((string) ($idx + 1), 2, '0', STR_PAD_LEFT),
-                        'account_name' => $pItem['name'] ?? 'Piutang Program',
-                        'amount' => (float) $pItem['amount'],
+                        'account_name' => $pItemArr['name'] ?? 'Piutang Program',
+                        'amount' => (float) $pItemArr['amount'],
                         'status' => $status,
                         'source_type' => 'database_sync',
                         'created_at' => now(),
@@ -295,9 +325,10 @@ class IqosSyncService
             }
 
             // Piutang Personel / Karyawan
-            $recPersonnel = json_decode($rep->receivables_personnel_items ?? '[]', true) ?: [];
+            $recPersonnel = $parseItems($rep->receivables_personnel_items ?? '[]');
             foreach ($recPersonnel as $idx => $personItem) {
-                if (! empty($personItem['amount'])) {
+                $personItemArr = (array) $personItem;
+                if (! empty($personItemArr['amount'])) {
                     $records[] = [
                         'business_unit_code' => 'iqos',
                         'entity_code' => 'IQOS_RETAIL',
@@ -306,8 +337,8 @@ class IqosSyncService
                         'category' => 'asset',
                         'sub_category' => 'accounts_receivable',
                         'account_code' => '125'.$idx,
-                        'account_name' => 'Piutang: '.($personItem['name'] ?? 'Personel'),
-                        'amount' => (float) $personItem['amount'],
+                        'account_name' => 'Piutang: '.($personItemArr['name'] ?? 'Personel'),
+                        'amount' => (float) $personItemArr['amount'],
                         'status' => $status,
                         'source_type' => 'database_sync',
                         'created_at' => now(),
@@ -317,7 +348,7 @@ class IqosSyncService
             }
 
             // 5.4 Aktiva Tetap & Investasi Awal
-            if ((float) $rep->initial_investment_asset != 0) {
+            if ((float) ($rep->initial_investment_asset ?? 0) != 0) {
                 $records[] = [
                     'business_unit_code' => 'iqos',
                     'entity_code' => 'IQOS_RETAIL',
@@ -336,9 +367,10 @@ class IqosSyncService
             }
 
             // Aset Lain-lain
-            $otherAssets = json_decode($rep->other_assets_items ?? '[]', true) ?: [];
+            $otherAssets = $parseItems($rep->other_assets_items ?? '[]');
             foreach ($otherAssets as $idx => $oAsset) {
-                if (! empty($oAsset['amount'])) {
+                $oAssetArr = (array) $oAsset;
+                if (! empty($oAssetArr['amount'])) {
                     $records[] = [
                         'business_unit_code' => 'iqos',
                         'entity_code' => 'IQOS_RETAIL',
@@ -347,8 +379,8 @@ class IqosSyncService
                         'category' => 'asset',
                         'sub_category' => 'other_assets',
                         'account_code' => '17'.str_pad((string) ($idx + 1), 2, '0', STR_PAD_LEFT),
-                        'account_name' => $oAsset['name'] ?? 'Aset Lainnya',
-                        'amount' => (float) $oAsset['amount'],
+                        'account_name' => $oAssetArr['name'] ?? 'Aset Lainnya',
+                        'amount' => (float) $oAssetArr['amount'],
                         'status' => $status,
                         'source_type' => 'database_sync',
                         'created_at' => now(),
@@ -358,7 +390,7 @@ class IqosSyncService
             }
 
             // --- 6. NERACA: LIABILITIES ---
-            if ((float) $rep->debt_iqos != 0) {
+            if ((float) ($rep->debt_iqos ?? 0) != 0) {
                 $records[] = [
                     'business_unit_code' => 'iqos',
                     'entity_code' => 'IQOS_RETAIL',
@@ -376,7 +408,7 @@ class IqosSyncService
                 ];
             }
 
-            if ((float) $rep->debt_payment_iqos != 0) {
+            if ((float) ($rep->debt_payment_iqos ?? 0) != 0) {
                 $records[] = [
                     'business_unit_code' => 'iqos',
                     'entity_code' => 'IQOS_RETAIL',
@@ -395,9 +427,10 @@ class IqosSyncService
             }
 
             // Kewajiban Lain / Titipan
-            $otherLiabs = json_decode($rep->other_liabilities_items ?? '[]', true) ?: [];
+            $otherLiabs = $parseItems($rep->other_liabilities_items ?? '[]');
             foreach ($otherLiabs as $idx => $oLiab) {
-                if (! empty($oLiab['amount'])) {
+                $oLiabArr = (array) $oLiab;
+                if (! empty($oLiabArr['amount'])) {
                     $records[] = [
                         'business_unit_code' => 'iqos',
                         'entity_code' => 'IQOS_RETAIL',
@@ -406,8 +439,8 @@ class IqosSyncService
                         'category' => 'liability',
                         'sub_category' => 'other_liabilities',
                         'account_code' => '22'.str_pad((string) ($idx + 1), 2, '0', STR_PAD_LEFT),
-                        'account_name' => $oLiab['name'] ?? 'Kewajiban Lain / Titipan',
-                        'amount' => (float) $oLiab['amount'],
+                        'account_name' => $oLiabArr['name'] ?? 'Kewajiban Lain / Titipan',
+                        'amount' => (float) $oLiabArr['amount'],
                         'status' => $status,
                         'source_type' => 'database_sync',
                         'created_at' => now(),
@@ -436,10 +469,11 @@ class IqosSyncService
             }
 
             // Akumulasi Laba Ditahan (Detail per bulan sesuai SIR-IQOS jika ada)
-            $retainedItems = json_decode($rep->retained_earnings_items ?? '[]', true) ?: [];
+            $retainedItems = $parseItems($rep->retained_earnings_items ?? '[]');
             if (! empty($retainedItems)) {
                 foreach ($retainedItems as $idx => $rItem) {
-                    if (isset($rItem['amount']) && (float) $rItem['amount'] != 0) {
+                    $rItemArr = (array) $rItem;
+                    if (isset($rItemArr['amount']) && (float) $rItemArr['amount'] != 0) {
                         $records[] = [
                             'business_unit_code' => 'iqos',
                             'entity_code' => 'IQOS_RETAIL',
@@ -448,8 +482,8 @@ class IqosSyncService
                             'category' => 'equity',
                             'sub_category' => 'retained_earnings',
                             'account_code' => '32'.str_pad((string) ($idx + 1), 2, '0', STR_PAD_LEFT),
-                            'account_name' => $rItem['name'] ?? ('Laba Ditahan #'.($idx + 1)),
-                            'amount' => (float) $rItem['amount'],
+                            'account_name' => $rItemArr['name'] ?? ('Laba Ditahan #'.($idx + 1)),
+                            'amount' => (float) $rItemArr['amount'],
                             'status' => $status,
                             'source_type' => 'database_sync',
                             'created_at' => now(),
@@ -467,7 +501,7 @@ class IqosSyncService
                     'sub_category' => 'retained_earnings',
                     'account_code' => '3201',
                     'account_name' => 'Akumulasi Laba Ditahan Retail',
-                    'amount' => (float) $rep->total_retained_earnings,
+                    'amount' => (float) ($rep->total_retained_earnings ?? 0),
                     'status' => $status,
                     'source_type' => 'database_sync',
                     'created_at' => now(),
@@ -506,5 +540,116 @@ class IqosSyncService
             'synced_periods' => $periods,
             'count' => $syncedCount,
         ];
+    }
+
+    /**
+     * Ambil kalkulasi live PnL & Neraca dari project SIR-IQOS untuk periode yang belum difinalisasi.
+     */
+    public function fetchLiveReport(string $period): ?object
+    {
+        $iqosPath = env('IQOS_PROJECT_PATH', 'D:/Mekar Jaya/SIR-IQOS');
+        if (! file_exists($iqosPath.'/vendor/autoload.php')) {
+            $fallbacks = [
+                base_path('../SIR-IQOS'),
+                base_path('../sir-iqos'),
+                '/var/www/sir-iqos',
+                'C:/Mekar Jaya/SIR-IQOS',
+            ];
+            foreach ($fallbacks as $fb) {
+                if (file_exists($fb.'/vendor/autoload.php')) {
+                    $iqosPath = $fb;
+                    break;
+                }
+            }
+        }
+
+        $iqosPathNormalized = str_replace('\\', '/', $iqosPath);
+        if (! file_exists($iqosPathNormalized.'/vendor/autoload.php')) {
+            return null;
+        }
+
+        $iqosDb = config('database.connections.mysql_iqos.database', 'sir_iqos');
+
+        $script = <<<'PHP'
+require '%s/vendor/autoload.php';
+if (class_exists(Dotenv\Dotenv::class)) {
+    $dotenv = Dotenv\Dotenv::createMutable('%s');
+    $dotenv->load();
+}
+
+putenv('DB_DATABASE=%s');
+$_ENV['DB_DATABASE'] = '%s';
+$_SERVER['DB_DATABASE'] = '%s';
+
+$app = require_once '%s/bootstrap/app.php';
+$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+$kernel->bootstrap();
+
+config(['database.connections.mysql.database' => '%s']);
+\Illuminate\Support\Facades\DB::purge('mysql');
+
+$period = '%s';
+$ctrl = app(App\Http\Controllers\FinancialReportController::class);
+$ref = new ReflectionClass($ctrl);
+
+$mPnl = $ref->getMethod('calculateSinglePeriodPnl');
+$mPnl->setAccessible(true);
+$pnl = $mPnl->invoke($ctrl, $period, ['period' => $period], null, true);
+
+$neraca = $ctrl->getNeracaData($period);
+
+$neracaFlat = [
+    'bank_bri' => $neraca['bank_bri'] ?? 0,
+    'bank_bca' => $neraca['bank_bca'] ?? 0,
+    'kas_cash' => $neraca['kas_cash'] ?? 0,
+    'stock_value' => $neraca['stock_value'] ?? 0,
+    'debt_iqos' => $neraca['debt_iqos'] ?? 0,
+    'debt_payment_iqos' => 0,
+    'total_assets' => $neraca['total_assets'] ?? 0,
+    'total_liabilities' => $neraca['total_liabilities'] ?? 0,
+    'inflow_pending_items' => $neraca['aktiva']['penerimaan_berjalan']['items'] ?? [],
+    'selisih_bobi' => $neraca['aktiva']['rekonsiliasi']['items'][0]['amount'] ?? 0,
+    'receivables_program_items' => $neraca['aktiva']['piutang_program']['items'] ?? [],
+    'receivables_personnel_items' => $neraca['aktiva']['piutang_personil']['items'] ?? [],
+    'initial_investment_asset' => $neraca['aktiva']['investasi_aset']['items'][0]['amount'] ?? 0,
+    'other_assets_items' => $neraca['aktiva']['aset_lain']['items'] ?? [],
+    'other_liabilities_items' => $neraca['pasiva']['kewajiban_lain']['items'] ?? [],
+    'retained_earnings_items' => $neraca['pasiva']['ekuitas_laba']['items'] ?? [],
+    'total_retained_earnings' => $neraca['total_equity'] ?? 0,
+];
+
+$report = array_merge($pnl, $neracaFlat);
+echo json_encode($report);
+PHP;
+
+        $scriptFormatted = sprintf(
+            $script,
+            $iqosPathNormalized,
+            $iqosPathNormalized,
+            $iqosDb,
+            $iqosDb,
+            $iqosDb,
+            $iqosPathNormalized,
+            $iqosDb,
+            $period
+        );
+
+        $tempFile = storage_path('temp_iqos_calc_'.time().'_'.mt_rand(1000, 9999).'.php');
+        file_put_contents($tempFile, "<?php\n".$scriptFormatted);
+
+        $phpBinary = PHP_BINARY ?: 'php';
+        $output = shell_exec(escapeshellarg($phpBinary).' '.escapeshellarg($tempFile).' 2>&1');
+        @unlink($tempFile);
+
+        if (! $output) {
+            return null;
+        }
+
+        $data = json_decode($output);
+        if (! $data || empty($data->period)) {
+            return null;
+        }
+
+        return $data;
     }
 }

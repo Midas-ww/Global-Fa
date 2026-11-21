@@ -4,6 +4,7 @@ namespace App\Services\GlobalFinance;
 
 use App\Models\GlobalFinancialRecord;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class SpbuSyncService
 {
@@ -135,8 +136,11 @@ class SpbuSyncService
         }
 
         // --- 2. COGS (HPP) ---
+        $sumProductHpp = 0.0;
         if (! empty($pnl['cost_of_goods_sold']['products'])) {
             foreach ($pnl['cost_of_goods_sold']['products'] as $idx => $cProd) {
+                $cProdAmt = (float) ($cProd['amount'] ?? 0);
+                $sumProductHpp += $cProdAmt;
                 $records[] = [
                     'business_unit_code' => 'spbu',
                     'entity_code' => 'SPBU_44',
@@ -146,13 +150,35 @@ class SpbuSyncService
                     'sub_category' => 'fuel_cost',
                     'account_code' => '50'.str_pad((string) ($idx + 1), 2, '0', STR_PAD_LEFT),
                     'account_name' => 'HPP '.($cProd['name'] ?? 'BBM'),
-                    'amount' => (float) ($cProd['amount'] ?? 0),
+                    'amount' => $cProdAmt,
                     'status' => $status,
                     'source_type' => 'database_sync',
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
             }
+        }
+
+        // Defensive Fallback: Bila ada selisih antara HPP total dan rincian produk (misal ada produk baru belum terpetakan)
+        $expectedBbmHpp = (float) ($pnl['cost_of_goods_sold']['bbm_hpp'] ?? 0);
+        $diffHpp = round($expectedBbmHpp - $sumProductHpp, 2);
+        if (abs($diffHpp) > 1.0) {
+            $records[] = [
+                'business_unit_code' => 'spbu',
+                'entity_code' => 'SPBU_44',
+                'period' => $periodDate,
+                'report_type' => 'pnl',
+                'category' => 'cogs',
+                'sub_category' => 'fuel_cost',
+                'account_code' => '5090',
+                'account_name' => 'Penyesuaian HPP BBM Belum Terklasifikasi',
+                'amount' => $diffHpp,
+                'status' => $status,
+                'source_type' => 'database_sync',
+                'notes' => 'Otomatis dibuat untuk menjaga konsistensi total HPP BBM dengan sistem SPBU',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
         }
 
         // Losis & Tera HPP
@@ -167,6 +193,24 @@ class SpbuSyncService
                 'account_code' => '5098',
                 'account_name' => 'Losses BBM (Penguapan & Susut)',
                 'amount' => (float) $pnl['cost_of_goods_sold']['bbm_losis'],
+                'status' => $status,
+                'source_type' => 'database_sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+
+        if (! empty($pnl['cost_of_goods_sold']['bbm_tera'])) {
+            $records[] = [
+                'business_unit_code' => 'spbu',
+                'entity_code' => 'SPBU_44',
+                'period' => $periodDate,
+                'report_type' => 'pnl',
+                'category' => 'cogs',
+                'sub_category' => 'shrinkage_and_losses',
+                'account_code' => '5099',
+                'account_name' => 'Biaya Tera BBM (Pengujian Takaran Dispenser)',
+                'amount' => (float) $pnl['cost_of_goods_sold']['bbm_tera'],
                 'status' => $status,
                 'source_type' => 'database_sync',
                 'created_at' => now(),
@@ -196,6 +240,55 @@ class SpbuSyncService
                 'created_at' => now(),
                 'updated_at' => now(),
             ];
+        }
+
+        // --- 4. PENDAPATAN & BEBAN DILUAR USAHA (OTHER INCOME / EXPENSE) ---
+        if (! empty($pnl['other_income']['details'])) {
+            foreach ($pnl['other_income']['details'] as $idx => $oItem) {
+                $oAmt = (float) ($oItem['amount'] ?? 0);
+                if ($oAmt == 0.0) {
+                    continue;
+                }
+
+                $isPositive = $oAmt > 0;
+                $oName = trim($oItem['name'] ?? 'Lain-Lain');
+
+                $records[] = [
+                    'business_unit_code' => 'spbu',
+                    'entity_code' => 'SPBU_44',
+                    'period' => $periodDate,
+                    'report_type' => 'pnl',
+                    'category' => $isPositive ? 'other_income' : 'other_expense',
+                    'sub_category' => 'pendapatan_beban_lain',
+                    'account_code' => $isPositive ? '90'.str_pad((string) ($idx + 1), 2, '0', STR_PAD_LEFT) : '80'.str_pad((string) ($idx + 1), 2, '0', STR_PAD_LEFT),
+                    'account_name' => $oName,
+                    'amount' => abs($oAmt),
+                    'status' => $status,
+                    'source_type' => 'database_sync',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+        } elseif (! empty($pnl['other_income']['total'])) {
+            $totOther = (float) $pnl['other_income']['total'];
+            if ($totOther != 0.0) {
+                $isPositive = $totOther > 0;
+                $records[] = [
+                    'business_unit_code' => 'spbu',
+                    'entity_code' => 'SPBU_44',
+                    'period' => $periodDate,
+                    'report_type' => 'pnl',
+                    'category' => $isPositive ? 'other_income' : 'other_expense',
+                    'sub_category' => 'pendapatan_beban_lain',
+                    'account_code' => $isPositive ? '9001' : '8001',
+                    'account_name' => $isPositive ? 'Pendapatan Lain-Lain' : 'Beban Lain-Lain',
+                    'amount' => abs($totOther),
+                    'status' => $status,
+                    'source_type' => 'database_sync',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
         }
 
         // --- 4. NERACA: AKTIVA ---
@@ -320,13 +413,44 @@ class SpbuSyncService
 
         GlobalFinancialRecord::insert($records);
 
+        // Self-Reconciliation Check: Verifikasi Laba Bersih di Global FA vs API SPBU
+        $sumRev = 0.0;
+        $sumCogs = 0.0;
+        $sumOpex = 0.0;
+        $sumOtherInc = 0.0;
+        $sumOtherExp = 0.0;
+        foreach ($records as $r) {
+            if ($r['report_type'] !== 'pnl') {
+                continue;
+            }
+            match ($r['category']) {
+                'revenue' => $sumRev += (float) $r['amount'],
+                'cogs' => $sumCogs += (float) $r['amount'],
+                'opex' => $sumOpex += (float) $r['amount'],
+                'other_income' => $sumOtherInc += (float) $r['amount'],
+                'other_expense' => $sumOtherExp += (float) $r['amount'],
+                default => null,
+            };
+        }
+        $calcNetProfit = round(($sumRev - $sumCogs) - $sumOpex + ($sumOtherInc - $sumOtherExp), 2);
+        $expectedNetProfit = round((float) ($pnl['net_profit'] ?? 0), 2);
+        $variance = round($calcNetProfit - $expectedNetProfit, 2);
+        $isReconciled = abs($variance) < 1.0;
+
+        if (! $isReconciled) {
+            Log::warning("SPBU Sync Variance Mismatch for period [{$yearMonth}]: Calculated Net Profit = {$calcNetProfit}, Expected = {$expectedNetProfit}, Variance = {$variance}");
+        }
+
         return [
             'success' => true,
             'business_unit' => 'spbu',
             'period' => $yearMonth,
             'records_count' => count($records),
             'revenue_total' => (float) ($pnl['revenue']['total'] ?? 0),
-            'net_profit' => (float) ($pnl['net_profit'] ?? 0),
+            'net_profit' => $calcNetProfit,
+            'expected_net_profit' => $expectedNetProfit,
+            'reconciled' => $isReconciled,
+            'variance' => $variance,
             'total_aktiva' => (float) ($summary['total_aktiva'] ?? 0),
         ];
     }

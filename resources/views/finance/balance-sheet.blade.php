@@ -160,7 +160,7 @@
             </div>
 
             <!-- Total Assets Footer (SOLID FLAT - NO GRADIENT) -->
-            <div class="p-4 bg-amber-50/70 border-t-2 border-amber-300 flex items-center justify-between text-slate-900 mt-auto">
+            <div class="p-4 bg-amber-50/70 flex items-center justify-between text-slate-900 mt-auto">
                 <span class="font-black uppercase tracking-wide text-xs">TOTAL AKTIVA (ASSETS)</span>
                 <span class="text-base font-black font-mono text-slate-900">Rp {{ number_format($bs['assets']['total'], 0, ',', '.') }}</span>
             </div>
@@ -243,7 +243,7 @@
             </div>
 
             <!-- Total Liabilities & Equity Footer (SOLID FLAT - NO GRADIENT) -->
-            <div class="p-4 bg-amber-50/70 border-t-2 border-amber-300 flex items-center justify-between text-slate-900 mt-auto">
+            <div class="p-4 bg-amber-50/70 flex items-center justify-between text-slate-900 mt-auto">
                 <span class="font-black uppercase tracking-wide text-xs">TOTAL PASIVA (KEWAJIBAN + EKUITAS)</span>
                 <span class="text-base font-black font-mono text-slate-900">Rp {{ number_format($bs['total_liabilities_and_equity'], 0, ',', '.') }}</span>
             </div>

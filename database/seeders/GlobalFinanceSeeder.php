@@ -72,7 +72,7 @@ class GlobalFinanceSeeder extends Seeder
         $buXtrans = GlobalBusinessUnit::updateOrCreate(
             ['code' => 'xtrans'],
             [
-                'name' => 'Ekspedisi',
+                'name' => 'Xtrans',
                 'description' => 'PT Mekar Jaya Xtrans Jaya - Jasa logistik dan angkutan armada truk ekspedisi.',
                 'icon' => 'truck',
                 'color' => '#2563EB',
@@ -231,11 +231,13 @@ class GlobalFinanceSeeder extends Seeder
             echo 'IQOS Sync Warning: '.$e->getMessage()."\n";
         }
 
-        echo "Ingesting SPBU July 2026 from database...\n";
+        echo "Ingesting SPBU recent periods from database...\n";
         try {
             $spbuService = new SpbuSyncService;
-            $resSpbu = $spbuService->sync('2026-07');
-            echo 'SPBU Synced: '.json_encode($resSpbu)."\n";
+            foreach (['2026-07', '2026-08', '2026-09', '2026-10', '2026-11'] as $spbuPeriod) {
+                $resSpbu = $spbuService->sync($spbuPeriod);
+                echo "SPBU {$spbuPeriod} Synced: ".json_encode($resSpbu)."\n";
+            }
         } catch (\Throwable $e) {
             echo 'SPBU Sync Warning: '.$e->getMessage()."\n";
         }

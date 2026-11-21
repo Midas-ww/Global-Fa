@@ -66,7 +66,7 @@ class SsoCallbackController extends Controller
             'user_role' => $payload['role'] ?? 'super_admin',
         ]);
 
-        return redirect()->route('finance.dashboard')->with('success', "Selamat datang, {$user->name}!");
+        return redirect()->route('finance.dashboard');
     }
 
     /**

@@ -124,7 +124,9 @@
                     <div class="flex-1">
                         <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Periode Bulan</label>
                         <select name="period" class="w-full bg-white border border-[#edf0ee] rounded-xl text-xs font-mono font-medium px-3 py-2 text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#059669]">
-                            <option value="2026-09" selected>September 2026</option>
+                            <option value="2026-11" selected>November 2026 (Berjalan)</option>
+                            <option value="2026-10">Oktober 2026</option>
+                            <option value="2026-09">September 2026</option>
                             <option value="2026-08">Agustus 2026</option>
                             <option value="2026-07">Juli 2026</option>
                             <option value="2026-06">Juni 2026</option>
@@ -280,15 +282,15 @@
                 </form>
             </div>
 
-            <!-- EKSPEDISI UPLOAD BOX -->
+            <!-- XTRANS UPLOAD BOX -->
             <div class="p-4 rounded-xl border border-dashed border-amber-300 bg-[#fbfdfa] hover:bg-white transition">
                 <div class="flex items-center justify-between mb-2">
                     <div class="flex items-center gap-2">
                         <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 font-black text-xs flex items-center justify-center">
-                            EXP
+                            XT
                         </div>
                         <div>
-                            <h4 class="text-sm font-bold text-slate-900">Ekspedisi - PT Mekar Jaya Xtrans Jaya</h4>
+                            <h4 class="text-sm font-bold text-slate-900">Xtrans - PT Mekar Jaya Xtrans Jaya</h4>
                             <p class="text-[11px] text-slate-400">Laporan Laba Rugi Operasional & Neraca Konsolidasi Armada</p>
                         </div>
                     </div>
@@ -298,10 +300,10 @@
                     @csrf
                     <input type="hidden" name="type" value="xtrans">
                     <div class="relative flex items-center justify-center border-2 border-dashed border-slate-200 hover:border-amber-400 rounded-xl p-3 bg-white transition cursor-pointer group">
-                        <input type="file" name="file" accept=".xlsx,.xls,.csv" required class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" onchange="this.nextElementSibling.innerText = this.files[0]?.name || 'Pilih file Excel Ekspedisi...'">
+                        <input type="file" name="file" accept=".xlsx,.xls,.csv" required class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" onchange="this.nextElementSibling.innerText = this.files[0]?.name || 'Pilih file Excel Xtrans...'">
                         <div class="text-center text-xs text-slate-500 flex items-center gap-2 pointer-events-none group-hover:text-amber-700">
                             <i data-lucide="upload-cloud" class="w-4 h-4 text-amber-500"></i>
-                            <span class="font-medium text-slate-600">Pilih file Excel Ekspedisi (.xlsx / .xls)</span>
+                            <span class="font-medium text-slate-600">Pilih file Excel Xtrans (.xlsx / .xls)</span>
                         </div>
                     </div>
                     <div class="flex items-center justify-between flex-wrap gap-2 pt-1">
@@ -313,7 +315,7 @@
                         </div>
                         <button type="submit" class="px-4 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer">
                             <i data-lucide="search-check" class="w-3.5 h-3.5 text-amber-600"></i>
-                            Cek & Import Ekspedisi
+                            Cek & Import Xtrans
                         </button>
                     </div>
                 </form>
@@ -600,7 +602,7 @@
                 <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-slate-600 text-xs">
                     <span class="font-bold text-slate-800">Petunjuk Solusi:</span>
                     <ul class="list-disc pl-5 space-y-1 text-slate-500">
-                        <li>Pastikan Anda mengunggah berkas pada kotak unit usaha yang sesuai (MJS FMCG, MJX Ekspedisi, atau Unit Usaha Lain).</li>
+                        <li>Pastikan Anda mengunggah berkas pada kotak unit usaha yang sesuai (MJS FMCG, MJX Xtrans, atau Unit Usaha Lain).</li>
                         <li>Gunakan format template resmi holding yang dapat diunduh pada tombol <span class="font-semibold text-slate-700">"Unduh Template Excel"</span>.</li>
                         <li>Pastikan berkas Excel tidak dalam keadaan terkunci atau memiliki kata sandi.</li>
                     </ul>
