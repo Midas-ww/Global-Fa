@@ -76,7 +76,7 @@ html {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background-color: #9c4a2f;
+    background-color: #ca8a04;
 }
 
 .custom-scrollbar,
@@ -105,7 +105,7 @@ html {
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover,
 .custom-balance-scroll::-webkit-scrollbar-thumb:hover {
-    background-color: #9c4a2f;
+    background-color: #ca8a04;
 }
 
 .no-scrollbar::-webkit-scrollbar {

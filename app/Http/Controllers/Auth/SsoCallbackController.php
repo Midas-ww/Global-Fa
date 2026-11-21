@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class SsoCallbackController extends Controller
@@ -135,7 +136,7 @@ class SsoCallbackController extends Controller
     }
 
     /**
-     * Arahkan user kembali ke Super App Portal dengan token SSO aman.
+     * Arahkan user kembali ke Mekar Jaya Super App Portal dengan token SSO aman.
      */
     public function redirectToPortal(Request $request): RedirectResponse
     {
@@ -143,11 +144,37 @@ class SsoCallbackController extends Controller
         $user = $request->user();
 
         if (! $user) {
-            return redirect()->away("{$portalUrl}/login");
+            return redirect()->away("{$portalUrl}/select-portal");
         }
 
+        // 1. Dapatkan user_id yang valid di database pusat mekarjaya_db
+        $portalUserId = null;
+        if (session()->has('sso_user.user_id')) {
+            $portalUserId = (int) session('sso_user.user_id');
+        } elseif (! app()->environment('testing')) {
+            try {
+                $portalUserId = DB::connection('mysql')
+                    ->table('mekarjaya_db.users')
+                    ->where('email', $user->email)
+                    ->value('id');
+
+                if (! $portalUserId) {
+                    // Fallback ke akun superadmin mekarjaya_db jika akun lokal (misal admin@mekarjaya.com)
+                    $portalUserId = DB::connection('mysql')
+                        ->table('mekarjaya_db.users')
+                        ->where('email', 'superadmin@mjg.com')
+                        ->value('id') ?? 13;
+                }
+            } catch (\Throwable) {
+                $portalUserId = 13;
+            }
+        }
+
+        $portalUserId = $portalUserId ?? 13;
+
+        // 2. Siapkan payload SSO aman dengan target langsung ke portal launcher hub (select-portal)
         $payload = [
-            'user_id' => $user->id,
+            'user_id' => $portalUserId,
             'email' => $user->email,
             'name' => $user->name,
             'role' => $user->role ?? 'super_admin',

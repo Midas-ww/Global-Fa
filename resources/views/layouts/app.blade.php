@@ -30,13 +30,13 @@
                     },
                     colors: {
                         brand: {
-                            earth: '#9c4a2f',
-                            'earth-dark': '#853c23',
-                            clay: '#b85d38',
-                            sage: '#445e3d',
-                            sand: '#f7f5f0',
-                            border: '#e6e1d5',
-                            surface: '#f4f1ea',
+                            corn: '#ca8a04',
+                            'corn-dark': '#a16207',
+                            kernel: '#eab308',
+                            husk: '#15803d',
+                            silk: '#faf8f0',
+                            border: '#e9e5d6',
+                            surface: '#ffffff',
                         }
                     }
                 }
@@ -106,7 +106,7 @@
         }
 
         ::-webkit-scrollbar-thumb:hover {
-            background-color: #9c4a2f;
+            background-color: #ca8a04;
         }
 
         /* Class spesifik untuk wadah tabel laporan (.custom-scrollbar & .custom-balance-scroll) */
@@ -136,7 +136,7 @@
 
         .custom-scrollbar::-webkit-scrollbar-thumb:hover,
         .custom-balance-scroll::-webkit-scrollbar-thumb:hover {
-            background-color: #9c4a2f;
+            background-color: #ca8a04;
         }
 
         /* Custom Scrollbar - Hide when explicitly requested */
@@ -160,7 +160,7 @@
         }
     </script>
 </head>
-<body class="bg-[#f7f5f0] text-slate-800 antialiased font-sans flex h-screen overflow-hidden">
+<body class="bg-[#faf8f0] text-slate-800 antialiased font-sans flex h-screen overflow-hidden">
     @php
         $userName = auth()->user()->name ?? 'Executive';
         $nameParts = explode(' ', trim($userName));
@@ -174,10 +174,10 @@
     <div id="sidebarBackdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/40 z-40 hidden lg:hidden transition-opacity"></div>
 
     <!-- SIDEBAR (Flat Clean Modern Style ala SPBU & IQOS - NO GRADIENT) -->
-    <aside id="mainSidebar" class="w-64 bg-white text-slate-700 flex flex-col justify-between border-r border-[#e6e1d5] shrink-0 z-50 transition-all duration-300 ease-in-out fixed lg:static inset-y-0 left-0 -translate-x-full lg:translate-x-0 shadow-xs">
+    <aside id="mainSidebar" class="w-64 bg-white text-slate-700 flex flex-col justify-between border-r border-[#e9e5d6] shrink-0 z-50 transition-all duration-300 ease-in-out fixed lg:static inset-y-0 left-0 -translate-x-full lg:translate-x-0 shadow-xs">
         <div class="flex flex-col flex-1 overflow-hidden">
             <!-- Sidebar Header / Logo (Persis SIR-IQOS & SPBU) -->
-            <div class="h-16 flex items-center justify-center border-b border-[#e6e1d5] shrink-0 transition-all px-3 bg-white">
+            <div class="h-16 flex items-center justify-center border-b border-[#e9e5d6] shrink-0 transition-all px-3 bg-white">
                 <a href="{{ route('finance.dashboard') }}" class="flex items-center justify-center w-full overflow-hidden">
                     <!-- Logo Full (Expanded) -->
                     <img src="/assets/images/logo-full.png" alt="Mekar Jaya Group" class="h-11 sm:h-12 w-auto object-contain max-w-[200px] shrink-0 sidebar-logo-full" />
@@ -187,14 +187,14 @@
             </div>
 
             <!-- Sidebar Search Input (Hidden when collapsed) -->
-            <div class="p-3 border-b border-[#e6e1d5] shrink-0 sidebar-search-box">
+            <div class="p-3 border-b border-[#e9e5d6] shrink-0 sidebar-search-box">
                 <div class="relative flex items-center">
                     <svg class="w-4 h-4 absolute left-3 text-slate-400 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="11" cy="11" r="8" />
                         <path d="m21 21-4.3-4.3" />
                     </svg>
                     <input type="text" id="sidebarSearch" placeholder="Cari menu Global FA..."
-                        class="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#9c4a2f] focus:bg-white transition-all shadow-2xs"
+                        class="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#ca8a04] focus:bg-white transition-all shadow-2xs"
                         oninput="filterSidebar(this.value)" />
                     <button id="searchClearBtn" onclick="clearSearch()" type="button"
                         class="absolute right-2.5 p-0.5 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-200/60 transition-colors cursor-pointer hidden"
@@ -208,7 +208,7 @@
             </div>
 
             <!-- Collapsed Search Button (Muncul saat Sidebar Ditutup ala SPBU & IQOS) -->
-            <div class="p-2 border-b border-[#e6e1d5] flex justify-center shrink-0 hidden sidebar-collapsed-search">
+            <div class="p-2 border-b border-[#e9e5d6] flex justify-center shrink-0 hidden sidebar-collapsed-search">
                 <button type="button" onclick="expandSidebar(); document.getElementById('sidebarSearch').focus();"
                     class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-all cursor-pointer relative"
                     title="Cari Menu (Ctrl+K)">
@@ -230,8 +230,8 @@
                         <!-- Overview Link (Persis Dashboard Icon ala SPBU & IQOS) -->
                         <a href="{{ route('finance.dashboard') }}"
                            title="Overview"
-                           class="sidebar-item flex items-center text-xs transition-all duration-300 ease-in-out group relative cursor-pointer rounded-tl-[1.2rem] rounded-br-[1.2rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1.2rem] hover:rounded-bl-[1.2rem] hover:rounded-tl-none hover:rounded-br-none {{ request()->routeIs('finance.dashboard') ? 'bg-[#9c4a2f]/10 text-[#782f18] border border-[#e2beaf] font-bold shadow-2xs' : 'text-slate-600 hover:bg-[#f8ede7] hover:text-[#782f18] font-semibold' }} w-full px-3.5 py-2.5 justify-start gap-3">
-                            <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('finance.dashboard') ? 'text-[#9c4a2f]' : 'text-slate-500 group-hover:text-[#9c4a2f]' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                           class="sidebar-item flex items-center text-xs transition-all duration-300 ease-in-out group relative cursor-pointer rounded-tl-[1.2rem] rounded-br-[1.2rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1.2rem] hover:rounded-bl-[1.2rem] hover:rounded-tl-none hover:rounded-br-none {{ request()->routeIs('finance.dashboard') ? 'bg-[#ca8a04]/10 text-[#713f12] border border-[#fde047] font-bold shadow-2xs' : 'text-slate-600 hover:bg-[#fef9c3] hover:text-[#713f12] font-semibold' }} w-full px-3.5 py-2.5 justify-start gap-3">
+                            <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('finance.dashboard') ? 'text-[#ca8a04]' : 'text-slate-500 group-hover:text-[#ca8a04]' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <rect width="7" height="9" x="3" y="3" rx="1" />
                                 <rect width="7" height="5" x="14" y="3" rx="1" />
                                 <rect width="7" height="9" x="14" y="12" rx="1" />
@@ -243,8 +243,8 @@
                         <!-- Laba Rugi (P&L) Link (Persis PNL Chart Icon ala SPBU & IQOS) -->
                         <a href="{{ route('finance.pnl') }}"
                            title="Laba Rugi (P&L)"
-                           class="sidebar-item flex items-center text-xs transition-all duration-300 ease-in-out group relative cursor-pointer rounded-tl-[1.2rem] rounded-br-[1.2rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1.2rem] hover:rounded-bl-[1.2rem] hover:rounded-tl-none hover:rounded-br-none {{ request()->routeIs('finance.pnl') ? 'bg-[#9c4a2f]/10 text-[#782f18] border border-[#e2beaf] font-bold shadow-2xs' : 'text-slate-600 hover:bg-[#f8ede7] hover:text-[#782f18] font-semibold' }} w-full px-3.5 py-2.5 justify-start gap-3">
-                            <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('finance.pnl') ? 'text-[#9c4a2f]' : 'text-slate-500 group-hover:text-[#9c4a2f]' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                           class="sidebar-item flex items-center text-xs transition-all duration-300 ease-in-out group relative cursor-pointer rounded-tl-[1.2rem] rounded-br-[1.2rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1.2rem] hover:rounded-bl-[1.2rem] hover:rounded-tl-none hover:rounded-br-none {{ request()->routeIs('finance.pnl') ? 'bg-[#ca8a04]/10 text-[#713f12] border border-[#fde047] font-bold shadow-2xs' : 'text-slate-600 hover:bg-[#fef9c3] hover:text-[#713f12] font-semibold' }} w-full px-3.5 py-2.5 justify-start gap-3">
+                            <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('finance.pnl') ? 'text-[#ca8a04]' : 'text-slate-500 group-hover:text-[#ca8a04]' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M3 17l6-6 4 3 8-9" />
                                 <circle cx="3" cy="17" r="1" />
                                 <circle cx="9" cy="11" r="1" />
@@ -257,8 +257,8 @@
                         <!-- Neraca Keuangan (Balance Sheet) Link (Persis Balance Scale ala SPBU & IQOS) -->
                         <a href="{{ route('finance.balance-sheet') }}"
                            title="Neraca Keuangan"
-                           class="sidebar-item flex items-center text-xs transition-all duration-300 ease-in-out group relative cursor-pointer rounded-tl-[1.2rem] rounded-br-[1.2rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1.2rem] hover:rounded-bl-[1.2rem] hover:rounded-tl-none hover:rounded-br-none {{ request()->routeIs('finance.balance-sheet') ? 'bg-[#9c4a2f]/10 text-[#782f18] border border-[#e2beaf] font-bold shadow-2xs' : 'text-slate-600 hover:bg-[#f8ede7] hover:text-[#782f18] font-semibold' }} w-full px-3.5 py-2.5 justify-start gap-3">
-                            <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('finance.balance-sheet') ? 'text-[#9c4a2f]' : 'text-slate-500 group-hover:text-[#9c4a2f]' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                           class="sidebar-item flex items-center text-xs transition-all duration-300 ease-in-out group relative cursor-pointer rounded-tl-[1.2rem] rounded-br-[1.2rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1.2rem] hover:rounded-bl-[1.2rem] hover:rounded-tl-none hover:rounded-br-none {{ request()->routeIs('finance.balance-sheet') ? 'bg-[#ca8a04]/10 text-[#713f12] border border-[#fde047] font-bold shadow-2xs' : 'text-slate-600 hover:bg-[#fef9c3] hover:text-[#713f12] font-semibold' }} w-full px-3.5 py-2.5 justify-start gap-3">
+                            <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('finance.balance-sheet') ? 'text-[#ca8a04]' : 'text-slate-500 group-hover:text-[#ca8a04]' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M12 3v18" />
                                 <path d="M3 7h18" />
                                 <path d="M3 7l-2 5h7L6 7" />
@@ -277,8 +277,8 @@
                         <!-- Riwayat & Import Data Link (Persis IQOS) -->
                         <a href="{{ route('finance.sync') }}"
                            title="Riwayat & Import Data"
-                           class="sidebar-item flex items-center text-xs transition-all duration-300 ease-in-out group relative cursor-pointer rounded-tl-[1.2rem] rounded-br-[1.2rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1.2rem] hover:rounded-bl-[1.2rem] hover:rounded-tl-none hover:rounded-br-none {{ request()->routeIs('finance.sync') ? 'bg-[#9c4a2f]/10 text-[#782f18] border border-[#e2beaf] font-bold shadow-2xs' : 'text-slate-600 hover:bg-[#f8ede7] hover:text-[#782f18] font-semibold' }} w-full px-3.5 py-2.5 justify-start gap-3">
-                            <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('finance.sync') ? 'text-[#9c4a2f]' : 'text-slate-500 group-hover:text-[#9c4a2f]' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                           class="sidebar-item flex items-center text-xs transition-all duration-300 ease-in-out group relative cursor-pointer rounded-tl-[1.2rem] rounded-br-[1.2rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1.2rem] hover:rounded-bl-[1.2rem] hover:rounded-tl-none hover:rounded-br-none {{ request()->routeIs('finance.sync') ? 'bg-[#ca8a04]/10 text-[#713f12] border border-[#fde047] font-bold shadow-2xs' : 'text-slate-600 hover:bg-[#fef9c3] hover:text-[#713f12] font-semibold' }} w-full px-3.5 py-2.5 justify-start gap-3">
+                            <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('finance.sync') ? 'text-[#ca8a04]' : 'text-slate-500 group-hover:text-[#ca8a04]' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
                                 <path d="M21 3v5h-5" />
                                 <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
@@ -289,14 +289,20 @@
 
                         <!-- Super App Portal Link -->
                         <a href="{{ route('sso.portal') }}" target="_blank"
-                           title="Super App Portal"
-                           class="sidebar-item flex items-center text-xs transition-all duration-300 ease-in-out group relative cursor-pointer rounded-tl-[1.2rem] rounded-br-[1.2rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1.2rem] hover:rounded-bl-[1.2rem] hover:rounded-tl-none hover:rounded-br-none text-slate-600 hover:bg-[#f8ede7] hover:text-[#782f18] font-semibold w-full px-3.5 py-2.5 justify-start gap-3">
-                            <svg class="w-5 h-5 shrink-0 text-slate-500 group-hover:text-[#9c4a2f]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                                <polyline points="15 3 21 3 21 9" />
-                                <line x1="21" y1="3" x2="14" y2="10" />
+                           title="Portal Mekar Jaya Super App"
+                           class="sidebar-item flex items-center text-xs transition-all duration-300 ease-in-out group relative cursor-pointer rounded-tl-[1.2rem] rounded-br-[1.2rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1.2rem] hover:rounded-bl-[1.2rem] hover:rounded-tl-none hover:rounded-br-none text-slate-600 hover:bg-[#fef9c3] hover:text-[#713f12] font-semibold w-full px-3.5 py-2.5 justify-start gap-3">
+                            <svg class="w-5 h-5 shrink-0 text-slate-500 group-hover:text-[#ca8a04]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect width="7" height="7" x="3" y="3" rx="1"></rect>
+                                <rect width="7" height="7" x="14" y="3" rx="1"></rect>
+                                <rect width="7" height="7" x="14" y="14" rx="1"></rect>
+                                <rect width="7" height="7" x="3" y="14" rx="1"></rect>
                             </svg>
-                            <span class="truncate flex-1 sidebar-label">Super App Portal</span>
+                            <span class="truncate flex-1 sidebar-label">Portal Super App</span>
+                            <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-[#ca8a04] shrink-0 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                <polyline points="15 3 21 3 21 9"></polyline>
+                                <line x1="21" y1="3" x2="14" y2="10"></line>
+                            </svg>
                         </a>
                     </nav>
                 </div>
@@ -307,8 +313,8 @@
                     <nav class="space-y-1.5">
                         <a href="{{ route('finance.master.units') }}"
                            title="Master Unit Bisnis"
-                           class="sidebar-item flex items-center text-xs transition-all duration-300 ease-in-out group relative cursor-pointer rounded-tl-[1.2rem] rounded-br-[1.2rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1.2rem] hover:rounded-bl-[1.2rem] hover:rounded-tl-none hover:rounded-br-none {{ request()->routeIs('finance.master.*') ? 'bg-[#9c4a2f]/10 text-[#782f18] border border-[#e2beaf] font-bold shadow-2xs' : 'text-slate-600 hover:bg-[#f8ede7] hover:text-[#782f18] font-semibold' }} w-full px-3.5 py-2.5 justify-start gap-3">
-                            <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('finance.master.*') ? 'text-[#9c4a2f]' : 'text-slate-500 group-hover:text-[#9c4a2f]' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                           class="sidebar-item flex items-center text-xs transition-all duration-300 ease-in-out group relative cursor-pointer rounded-tl-[1.2rem] rounded-br-[1.2rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1.2rem] hover:rounded-bl-[1.2rem] hover:rounded-tl-none hover:rounded-br-none {{ request()->routeIs('finance.master.*') ? 'bg-[#ca8a04]/10 text-[#713f12] border border-[#fde047] font-bold shadow-2xs' : 'text-slate-600 hover:bg-[#fef9c3] hover:text-[#713f12] font-semibold' }} w-full px-3.5 py-2.5 justify-start gap-3">
+                            <svg class="w-5 h-5 shrink-0 {{ request()->routeIs('finance.master.*') ? 'text-[#ca8a04]' : 'text-slate-500 group-hover:text-[#ca8a04]' }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <rect width="16" height="20" x="4" y="2" rx="2" />
                                 <path d="M9 22v-4h6v4" />
                                 <path d="M8 6h.01" />
@@ -359,9 +365,9 @@
         </div>
 
         <!-- Sidebar Footer / User Profile & Logout (Persis SPBU & IQOS) -->
-        <div class="p-3 border-t border-[#e6e1d5] shrink-0 bg-slate-50/50 flex items-center transition-all mt-auto justify-between sidebar-footer">
+        <div class="p-3 border-t border-[#e9e5d6] shrink-0 bg-slate-50/50 flex items-center transition-all mt-auto justify-between sidebar-footer">
             <div class="flex items-center gap-2.5 overflow-hidden">
-                <div class="w-8 h-8 rounded-full bg-[#9c4a2f] text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs" title="{{ $userName }}">
+                <div class="w-8 h-8 rounded-full bg-[#ca8a04] text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs" title="{{ $userName }}">
                     {{ $userInitials }}
                 </div>
                 <div class="flex flex-col truncate min-w-0 sidebar-label">
@@ -384,7 +390,7 @@
     </aside>
 
     <!-- MAIN CONTENT AREA -->
-    <div class="flex-1 flex flex-col overflow-hidden bg-[#f7f5f0]">
+    <div class="flex-1 flex flex-col overflow-hidden bg-[#faf8f0]">
         
         <!-- TOPBAR (Identik & Serasi dengan SIR-IQOS & SPBU) -->
         <header class="h-16 bg-white border-b border-slate-200/90 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shrink-0 shadow-xs">
@@ -423,7 +429,7 @@
                     <span class="hidden sm:inline">Mekarjaya Group</span>
                     <span class="inline sm:hidden font-semibold">MJG</span>
                     <span>/</span>
-                    <span class="text-slate-900 font-bold shrink-0 text-[#9c4a2f]">
+                    <span class="text-slate-900 font-bold shrink-0 text-[#ca8a04]">
                         Global FA
                     </span>
                     <span>/</span>
@@ -450,7 +456,7 @@
                     >
                         <!-- Avatar Circle -->
                         <div class="relative shrink-0">
-                            <div class="w-8 h-8 rounded-full bg-[#9c4a2f] text-white font-bold text-xs flex items-center justify-center shadow-xs">
+                            <div class="w-8 h-8 rounded-full bg-[#ca8a04] text-white font-bold text-xs flex items-center justify-center shadow-xs">
                                 {{ $userInitials }}
                             </div>
                         </div>
@@ -482,14 +488,23 @@
                         <a
                             href="{{ route('sso.portal') }}"
                             target="_blank"
-                            class="flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-semibold text-slate-700 hover:bg-[#f8ede7] hover:text-[#9c4a2f] active:bg-[#f5e4dc] rounded-xl transition-all cursor-pointer group"
+                            title="Buka Portal Mekar Jaya Super App"
+                            class="flex items-center justify-between gap-2.5 px-3.5 py-2.5 text-xs font-semibold text-slate-700 hover:bg-[#fef9c3] hover:text-[#ca8a04] active:bg-[#fef08a] rounded-xl transition-all cursor-pointer group"
                         >
-                            <svg class="w-4 h-4 text-slate-500 group-hover:text-[#9c4a2f] shrink-0 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z" />
-                                <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65" />
-                                <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65" />
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <svg class="w-4 h-4 text-slate-500 group-hover:text-[#ca8a04] shrink-0 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect width="7" height="7" x="3" y="3" rx="1"></rect>
+                                    <rect width="7" height="7" x="14" y="3" rx="1"></rect>
+                                    <rect width="7" height="7" x="14" y="14" rx="1"></rect>
+                                    <rect width="7" height="7" x="3" y="14" rx="1"></rect>
+                                </svg>
+                                <span class="truncate">Portal Super App</span>
+                            </div>
+                            <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-[#ca8a04] shrink-0 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                <polyline points="15 3 21 3 21 9"></polyline>
+                                <line x1="21" y1="3" x2="14" y2="10"></line>
                             </svg>
-                            <span>Portal</span>
                         </a>
 
                         <div class="border-t border-slate-100 my-1 mx-1"></div>
@@ -517,8 +532,8 @@
         <!-- FLASH NOTIFICATIONS -->
         <div class="px-4 sm:px-8 pt-4">
             @if(session('success'))
-            <div class="p-3 mb-3 text-xs text-[#782f18] rounded-xl bg-[#f8ede7] border border-[#e2beaf] flex items-center gap-2.5 shadow-2xs">
-                <i data-lucide="check-circle-2" class="w-4 h-4 text-[#9c4a2f] shrink-0"></i>
+            <div class="p-3 mb-3 text-xs text-[#713f12] rounded-xl bg-[#fef9c3] border border-[#fde047] flex items-center gap-2.5 shadow-2xs">
+                <i data-lucide="check-circle-2" class="w-4 h-4 text-[#ca8a04] shrink-0"></i>
                 <div class="font-medium">{{ session('success') }}</div>
             </div>
             @endif
@@ -556,7 +571,7 @@
                 <div id="tableScrollThumb"
                      onmousedown="onTableThumbMouseDown(event)"
                      ontouchstart="onTableThumbTouchStart(event)"
-                     class="h-2 rounded-full bg-slate-400 hover:bg-[#9c4a2f] active:bg-[#853c23] cursor-grab active:cursor-grabbing transition-colors duration-150 shadow-2xs"
+                     class="h-2 rounded-full bg-slate-400 hover:bg-[#ca8a04] active:bg-[#a16207] cursor-grab active:cursor-grabbing transition-colors duration-150 shadow-2xs"
                      style="width: 48px; transform: translateX(0px);">
                 </div>
             </div>

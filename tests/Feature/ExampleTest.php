@@ -2,11 +2,14 @@
 
 namespace Tests\Feature;
 
-// use Illuminate\Foundation\Testing\RefreshDatabase;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
+    use RefreshDatabase;
+
     /**
      * A basic test example.
      */
@@ -30,5 +33,15 @@ class ExampleTest extends TestCase
 
         $response->assertStatus(302);
         $this->assertStringContainsString('localhost:8000/logout', $response->headers->get('Location'));
+    }
+
+    public function test_portal_redirects_to_superapp_portal(): void
+    {
+        $user = User::factory()->create();
+        $response = $this->actingAs($user)->get('/sso/portal');
+
+        $response->assertStatus(302);
+        $this->assertStringContainsString('localhost:8000/sso/callback', $response->headers->get('Location'));
+        $this->assertStringContainsString('target=portal', $response->headers->get('Location'));
     }
 }

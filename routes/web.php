@@ -25,6 +25,10 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/sync/logs/bulk-delete', [GlobalFinanceController::class, 'bulkDeleteIngestionLogs'])->name('finance.sync.bulk-delete');
     Route::delete('/sync/log/{id}', [GlobalFinanceController::class, 'deleteIngestionLog'])->name('finance.sync.delete-log');
 
+    // Intercompany Elimination Routes
+    Route::post('/eliminations/sync', [GlobalFinanceController::class, 'syncEliminations'])->name('finance.eliminations.sync');
+    Route::post('/eliminations/rules/{id}/toggle', [GlobalFinanceController::class, 'toggleEliminationRule'])->name('finance.eliminations.rules.toggle');
+
     // Master Data Unit Usaha & Entitas
     Route::get('/master/units', [MasterBusinessUnitController::class, 'index'])->name('finance.master.units');
     Route::post('/master/units', [MasterBusinessUnitController::class, 'store'])->name('finance.master.units.store');

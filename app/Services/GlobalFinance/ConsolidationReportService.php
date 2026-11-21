@@ -5,11 +5,14 @@ namespace App\Services\GlobalFinance;
 use App\Models\GlobalBusinessUnit;
 use App\Models\GlobalEntity;
 use App\Models\GlobalFinancialRecord;
-use App\Models\GlobalIntercompanyElimination;
 use Carbon\Carbon;
 
 class ConsolidationReportService
 {
+    public function __construct(
+        public IntercompanyEliminationService $eliminationService
+    ) {}
+
     /**
      * Ambil daftar semua periode yang tersedia dalam database, diurutkan dari terbaru.
      */
@@ -448,13 +451,10 @@ class ConsolidationReportService
         $totalLiab = (float) $liabilityItems->sum('amount');
         $totalEquity = (float) $equityItems->sum('amount');
 
-        // Eliminasi Intercompany
-        $eliminations = GlobalIntercompanyElimination::query()
-            ->where('period', '<=', $period)
-            ->where('is_active', true)
-            ->get();
-
+        // Eliminasi Intercompany (Otomatis tersinkronisasi berbasis aturan aktif)
+        $eliminations = $this->eliminationService->syncEliminationsForPeriod($period);
         $eliminationAmount = (float) $eliminations->sum('amount');
+        $rules = $this->eliminationService->getRules();
 
         return [
             'period' => $period,
@@ -474,6 +474,7 @@ class ConsolidationReportService
             'eliminations' => [
                 'items' => $eliminations,
                 'total_elimination' => $eliminationAmount,
+                'rules' => $rules,
             ],
             'total_liabilities_and_equity' => $totalLiab + $totalEquity,
             'is_balanced' => abs($totalAssets - ($totalLiab + $totalEquity)) < 1.0,

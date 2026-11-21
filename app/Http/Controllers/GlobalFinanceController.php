@@ -8,6 +8,7 @@ use App\Models\GlobalFinancialRecord;
 use App\Models\GlobalIngestionLog;
 use App\Services\GlobalFinance\ConsolidationReportService;
 use App\Services\GlobalFinance\ExcelIngestionService;
+use App\Services\GlobalFinance\IntercompanyEliminationService;
 use App\Services\GlobalFinance\IqosSyncService;
 use App\Services\GlobalFinance\SpbuSyncService;
 use Illuminate\Http\JsonResponse;
@@ -19,12 +20,10 @@ use Illuminate\View\View;
 
 class GlobalFinanceController extends Controller
 {
-    protected ConsolidationReportService $reportService;
-
-    public function __construct(ConsolidationReportService $reportService)
-    {
-        $this->reportService = $reportService;
-    }
+    public function __construct(
+        protected ConsolidationReportService $reportService,
+        protected IntercompanyEliminationService $eliminationService
+    ) {}
 
     /**
      * Dashboard Konsolidasi Finansial Holding.
@@ -172,6 +171,9 @@ class GlobalFinanceController extends Controller
                 ]);
             }
 
+            // Otomatis sinkronkan eliminasi intercompany setelah sync database
+            $this->eliminationService->syncAllPeriods();
+
             return back()->with('success', 'Sinkronisasi Database Berhasil: '.implode(' | ', $results));
         } catch (\Throwable $e) {
             GlobalIngestionLog::create([
@@ -295,6 +297,9 @@ class GlobalFinanceController extends Controller
                 ])),
             ]);
 
+            // Otomatis sinkronkan eliminasi intercompany setelah import baru
+            $this->eliminationService->syncAllPeriods();
+
             return back()->with('success', $msg);
         } catch (\Throwable $e) {
             if (file_exists($fullPath)) {
@@ -384,5 +389,26 @@ class GlobalFinanceController extends Controller
         }
 
         return back()->with('success', "Riwayat sinkronisasi database untuk unit {$businessUnit} ({$filename}) berhasil dihapus.");
+    }
+
+    /**
+     * Jalankan sinkronisasi ulang seluruh jurnal eliminasi intercompany otomatis.
+     */
+    public function syncEliminations(): RedirectResponse
+    {
+        $res = $this->eliminationService->syncAllPeriods();
+
+        return back()->with('success', "Berhasil mensinkronkan {$res['total_eliminations_active']} transaksi eliminasi otomatis di {$res['periods_processed']} periode finansial.");
+    }
+
+    /**
+     * Aktifkan atau nonaktifkan aturan eliminasi intercompany tertentu.
+     */
+    public function toggleEliminationRule(int $id): RedirectResponse
+    {
+        $isActive = $this->eliminationService->toggleRule($id);
+        $statusText = $isActive ? 'diaktifkan' : 'dinonaktifkan';
+
+        return back()->with('success', "Aturan eliminasi intercompany berhasil {$statusText} dan seluruh periode telah disinkronkan ulang.");
     }
 }

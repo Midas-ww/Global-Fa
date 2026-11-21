@@ -4,9 +4,9 @@ namespace Database\Seeders;
 
 use App\Models\GlobalBusinessUnit;
 use App\Models\GlobalEntity;
-use App\Models\GlobalIntercompanyElimination;
 use App\Models\User;
 use App\Services\GlobalFinance\ExcelIngestionService;
+use App\Services\GlobalFinance\IntercompanyEliminationService;
 use App\Services\GlobalFinance\IqosSyncService;
 use App\Services\GlobalFinance\SpbuSyncService;
 use Illuminate\Database\Seeder;
@@ -206,20 +206,9 @@ class GlobalFinanceSeeder extends Seeder
             ]
         );
 
-        // 3. Intercompany Eliminations (Sample)
-        GlobalIntercompanyElimination::updateOrCreate(
-            [
-                'period' => '2026-09-01',
-                'from_entity_code' => 'XTRANS',
-                'to_entity_code' => 'SPBU_44',
-                'category' => 'hutang_piutang_spbu',
-            ],
-            [
-                'description' => 'Eliminasi Piutang/Hutang Solar Ritase Armada Truk Xtrans di SPBU No. 44.511.12',
-                'amount' => 125000000,
-                'is_active' => true,
-            ]
-        );
+        // 3. Intercompany Eliminations (Automated Rule-Based Sync)
+        $eliminationService = new IntercompanyEliminationService;
+        $eliminationService->syncAllPeriods();
 
         // 4. Ingest Databases (IQOS & SPBU)
         echo "Ingesting IQOS from database...\n";
@@ -297,5 +286,8 @@ class GlobalFinanceSeeder extends Seeder
                 break;
             }
         }
+
+        // Final sync of intercompany eliminations after all ingestions
+        $eliminationService->syncAllPeriods();
     }
 }
