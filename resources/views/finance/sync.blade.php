@@ -12,36 +12,36 @@
             <p class="text-xs text-slate-500 mt-0.5">Sinkronisasi database live antar unit usaha & upload laporan berkas Excel konsolidasi</p>
         </div>
         <a href="#riwayat-import" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-bold transition shadow-2xs">
-            <i data-lucide="history" class="w-4 h-4 text-amber-700"></i>
+            <i data-lucide="history" class="w-4 h-4 text-[#9c4a2f]"></i>
             <span>Lihat Riwayat & Hapus Data Import ({{ count($logs) }} Riwayat)</span>
         </a>
     </div>
 
     <!-- OVERVIEW STATS -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
-        <div class="bg-white rounded-2xl p-5 border border-[#f0efe6] shadow-xs flex items-center justify-between hover:border-slate-300 transition-all">
+        <div class="bg-white rounded-2xl p-5 border border-[#e6e1d5] shadow-xs flex items-center justify-between hover:border-slate-300 transition-all">
             <div>
                 <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Record Data</span>
                 <h4 class="text-2xl font-black text-slate-900 mt-1">{{ number_format($stats['total_records'] ?? 0, 0, ',', '.') }}</h4>
                 <p class="text-xs text-slate-400 mt-0.5">Tersimpan di database konsolidasi</p>
             </div>
-            <div class="w-11 h-11 rounded-xl bg-amber-500/15 text-amber-950 border border-amber-300 flex items-center justify-center">
-                <i data-lucide="database" class="w-5 h-5 text-amber-700"></i>
+            <div class="w-11 h-11 rounded-xl bg-[#9c4a2f]/10 text-[#782f18] border border-[#e2beaf] flex items-center justify-center">
+                <i data-lucide="database" class="w-5 h-5 text-[#9c4a2f]"></i>
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl p-5 border border-[#f0efe6] shadow-xs flex items-center justify-between hover:border-slate-300 transition-all">
+        <div class="bg-white rounded-2xl p-5 border border-[#e6e1d5] shadow-xs flex items-center justify-between hover:border-slate-300 transition-all">
             <div>
                 <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Unit Bisnis Aktif</span>
                 <h4 class="text-2xl font-black text-slate-900 mt-1">{{ $stats['total_business_units'] ?? count($businessUnits) }} Unit Bisnis</h4>
                 <p class="text-xs text-slate-400 mt-0.5">{{ $stats['total_entities'] ?? 24 }} Cabang & Entitas Hukum</p>
             </div>
-            <div class="w-11 h-11 rounded-xl bg-amber-500/15 text-amber-950 border border-amber-300 flex items-center justify-center">
-                <i data-lucide="building-2" class="w-5 h-5 text-amber-700"></i>
+            <div class="w-11 h-11 rounded-xl bg-[#9c4a2f]/10 text-[#782f18] border border-[#e2beaf] flex items-center justify-center">
+                <i data-lucide="building-2" class="w-5 h-5 text-[#9c4a2f]"></i>
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl p-5 border border-[#f0efe6] shadow-xs flex items-center justify-between hover:border-slate-300 transition-all">
+        <div class="bg-white rounded-2xl p-5 border border-[#e6e1d5] shadow-xs flex items-center justify-between hover:border-slate-300 transition-all">
             <div>
                 <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Koneksi Database</span>
                 <h4 class="text-2xl font-black text-[#16a34a] mt-1 flex items-center gap-1.5">
@@ -50,12 +50,12 @@
                 </h4>
                 <p class="text-xs text-slate-400 mt-0.5">SPBU (api_air) & IQOS (Retail) (sir_iqos)</p>
             </div>
-            <div class="w-11 h-11 rounded-xl bg-amber-500/15 text-amber-950 border border-amber-300 flex items-center justify-center">
-                <i data-lucide="network" class="w-5 h-5 text-amber-700"></i>
+            <div class="w-11 h-11 rounded-xl bg-[#9c4a2f]/10 text-[#782f18] border border-[#e2beaf] flex items-center justify-center">
+                <i data-lucide="network" class="w-5 h-5 text-[#9c4a2f]"></i>
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl p-5 border border-[#f0efe6] shadow-xs flex items-center justify-between hover:border-slate-300 transition-all">
+        <div class="bg-white rounded-2xl p-5 border border-[#e6e1d5] shadow-xs flex items-center justify-between hover:border-slate-300 transition-all">
             <div>
                 <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Pembaruan Terakhir</span>
                 <h4 class="text-sm font-bold text-slate-800 mt-2 truncate max-w-[150px]">
@@ -73,11 +73,11 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         <!-- SECTION 1: DATABASE SYNC (SPBU & RETAIL) -->
-        <div class="bg-white rounded-2xl border border-[#f0efe6] shadow-xs p-6 space-y-6">
-            <div class="flex items-center justify-between border-b border-[#f0efe6] pb-4">
+        <div class="bg-white rounded-2xl border border-[#e6e1d5] shadow-xs p-6 space-y-6">
+            <div class="flex items-center justify-between border-b border-[#e6e1d5] pb-4">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-950 border border-amber-300 flex items-center justify-center">
-                        <i data-lucide="refresh-cw" class="w-5 h-5 text-amber-700"></i>
+                    <div class="w-10 h-10 rounded-xl bg-[#9c4a2f]/10 text-[#782f18] border border-[#e2beaf] flex items-center justify-center">
+                        <i data-lucide="refresh-cw" class="w-5 h-5 text-[#9c4a2f]"></i>
                     </div>
                     <div>
                         <h3 class="font-bold text-slate-900 text-base">Sinkronisasi Database Otomatis</h3>
@@ -88,15 +88,15 @@
                     @csrf
                     <input type="hidden" name="target" value="all">
                     <input type="hidden" name="period" value="{{ $selectedPeriod ?? '2026-07' }}">
-                    <button type="submit" class="px-4 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-[#edf0ee] text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer">
-                        <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-500"></i>
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-[#e6e1d5] text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer">
+                        <i data-lucide="zap" class="w-3.5 h-3.5 text-[#9c4a2f]"></i>
                         Sinkronkan Semua
                     </button>
                 </form>
             </div>
 
             <!-- SPBU CARD -->
-            <div class="p-4 rounded-xl border border-[#edf0ee] bg-[#fbfdfa] hover:bg-white hover:border-slate-300 transition duration-150 group">
+            <div class="p-4 rounded-xl border border-[#e6e1d5] bg-[#fbfdfa] hover:bg-white hover:border-slate-300 transition duration-150 group">
                 <div class="flex items-start justify-between">
                     <div class="flex items-center gap-3">
                         <div class="w-9 h-9 rounded-lg bg-rose-50 text-rose-700 font-bold text-xs flex items-center justify-center border border-rose-200">
@@ -123,7 +123,7 @@
                     <input type="hidden" name="target" value="spbu">
                     <div class="flex-1">
                         <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Periode Bulan</label>
-                        <select name="period" class="w-full bg-white border border-[#edf0ee] rounded-xl text-xs font-mono font-medium px-3 py-2 text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#059669]">
+                        <select name="period" class="w-full bg-white border border-[#e6e1d5] rounded-xl text-xs font-mono font-medium px-3 py-2 text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#059669]">
                             <option value="2026-11" selected>November 2026 (Berjalan)</option>
                             <option value="2026-10">Oktober 2026</option>
                             <option value="2026-09">September 2026</option>
@@ -138,8 +138,8 @@
                         </select>
                     </div>
                     <div class="pt-5">
-                        <button type="submit" class="px-4 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-[#f0efe6] text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer">
-                            <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-amber-700"></i>
+                        <button type="submit" class="px-4 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-[#e6e1d5] text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer">
+                            <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-[#9c4a2f]"></i>
                             Sinkron SPBU
                         </button>
                     </div>
@@ -147,7 +147,7 @@
             </div>
 
             <!-- IQOS (RETAIL) CARD -->
-            <div class="p-4 rounded-xl border border-[#edf0ee] bg-[#fbfdfa] hover:bg-white hover:border-slate-300 transition duration-150 group">
+            <div class="p-4 rounded-xl border border-[#e6e1d5] bg-[#fbfdfa] hover:bg-white hover:border-slate-300 transition duration-150 group">
                 <div class="flex items-start justify-between">
                     <div class="flex items-center gap-3">
                         <div class="w-9 h-9 rounded-lg bg-teal-50 text-teal-800 font-bold text-xs flex items-center justify-center border border-teal-200">
@@ -173,7 +173,7 @@
                     @csrf
                     <input type="hidden" name="target" value="iqos">
                     <span class="text-xs text-slate-400">Mencakup periode historis terdata di database operasional.</span>
-                    <button type="submit" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs transition flex items-center gap-1.5 shadow-2xs cursor-pointer">
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-[#9c4a2f] hover:bg-[#853c23] text-white font-bold text-xs transition flex items-center gap-1.5 shadow-2xs cursor-pointer">
                         <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
                         Sinkron IQOS (Retail)
                     </button>
@@ -182,11 +182,11 @@
         </div>
 
         <!-- SECTION 2: EXCEL INGESTION HUB -->
-        <div class="bg-white rounded-2xl border border-[#f0efe6] shadow-xs p-6 space-y-6">
-            <div class="flex items-center justify-between border-b border-[#f0efe6] pb-4 flex-wrap gap-3">
+        <div class="bg-white rounded-2xl border border-[#e6e1d5] shadow-xs p-6 space-y-6">
+            <div class="flex items-center justify-between border-b border-[#e6e1d5] pb-4 flex-wrap gap-3">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-950 border border-amber-300 flex items-center justify-center">
-                        <i data-lucide="file-spreadsheet" class="w-5 h-5 text-amber-700"></i>
+                    <div class="w-10 h-10 rounded-xl bg-[#9c4a2f]/10 text-[#782f18] border border-[#e2beaf] flex items-center justify-center">
+                        <i data-lucide="file-spreadsheet" class="w-5 h-5 text-[#9c4a2f]"></i>
                     </div>
                     <div>
                         <h3 class="font-bold text-slate-900 text-base">Excel Ingestion Hub</h3>
@@ -194,11 +194,11 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-2 flex-wrap">
-                    <span class="px-2.5 py-1 text-[11px] font-bold rounded-full bg-amber-50 text-amber-900 border border-amber-300 flex items-center gap-1.5 shadow-2xs">
-                        <i data-lucide="shield-check" class="w-3.5 h-3.5 text-amber-700"></i>
+                    <span class="px-2.5 py-1 text-[11px] font-bold rounded-full bg-[#f8ede7] text-[#782f18] border border-[#e2beaf] flex items-center gap-1.5 shadow-2xs">
+                        <i data-lucide="shield-check" class="w-3.5 h-3.5 text-[#9c4a2f]"></i>
                         <span>Validasi Cerdas & Proteksi Duplikasi Aktif</span>
                     </span>
-                    <span class="px-2.5 py-1 text-[11px] font-bold rounded-full bg-amber-100 text-amber-950 border border-amber-300">
+                    <span class="px-2.5 py-1 text-[11px] font-bold rounded-full bg-[#f8ede7] text-[#782f18] border border-[#e2beaf]">
                         Auto-Parsing
                     </span>
                 </div>
@@ -283,10 +283,10 @@
             </div>
 
             <!-- XTRANS UPLOAD BOX -->
-            <div class="p-4 rounded-xl border border-dashed border-amber-300 bg-[#fbfdfa] hover:bg-white transition">
+            <div class="p-4 rounded-xl border border-dashed border-[#e2beaf] bg-[#fbfdfa] hover:bg-white transition">
                 <div class="flex items-center justify-between mb-2">
                     <div class="flex items-center gap-2">
-                        <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 font-black text-xs flex items-center justify-center">
+                        <div class="w-8 h-8 rounded-lg bg-[#f8ede7] text-[#782f18] border border-[#edd7ce] font-black text-xs flex items-center justify-center">
                             XT
                         </div>
                         <div>
@@ -299,22 +299,22 @@
                 <form id="formXtransUpload" action="{{ route('finance.sync.excel') }}" method="POST" enctype="multipart/form-data" class="mt-3 space-y-3" onsubmit="return handleExcelImportSubmit(event, this)">
                     @csrf
                     <input type="hidden" name="type" value="xtrans">
-                    <div class="relative flex items-center justify-center border-2 border-dashed border-slate-200 hover:border-amber-400 rounded-xl p-3 bg-white transition cursor-pointer group">
+                    <div class="relative flex items-center justify-center border-2 border-dashed border-slate-200 hover:border-[#e2beaf] rounded-xl p-3 bg-white transition cursor-pointer group">
                         <input type="file" name="file" accept=".xlsx,.xls,.csv" required class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" onchange="this.nextElementSibling.innerText = this.files[0]?.name || 'Pilih file Excel Xtrans...'">
-                        <div class="text-center text-xs text-slate-500 flex items-center gap-2 pointer-events-none group-hover:text-amber-700">
-                            <i data-lucide="upload-cloud" class="w-4 h-4 text-amber-500"></i>
+                        <div class="text-center text-xs text-slate-500 flex items-center gap-2 pointer-events-none group-hover:text-[#9c4a2f]">
+                            <i data-lucide="upload-cloud" class="w-4 h-4 text-[#9c4a2f]"></i>
                             <span class="font-medium text-slate-600">Pilih file Excel Xtrans (.xlsx / .xls)</span>
                         </div>
                     </div>
                     <div class="flex items-center justify-between flex-wrap gap-2 pt-1">
                         <div class="flex items-center gap-2">
-                            <input type="checkbox" name="overwrite" id="overwriteXtrans" value="1" class="w-4 h-4 rounded border-slate-300 text-amber-500 focus:ring-amber-500 cursor-pointer">
+                            <input type="checkbox" name="overwrite" id="overwriteXtrans" value="1" class="w-4 h-4 rounded border-slate-300 text-[#9c4a2f] focus:ring-[#9c4a2f] cursor-pointer">
                             <label for="overwriteXtrans" class="text-xs text-slate-600 font-medium cursor-pointer select-none">
                                 Timpa data jika file sudah ada (<span class="font-mono text-slate-400">Overwrite</span>)
                             </label>
                         </div>
                         <button type="submit" class="px-4 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer">
-                            <i data-lucide="search-check" class="w-3.5 h-3.5 text-amber-600"></i>
+                            <i data-lucide="search-check" class="w-3.5 h-3.5 text-[#9c4a2f]"></i>
                             Cek & Import Xtrans
                         </button>
                     </div>
@@ -361,25 +361,25 @@
             </div>
 
             <!-- UNIVERSAL TEMPLATE UPLOAD BOX (FOR ANY REGISTERED / NEW BUSINESS UNIT) -->
-            <div class="p-4 rounded-xl border border-dashed border-amber-300 bg-[#faf9f5] hover:bg-white transition">
+            <div class="p-4 rounded-xl border border-dashed border-[#e2beaf] bg-[#f7f5f0] hover:bg-white transition">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
                     <div class="flex items-center gap-2">
-                        <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-900 font-black text-xs flex items-center justify-center border border-amber-300">
-                            <i data-lucide="layers" class="w-4 h-4 text-amber-700"></i>
+                        <div class="w-8 h-8 rounded-lg bg-[#f8ede7] text-[#782f18] font-black text-xs flex items-center justify-center border border-[#e2beaf]">
+                            <i data-lucide="layers" class="w-4 h-4 text-[#9c4a2f]"></i>
                         </div>
                         <div>
                             <div class="flex items-center gap-2">
                                 <h4 class="text-sm font-bold text-slate-900">Unit Usaha Lain / Baru (Template Universal)</h4>
-                                <span class="px-2 py-0.2 text-[10px] font-bold rounded-full bg-amber-100 text-amber-900 border border-amber-300">Fleksibel</span>
+                                <span class="px-2 py-0.2 text-[10px] font-bold rounded-full bg-[#f8ede7] text-[#782f18] border border-[#e2beaf]">Fleksibel</span>
                             </div>
                             <p class="text-[11px] text-slate-400">Gunakan untuk unit bisnis baru dari Master Data atau cabang mana pun dengan format template standar holding.</p>
                         </div>
                     </div>
 
                     <a id="btnDownloadUniversalTemplate" href="{{ route('finance.master.units.template', $businessUnits[0]['code'] ?? 'fmcg') }}"
-                       class="px-3 py-1.5 rounded-lg bg-white hover:bg-amber-50 text-amber-900 border border-amber-300 text-xs font-bold transition flex items-center gap-1.5 shadow-2xs self-start sm:self-auto cursor-pointer"
+                       class="px-3 py-1.5 rounded-lg bg-white hover:bg-[#f8ede7] text-[#782f18] border border-[#e2beaf] text-xs font-bold transition flex items-center gap-1.5 shadow-2xs self-start sm:self-auto cursor-pointer"
                        title="Unduh format template Excel resmi">
-                        <i data-lucide="download" class="w-3.5 h-3.5 text-amber-700"></i>
+                        <i data-lucide="download" class="w-3.5 h-3.5 text-[#9c4a2f]"></i>
                         Unduh Template Excel
                     </a>
                 </div>
@@ -392,7 +392,7 @@
                             <label class="text-xs font-bold text-slate-700">Pilih Unit Usaha Tujuan</label>
                             <select name="type" required 
                                 onchange="document.getElementById('btnDownloadUniversalTemplate').href = '/master/units/' + this.value + '/template'"
-                                class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white">
+                                class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#9c4a2f] bg-white">
                                 @foreach($businessUnits as $bu)
                                 <option value="{{ $bu['code'] }}">{{ $bu['name'] }} ({{ strtoupper($bu['code']) }})</option>
                                 @endforeach
@@ -401,10 +401,10 @@
 
                         <div class="md:col-span-2 space-y-1">
                             <label class="text-xs font-bold text-slate-700">Pilih Berkas Laporan Keuangan</label>
-                            <div class="relative flex items-center justify-center border-2 border-dashed border-slate-200 hover:border-amber-400 rounded-xl p-2 bg-white transition cursor-pointer group">
+                            <div class="relative flex items-center justify-center border-2 border-dashed border-slate-200 hover:border-[#e2beaf] rounded-xl p-2 bg-white transition cursor-pointer group">
                                 <input type="file" name="file" accept=".xlsx,.xls,.csv" required class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" onchange="this.nextElementSibling.innerText = this.files[0]?.name || 'Pilih berkas template Excel...'">
-                                <div class="text-center text-xs text-slate-500 flex items-center gap-2 pointer-events-none group-hover:text-amber-800 py-0.5">
-                                    <i data-lucide="upload-cloud" class="w-4 h-4 text-amber-600"></i>
+                                <div class="text-center text-xs text-slate-500 flex items-center gap-2 pointer-events-none group-hover:text-[#782f18] py-0.5">
+                                    <i data-lucide="upload-cloud" class="w-4 h-4 text-[#9c4a2f]"></i>
                                     <span class="font-medium text-slate-600">Pilih berkas Excel (.xlsx / .xls)</span>
                                 </div>
                             </div>
@@ -413,12 +413,12 @@
 
                     <div class="flex items-center justify-between flex-wrap gap-2 pt-1 border-t border-slate-100">
                         <div class="flex items-center gap-2">
-                            <input type="checkbox" name="overwrite" id="overwriteUniversal" value="1" class="w-4 h-4 rounded border-slate-300 text-amber-500 focus:ring-amber-400 cursor-pointer">
+                            <input type="checkbox" name="overwrite" id="overwriteUniversal" value="1" class="w-4 h-4 rounded border-slate-300 text-[#9c4a2f] focus:ring-[#9c4a2f] cursor-pointer">
                             <label for="overwriteUniversal" class="text-xs text-slate-600 font-medium cursor-pointer select-none">
                                 Timpa data jika file sudah ada (<span class="font-mono text-slate-400">Overwrite</span>)
                             </label>
                         </div>
-                        <button type="submit" class="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer">
+                        <button type="submit" class="px-4 py-2 rounded-lg bg-[#9c4a2f] hover:bg-[#853c23] text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer">
                             <i data-lucide="search-check" class="w-3.5 h-3.5 text-slate-950"></i>
                             Cek & Import Data Unit
                         </button>
@@ -430,11 +430,11 @@
     </div>
 
     <!-- INGESTION & SYNC AUDIT LOG TABLE -->
-    <div id="riwayat-import" class="bg-white rounded-2xl border border-[#f0efe6] shadow-xs overflow-hidden scroll-mt-6">
-        <div class="p-5 border-b border-[#f0efe6] flex items-center justify-between flex-wrap gap-3 bg-white">
+    <div id="riwayat-import" class="bg-white rounded-2xl border border-[#e6e1d5] shadow-xs overflow-hidden scroll-mt-6">
+        <div class="p-5 border-b border-[#e6e1d5] flex items-center justify-between flex-wrap gap-3 bg-white">
             <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-amber-500/15 text-amber-950 border border-amber-300 flex items-center justify-center">
-                    <i data-lucide="history" class="w-4 h-4 text-amber-700"></i>
+                <div class="w-9 h-9 rounded-xl bg-[#9c4a2f]/10 text-[#782f18] border border-[#e2beaf] flex items-center justify-center">
+                    <i data-lucide="history" class="w-4 h-4 text-[#9c4a2f]"></i>
                 </div>
                 <div>
                     <h3 class="font-bold text-slate-900 text-base">Riwayat Aktivitas Ingestion & Sinkronisasi</h3>
@@ -445,8 +445,8 @@
             <!-- Action Controls: Bulk Delete & Total Summary -->
             <div class="flex items-center gap-3">
                 <div id="bulkActionBar" class="hidden flex items-center gap-2">
-                    <span id="selectedCountBadge" class="text-xs font-bold bg-amber-50 text-amber-900 border border-amber-200 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
-                        <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                    <span id="selectedCountBadge" class="text-xs font-bold bg-[#f8ede7] text-[#782f18] border border-[#edd7ce] px-2.5 py-1 rounded-lg flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-[#f8ede7]0 animate-pulse"></span>
                         <span id="selectedCountText">0 riwayat dipilih</span>
                     </span>
                     <button type="button" onclick="openBulkDeleteModal()" class="px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer">
@@ -464,9 +464,9 @@
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
-                    <tr class="bg-[#faf9f5] text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-[#f0efe6]">
+                    <tr class="bg-[#f7f5f0] text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-[#e6e1d5]">
                         <th class="py-3 px-4 w-10 text-center">
-                            <input type="checkbox" id="selectAllLogs" onchange="toggleSelectAllLogs(this)" class="w-4 h-4 rounded border-slate-300 text-amber-500 focus:ring-amber-400 cursor-pointer" title="Pilih Semua Riwayat">
+                            <input type="checkbox" id="selectAllLogs" onchange="toggleSelectAllLogs(this)" class="w-4 h-4 rounded border-slate-300 text-[#9c4a2f] focus:ring-[#9c4a2f] cursor-pointer" title="Pilih Semua Riwayat">
                         </th>
                         <th class="py-3 px-4">Waktu</th>
                         <th class="py-3 px-4">Unit Bisnis</th>
@@ -488,7 +488,7 @@
                                 data-rows="{{ $log->records_count }}"
                                 data-type="{{ $log->source_type }}"
                                 onchange="updateSelectedLogsCount()"
-                                class="log-checkbox w-4 h-4 rounded border-slate-300 text-amber-500 focus:ring-amber-400 cursor-pointer"
+                                class="log-checkbox w-4 h-4 rounded border-slate-300 text-[#9c4a2f] focus:ring-[#9c4a2f] cursor-pointer"
                                 title="Pilih riwayat {{ $log->filename }}">
                         </td>
                         <td class="py-3 px-4 font-mono text-[11px] text-slate-500 whitespace-nowrap">
@@ -499,7 +499,7 @@
                                 @if(str_contains(strtolower($log->business_unit_code), 'spbu')) bg-rose-50 text-rose-700 border border-rose-200
                                 @elseif(str_contains(strtolower($log->business_unit_code), 'iqos') || str_contains(strtolower($log->business_unit_code), 'retail')) bg-teal-50 text-teal-800 border border-teal-200
                                 @elseif(str_contains(strtolower($log->business_unit_code), 'fmcg')) bg-sky-50 text-sky-700 border border-sky-200
-                                @elseif(str_contains(strtolower($log->business_unit_code), 'xtrans')) bg-amber-50 text-amber-700 border border-amber-200
+                                @elseif(str_contains(strtolower($log->business_unit_code), 'xtrans')) bg-[#f8ede7] text-[#9c4a2f] border border-[#edd7ce]
                                 @elseif(str_contains(strtolower($log->business_unit_code), 'ccod')) bg-indigo-50 text-indigo-700 border border-indigo-200
                                 @else bg-slate-100 text-slate-700 border border-slate-200 @endif">
                                 {{ $log->business_unit_code }}
@@ -508,11 +508,11 @@
                         <td class="py-3 px-4">
                             @if($log->source_type === 'database_sync')
                                 <span class="inline-flex items-center gap-1 text-slate-800 font-semibold whitespace-nowrap">
-                                    <i data-lucide="database" class="w-3.5 h-3.5 text-amber-600"></i> Database Sync
+                                    <i data-lucide="database" class="w-3.5 h-3.5 text-[#9c4a2f]"></i> Database Sync
                                 </span>
                             @else
                                 <span class="inline-flex items-center gap-1 text-slate-800 font-semibold whitespace-nowrap">
-                                    <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-amber-500"></i> Excel Upload
+                                    <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-[#9c4a2f]"></i> Excel Upload
                                 </span>
                             @endif
                         </td>
@@ -524,8 +524,8 @@
                         </td>
                         <td class="py-3 px-4 text-center whitespace-nowrap">
                             @if($log->status === 'success')
-                                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-200 inline-flex items-center gap-1">
-                                    <i data-lucide="check-circle" class="w-3 h-3 text-amber-700"></i> Berhasil
+                                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#f8ede7] text-[#782f18] border border-[#edd7ce] inline-flex items-center gap-1">
+                                    <i data-lucide="check-circle" class="w-3 h-3 text-[#9c4a2f]"></i> Berhasil
                                 </span>
                             @else
                                 <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800 inline-flex items-center gap-1" title="{{ $log->details }}">
@@ -562,8 +562,8 @@
         <!-- Modal Header -->
         <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
             <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-amber-500/15 text-amber-950 border border-amber-300 flex items-center justify-center">
-                    <i data-lucide="file-check-2" class="w-5 h-5 text-amber-700"></i>
+                <div class="w-9 h-9 rounded-xl bg-[#9c4a2f]/10 text-[#782f18] border border-[#e2beaf] flex items-center justify-center">
+                    <i data-lucide="file-check-2" class="w-5 h-5 text-[#9c4a2f]"></i>
                 </div>
                 <div>
                     <h3 class="font-bold text-slate-900 text-sm">Verifikasi & Pratinjau Berkas Excel</h3>
@@ -580,7 +580,7 @@
             
             <!-- 1. LOADING STATE -->
             <div id="previewLoadingState" class="py-12 flex flex-col items-center justify-center space-y-3 text-center">
-                <div class="w-10 h-10 border-3 border-amber-200 border-t-amber-500 rounded-full animate-spin"></div>
+                <div class="w-10 h-10 border-3 border-[#edd7ce] border-t-[#9c4a2f] rounded-full animate-spin"></div>
                 <div>
                     <h4 class="font-bold text-slate-800 text-sm">Menganalisis Berkas Excel...</h4>
                     <p class="text-xs text-slate-400 mt-1 max-w-md">Membaca struktur sheet, mendeteksi tipe format, memeriksa histori duplikasi, dan mengekstrak ringkasan akun finansial.</p>
@@ -612,9 +612,9 @@
             <!-- 3. SUCCESS / PREVIEW STATE -->
             <div id="previewSuccessState" class="hidden space-y-4">
                 <!-- File Card -->
-                <div class="p-3.5 rounded-xl bg-[#faf9f5] border border-[#f0efe6] flex items-center justify-between flex-wrap gap-3">
+                <div class="p-3.5 rounded-xl bg-[#f7f5f0] border border-[#e6e1d5] flex items-center justify-between flex-wrap gap-3">
                     <div class="flex items-center gap-3 min-w-0">
-                        <div class="w-9 h-9 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-amber-700 shadow-2xs shrink-0">
+                        <div class="w-9 h-9 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-[#9c4a2f] shadow-2xs shrink-0">
                             <i data-lucide="file-spreadsheet" class="w-5 h-5"></i>
                         </div>
                         <div class="truncate">
@@ -642,11 +642,11 @@
                     </div>
 
                     <!-- Duplicate Warning Alert -->
-                    <div id="previewDuplicateAlert" class="hidden p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 flex items-start gap-2.5 text-xs">
-                        <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5"></i>
+                    <div id="previewDuplicateAlert" class="hidden p-3 rounded-xl bg-[#f8ede7] border border-[#edd7ce] text-[#782f18] flex items-start gap-2.5 text-xs">
+                        <i data-lucide="alert-triangle" class="w-4 h-4 text-[#9c4a2f] shrink-0 mt-0.5"></i>
                         <div class="space-y-0.5">
-                            <span class="font-bold text-amber-900">Peringatan Duplikasi Berkas Terdeteksi</span>
-                            <p id="previewDuplicateMessage" class="text-[11px] text-amber-700 leading-relaxed"></p>
+                            <span class="font-bold text-[#782f18]">Peringatan Duplikasi Berkas Terdeteksi</span>
+                            <p id="previewDuplicateMessage" class="text-[11px] text-[#9c4a2f] leading-relaxed"></p>
                         </div>
                     </div>
                 </div>
@@ -665,7 +665,7 @@
                     </div>
                     <div class="p-3 rounded-xl bg-white border border-slate-200 shadow-2xs">
                         <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Estimasi Rekor</span>
-                        <p class="text-base font-black text-amber-700 mt-0.5 font-mono" id="previewEstimatedRecords">0</p>
+                        <p class="text-base font-black text-[#9c4a2f] mt-0.5 font-mono" id="previewEstimatedRecords">0</p>
                         <span class="text-[10px] text-slate-400">Baris data</span>
                     </div>
                     <div class="p-3 rounded-xl bg-white border border-slate-200 shadow-2xs">
@@ -708,7 +708,7 @@
                 <!-- Overwrite Checkbox in Modal -->
                 <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between flex-wrap gap-2">
                     <label class="flex items-center gap-2 cursor-pointer select-none">
-                        <input type="checkbox" id="modalOverwriteCheckbox" class="w-4 h-4 rounded border-slate-300 text-amber-500 focus:ring-amber-400 cursor-pointer">
+                        <input type="checkbox" id="modalOverwriteCheckbox" class="w-4 h-4 rounded border-slate-300 text-[#9c4a2f] focus:ring-[#9c4a2f] cursor-pointer">
                         <span class="text-xs font-semibold text-slate-700">
                             Timpa data jika berkas sudah ada (<span class="font-mono text-slate-400 font-normal">Overwrite</span>)
                         </span>
@@ -724,7 +724,7 @@
             <button type="button" onclick="closePreviewModal()" class="px-4 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 font-bold text-xs transition cursor-pointer">
                 Batal / Ganti Berkas
             </button>
-            <button type="button" id="btnConfirmImport" onclick="confirmAndSubmit()" class="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs transition flex items-center gap-2 shadow-xs cursor-pointer">
+            <button type="button" id="btnConfirmImport" onclick="confirmAndSubmit()" class="px-5 py-2 rounded-xl bg-[#9c4a2f] hover:bg-[#853c23] text-white font-bold text-xs transition flex items-center gap-2 shadow-xs cursor-pointer">
                 <i data-lucide="check" class="w-4 h-4 text-slate-950"></i>
                 <span id="btnConfirmText">Konfirmasi & Simpan ke Database</span>
             </button>
@@ -828,8 +828,8 @@
         const formatText = document.getElementById('previewFormatStatusText');
 
         if (data.is_type_match) {
-            formatAlert.className = 'p-3 rounded-xl flex items-center gap-2.5 text-xs font-semibold bg-amber-50 text-amber-900 border border-amber-300';
-            formatIcon.className = 'w-4 h-4 shrink-0 text-amber-700';
+            formatAlert.className = 'p-3 rounded-xl flex items-center gap-2.5 text-xs font-semibold bg-[#f8ede7] text-[#782f18] border border-[#e2beaf]';
+            formatIcon.className = 'w-4 h-4 shrink-0 text-[#9c4a2f]';
             formatText.innerText = 'Format Berkas Sesuai: Terverifikasi untuk ' + data.target_label;
         } else {
             formatAlert.className = 'p-3 rounded-xl flex items-center gap-2.5 text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200';

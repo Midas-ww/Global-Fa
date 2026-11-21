@@ -16,8 +16,8 @@
         <div class="flex items-center gap-2 flex-wrap">
             <!-- Period Selector -->
             <form action="{{ route('finance.dashboard') }}" method="GET" class="flex items-center">
-                <div class="flex items-center gap-1.5 px-3 py-2 bg-white border border-[#f0efe6] rounded-xl shadow-2xs">
-                    <i data-lucide="calendar" class="w-3.5 h-3.5 text-[#d97706] shrink-0"></i>
+                <div class="flex items-center gap-1.5 px-3 py-2 bg-white border border-[#e6e1d5] rounded-xl shadow-2xs">
+                    <i data-lucide="calendar" class="w-3.5 h-3.5 text-[#9c4a2f] shrink-0"></i>
                     <label for="periodSelectDash" class="text-xs font-semibold text-slate-500">Periode:</label>
                     <select name="period" id="periodSelectDash" onchange="this.form.submit()" class="text-xs font-bold font-mono bg-transparent text-slate-900 focus:outline-none cursor-pointer">
                         @foreach($availablePeriods as $p)
@@ -30,12 +30,12 @@
             </form>
 
             <a href="{{ route('finance.sync') }}"
-               class="px-3.5 py-2 bg-white hover:bg-amber-50/60 text-slate-700 border border-[#f0efe6] rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer">
+               class="px-3.5 py-2 bg-white hover:bg-[#f8ede7]/60 text-slate-700 border border-[#e6e1d5] rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer">
                 <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-slate-500"></i>
                 <span>Data Ingestion</span>
             </a>
             <a href="{{ route('finance.pnl', ['period' => $selectedPeriod]) }}"
-               class="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold border border-amber-500 rounded-xl text-xs transition-all flex items-center gap-1.5 shadow-xs cursor-pointer">
+               class="px-3.5 py-2 bg-[#9c4a2f] hover:bg-[#853c23] text-white font-semibold border border-[#9c4a2f] rounded-xl text-xs transition-all flex items-center gap-1.5 shadow-xs cursor-pointer">
                 <i data-lucide="file-text" class="w-3.5 h-3.5 text-white"></i>
                 <span>Laporan P&L</span>
             </a>
@@ -46,15 +46,15 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         
         <!-- Card 1: Total Revenue -->
-        <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs hover:shadow-md hover:border-amber-300 transition-all duration-200 flex flex-col justify-between">
+        <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs hover:shadow-md hover:border-[#e2beaf] transition-all duration-200 flex flex-col justify-between">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-950 flex items-center justify-center border border-amber-300">
-                        <i data-lucide="dollar-sign" class="w-4 h-4 text-amber-700"></i>
+                    <div class="w-8 h-8 rounded-xl bg-[#9c4a2f]/10 text-[#782f18] flex items-center justify-center border border-[#e2beaf]">
+                        <i data-lucide="dollar-sign" class="w-4 h-4 text-[#9c4a2f]"></i>
                     </div>
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Total Revenue</span>
                 </div>
-                <a href="{{ route('finance.pnl', ['period' => $selectedPeriod]) }}" class="text-slate-400 hover:text-amber-700 p-1 rounded-lg hover:bg-amber-50 transition-colors">
+                <a href="{{ route('finance.pnl', ['period' => $selectedPeriod]) }}" class="text-slate-400 hover:text-[#9c4a2f] p-1 rounded-lg hover:bg-[#f8ede7] transition-colors">
                     <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
                 </a>
             </div>
@@ -64,7 +64,7 @@
                     Rp {{ number_format($summary['kpis']['revenue'] ?? 0, 0, ',', '.') }}
                 </div>
                 <div class="flex items-center gap-1.5">
-                    <span class="px-2 py-0.5 rounded-full font-mono text-[11px] font-bold bg-amber-500/15 text-amber-950 border border-amber-300">
+                    <span class="px-2 py-0.5 rounded-full font-mono text-[11px] font-bold bg-[#9c4a2f]/10 text-[#782f18] border border-[#e2beaf]">
                         +100%
                     </span>
                 </div>
@@ -84,7 +84,7 @@
                     </div>
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-500">HPP & Beban Usaha</span>
                 </div>
-                <a href="{{ route('finance.sync') }}" class="text-slate-400 hover:text-amber-700 p-1 rounded-lg hover:bg-amber-50 transition-colors">
+                <a href="{{ route('finance.sync') }}" class="text-slate-400 hover:text-[#9c4a2f] p-1 rounded-lg hover:bg-[#f8ede7] transition-colors">
                     <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
                 </a>
             </div>
@@ -103,15 +103,15 @@
         </div>
 
         <!-- Card 3: Laba Kotor (Gross Profit) -->
-        <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs hover:shadow-md hover:border-amber-300 transition-all duration-200 flex flex-col justify-between">
+        <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs hover:shadow-md hover:border-[#e2beaf] transition-all duration-200 flex flex-col justify-between">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-950 flex items-center justify-center border border-amber-300">
-                        <i data-lucide="trending-up" class="w-4 h-4 text-amber-700"></i>
+                    <div class="w-8 h-8 rounded-xl bg-[#9c4a2f]/10 text-[#782f18] flex items-center justify-center border border-[#e2beaf]">
+                        <i data-lucide="trending-up" class="w-4 h-4 text-[#9c4a2f]"></i>
                     </div>
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Laba Kotor (GP)</span>
                 </div>
-                <a href="{{ route('finance.pnl', ['period' => $selectedPeriod]) }}" class="text-slate-400 hover:text-amber-700 p-1 rounded-lg hover:bg-amber-50 transition-colors">
+                <a href="{{ route('finance.pnl', ['period' => $selectedPeriod]) }}" class="text-slate-400 hover:text-[#9c4a2f] p-1 rounded-lg hover:bg-[#f8ede7] transition-colors">
                     <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
                 </a>
             </div>
@@ -121,7 +121,7 @@
                     Rp {{ number_format($summary['kpis']['gross_profit'] ?? 0, 0, ',', '.') }}
                 </div>
                 <div class="flex items-center gap-1.5">
-                    <span class="px-2 py-0.5 rounded-full font-mono text-[11px] font-bold bg-amber-500/15 text-amber-950 border border-amber-300">
+                    <span class="px-2 py-0.5 rounded-full font-mono text-[11px] font-bold bg-[#9c4a2f]/10 text-[#782f18] border border-[#e2beaf]">
                         Margin {{ $summary['kpis']['gross_margin_percentage'] ?? 0 }}%
                     </span>
                 </div>
@@ -134,25 +134,25 @@
             $net = $summary['kpis']['net_profit'] ?? 0;
             $isNetPositive = $net >= 0;
         @endphp
-        <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs hover:shadow-md hover:border-amber-300 transition-all duration-200 flex flex-col justify-between">
+        <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs hover:shadow-md hover:border-[#e2beaf] transition-all duration-200 flex flex-col justify-between">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-950 flex items-center justify-center border border-amber-300">
-                        <i data-lucide="landmark" class="w-4 h-4 text-amber-700"></i>
+                    <div class="w-8 h-8 rounded-xl bg-[#9c4a2f]/10 text-[#782f18] flex items-center justify-center border border-[#e2beaf]">
+                        <i data-lucide="landmark" class="w-4 h-4 text-[#9c4a2f]"></i>
                     </div>
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Laba Bersih (Net)</span>
                 </div>
-                <a href="{{ route('finance.pnl', ['period' => $selectedPeriod]) }}" class="text-slate-400 hover:text-amber-700 p-1 rounded-lg hover:bg-amber-50 transition-colors">
+                <a href="{{ route('finance.pnl', ['period' => $selectedPeriod]) }}" class="text-slate-400 hover:text-[#9c4a2f] p-1 rounded-lg hover:bg-[#f8ede7] transition-colors">
                     <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
                 </a>
             </div>
 
             <div class="mt-4 flex items-baseline justify-between flex-wrap gap-2">
-                <div class="text-xl sm:text-2xl font-black {{ $isNetPositive ? 'text-[#16a34a]' : 'text-slate-700' }} tracking-tight font-mono">
+                <div class="text-xl sm:text-2xl font-black {{ $isNetPositive ? 'text-[#445e3d]' : 'text-slate-700' }} tracking-tight font-mono">
                     Rp {{ number_format($net, 0, ',', '.') }}
                 </div>
                 <div class="flex items-center gap-1.5">
-                    <span class="px-2 py-0.5 rounded-full font-mono text-[11px] font-bold bg-amber-500/15 text-amber-950 border border-amber-300">
+                    <span class="px-2 py-0.5 rounded-full font-mono text-[11px] font-bold bg-[#9c4a2f]/10 text-[#782f18] border border-[#e2beaf]">
                         {{ $isNetPositive ? '+' : '' }}{{ $summary['kpis']['net_margin_percentage'] ?? 0 }}%
                     </span>
                 </div>
@@ -204,35 +204,35 @@
                     </div>
                 </div>
 
-                <!-- Legend Indicators (Executive Golden Yellow Palette) -->
+                <!-- Legend Indicators (Earth Tone Palette) -->
                 <div class="mt-3 flex flex-wrap items-center gap-2.5 text-xs font-semibold">
-                    <span class="inline-flex items-center gap-1.5 text-amber-950 bg-amber-50 px-2.5 py-0.5 rounded-md border border-amber-300">
-                        <span class="w-2.5 h-2.5 rounded-full bg-[#f59e0b]"></span>
+                    <span class="inline-flex items-center gap-1.5 text-[#782f18] bg-[#f8ede7] px-2.5 py-0.5 rounded-md border border-[#e2beaf]">
+                        <span class="w-2.5 h-2.5 rounded-full bg-[#9c4a2f]"></span>
                         Omzet Penjualan
                     </span>
-                    <span class="inline-flex items-center gap-1.5 text-yellow-950 bg-yellow-50 px-2.5 py-0.5 rounded-md border border-yellow-200">
-                        <span class="w-2.5 h-2.5 rounded-full bg-[#eab308]"></span>
+                    <span class="inline-flex items-center gap-1.5 text-[#6e4620] bg-[#fbf3eb] px-2.5 py-0.5 rounded-md border border-[#edd7c4]">
+                        <span class="w-2.5 h-2.5 rounded-full bg-[#c28b5b]"></span>
                         HPP (COGS)
                     </span>
-                    <span class="inline-flex items-center gap-1.5 text-amber-900 bg-amber-50 px-2.5 py-0.5 rounded-md border border-amber-200">
-                        <span class="w-2.5 h-2.5 rounded-full bg-[#d97706]"></span>
+                    <span class="inline-flex items-center gap-1.5 text-[#4e3d2c] bg-[#f5f1ec] px-2.5 py-0.5 rounded-md border border-[#dfd6cd]">
+                        <span class="w-2.5 h-2.5 rounded-full bg-[#786048]"></span>
                         Beban OPEX
                     </span>
-                    <span class="inline-flex items-center gap-1.5 text-amber-950 bg-amber-100/70 px-2.5 py-0.5 rounded-md border border-amber-300">
-                        <span class="w-2.5 h-2.5 rounded-full bg-[#b45309]"></span>
+                    <span class="inline-flex items-center gap-1.5 text-[#2d4529] bg-[#edf3ec] px-2.5 py-0.5 rounded-md border border-[#c4d8c1]">
+                        <span class="w-2.5 h-2.5 rounded-full bg-[#445e3d]"></span>
                         Laba Bersih
                     </span>
                 </div>
 
                 <!-- Micro Stats Strip -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 py-2.5 px-3 bg-[#faf9f5] rounded-xl border border-[#f0efe6] my-3.5 text-xs">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 py-2.5 px-3 bg-[#f7f5f0] rounded-xl border border-[#e6e1d5] my-3.5 text-xs">
                     <div>
                         <span class="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Total Omzet Periode</span>
                         <span class="font-bold text-slate-900 font-mono text-xs sm:text-sm">Rp {{ number_format($summary['kpis']['revenue'] ?? 0, 0, ',', '.') }}</span>
                     </div>
                     <div>
                         <span class="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Laba Bersih Konsolidasi</span>
-                        <span class="font-bold {{ ($summary['kpis']['net_profit'] ?? 0) >= 0 ? 'text-[#16a34a]' : 'text-slate-700' }} font-mono text-xs sm:text-sm">
+                        <span class="font-bold {{ ($summary['kpis']['net_profit'] ?? 0) >= 0 ? 'text-[#445e3d]' : 'text-slate-700' }} font-mono text-xs sm:text-sm">
                             Rp {{ number_format($summary['kpis']['net_profit'] ?? 0, 0, ',', '.') }}
                         </span>
                     </div>
@@ -241,7 +241,7 @@
                             $avgOmzet = count($summary['monthly_trends'] ?? []) > 0 ? array_sum(array_column($summary['monthly_trends'], 'revenue')) / count($summary['monthly_trends']) : 0;
                         @endphp
                         <span class="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Rata-rata/Bulan ({{ count($summary['monthly_trends']) }} Periode)</span>
-                        <span class="font-bold text-amber-800 font-mono text-xs sm:text-sm">Rp {{ number_format($avgOmzet, 0, ',', '.') }}</span>
+                        <span class="font-bold text-[#782f18] font-mono text-xs sm:text-sm">Rp {{ number_format($avgOmzet, 0, ',', '.') }}</span>
                     </div>
                 </div>
 
@@ -251,14 +251,14 @@
                 </div>
             </div>
 
-            <div class="pt-3 border-t border-[#f0efe6] flex items-center justify-between text-xs text-slate-500 mt-2">
+            <div class="pt-3 border-t border-[#e6e1d5] flex items-center justify-between text-xs text-slate-500 mt-2">
                 <span>Data historis 12 periode pembukuan grup holding</span>
                 <span class="font-semibold text-slate-700 font-mono">Periode Aktif: {{ \Carbon\Carbon::parse($selectedPeriod)->translatedFormat('F Y') }}</span>
             </div>
         </div>
 
         <!-- DOUGHNUT BREAKDOWN: KOLOM KANAN (5 Kolom) -->
-        <div class="lg:col-span-5 bg-white rounded-2xl border border-[#f0efe6] p-5 sm:p-6 shadow-xs flex flex-col justify-between">
+        <div class="lg:col-span-5 bg-white rounded-2xl border border-[#e6e1d5] p-5 sm:p-6 shadow-xs flex flex-col justify-between">
             <div>
                 <!-- Header -->
                 <div class="flex items-center justify-between mb-2">
@@ -266,7 +266,7 @@
                         <h2 class="text-base font-bold text-slate-900">Distribusi Unit Bisnis Holding</h2>
                         <p class="text-slate-500 text-xs mt-0.5">Proporsi kontribusi omzet per pilar usaha</p>
                     </div>
-                    <span class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-amber-500/15 text-amber-950 border border-amber-300">
+                    <span class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-[#9c4a2f]/10 text-[#782f18] border border-[#e2beaf]">
                         {{ count($summary['by_business_unit'] ?? []) }} Pilar Usaha
                     </span>
                 </div>
@@ -284,7 +284,7 @@
                             <span class="text-sm sm:text-base font-black text-slate-900 mt-0.5 font-mono">
                                 Rp {{ number_format(($summary['kpis']['revenue'] ?? 0) / 1000000000, 1, ',', '.') }} M
                             </span>
-                            <span class="text-[11px] text-amber-800 font-semibold mt-0.5">
+                            <span class="text-[11px] text-[#782f18] font-semibold mt-0.5">
                                 {{ count($summary['by_business_unit'] ?? []) }} Unit Bisnis
                             </span>
                         </div>
@@ -293,24 +293,24 @@
                     <!-- Breakdown List Per Unit Bisnis (Panjang & Mengisi Ruang Vertikal) -->
                     <div class="sm:col-span-7 space-y-2.5 max-h-[440px] overflow-y-auto pr-1 custom-scrollbar">
                         @php
-                            $amberPalette = [
-                                '#d97706', // Rich Honey Amber (Amber 600)
-                                '#f59e0b', // Vibrant Gold (Amber 500)
-                                '#b45309', // Warm Bronze (Amber 700)
-                                '#fbbf24', // Sun Gold (Amber 400)
-                                '#78350f', // Deep Amber / Mocha (Amber 900)
-                                '#fcd34d', // Soft Champagne (Amber 300)
-                                '#92400e', // Dark Bronze (Amber 800)
-                                '#fde68a', // Pale Gold (Amber 200)
+                            $earthPalette = [
+                                '#9c4a2f', // Rich Terracotta Earth (Tanah Liat)
+                                '#445e3d', // Forest Sage (Hijau Daun)
+                                '#c28b5b', // Warm Tan Sand (Pasir Hangat)
+                                '#786048', // Warm Walnut (Kayu Tua)
+                                '#5c7355', // Olive Foliage (Zaitun)
+                                '#b87d3b', // Warm Ochre (Tanah Kering)
+                                '#8a4325', // Deep Terracotta (Bata Bakar)
+                                '#364f33', // Deep Moss (Lumut Hutan)
                             ];
                         @endphp
                         @foreach($summary['by_business_unit'] as $idx => $bu)
                         @php
                             $totalRev = $summary['kpis']['revenue'] ?? 1;
                             $pct = $totalRev > 0 ? round(($bu['revenue'] / $totalRev) * 100, 1) : 0;
-                            $buTone = $amberPalette[$idx % count($amberPalette)];
+                            $buTone = $earthPalette[$idx % count($earthPalette)];
                         @endphp
-                        <div class="p-3 rounded-xl border border-[#f0efe6] hover:border-amber-300 transition-colors bg-[#faf9f5] flex items-center justify-between shadow-2xs">
+                        <div class="p-3 rounded-xl border border-[#e6e1d5] hover:border-[#e2beaf] transition-colors bg-[#f7f5f0] flex items-center justify-between shadow-2xs">
                             <div class="flex items-center gap-2.5 min-w-0">
                                 <span class="w-3.5 h-3.5 rounded-full shrink-0 shadow-2xs" style="background-color: {{ $buTone }}"></span>
                                 <div class="truncate">
@@ -318,13 +318,13 @@
                                     <div class="flex items-center gap-1.5 mt-0.5">
                                         <span class="text-[10px] text-slate-400 uppercase font-mono">{{ $bu['code'] }}</span>
                                         <span class="text-[10px] text-slate-300">&bull;</span>
-                                        <span class="text-[10px] font-semibold {{ ($bu['net_profit'] ?? 0) >= 0 ? 'text-amber-800' : 'text-rose-600' }}">Margin {{ $bu['net_margin'] ?? 0 }}%</span>
+                                        <span class="text-[10px] font-semibold {{ ($bu['net_profit'] ?? 0) >= 0 ? 'text-[#445e3d]' : 'text-rose-600' }}">Margin {{ $bu['net_margin'] ?? 0 }}%</span>
                                     </div>
                                 </div>
                             </div>
                             <div class="text-right shrink-0">
                                 <p class="text-xs font-bold text-slate-900 font-mono">Rp {{ number_format($bu['revenue'] / 1000000, 0, ',', '.') }} Jt</p>
-                                <span class="inline-block mt-0.5 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/15 text-amber-950 font-mono border border-amber-300">{{ $pct }}%</span>
+                                <span class="inline-block mt-0.5 px-2 py-0.5 rounded text-[10px] font-bold bg-[#9c4a2f]/10 text-[#782f18] font-mono border border-[#e2beaf]">{{ $pct }}%</span>
                             </div>
                         </div>
                         @endforeach
@@ -332,19 +332,19 @@
                 </div>
             </div>
 
-            <div class="pt-3 border-t border-[#f0efe6] flex items-center justify-between text-xs text-slate-500 mt-4">
+            <div class="pt-3 border-t border-[#e6e1d5] flex items-center justify-between text-xs text-slate-500 mt-4">
                 <span>Total Omzet: <strong class="text-slate-800 font-mono">Rp {{ number_format($summary['kpis']['revenue'] ?? 0, 0, ',', '.') }}</strong></span>
-                <span class="text-[11px] text-amber-700 font-bold">100% Terkonsolidasi</span>
+                <span class="text-[11px] text-[#9c4a2f] font-bold">100% Terkonsolidasi</span>
             </div>
         </div>
 
     </div>
 
     <!-- 3. PROFIT & LOSS MONITORING & BUSINESS UNIT BREAKDOWN -->
-    <div class="bg-white rounded-2xl border border-[#f0efe6] shadow-xs overflow-hidden">
+    <div class="bg-white rounded-2xl border border-[#e6e1d5] shadow-xs overflow-hidden">
         
         <!-- Header with Time Filter Tabs -->
-        <div class="p-5 border-b border-[#f0efe6] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="p-5 border-b border-[#e6e1d5] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
                 <h3 class="text-base font-bold text-slate-900 tracking-tight">Profit & Loss Monitoring</h3>
                 <p class="text-xs text-slate-400">Distribusi omzet, HPP, beban operasional dan margin per unit bisnis</p>
@@ -352,7 +352,7 @@
 
             <!-- Time Tabs (Flat Clean - NO GRADIENT) -->
             <div class="flex items-center gap-2">
-                <span class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500/15 text-amber-950 border border-amber-300">
+                <span class="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#9c4a2f]/10 text-[#782f18] border border-[#e2beaf]">
                     Monthly
                 </span>
                 <span class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-500 hover:text-slate-800 cursor-pointer">
@@ -365,20 +365,20 @@
         </div>
 
         <!-- Unit Bisnis Progress Bars (Solid Flat Colors) -->
-        <div class="p-5 border-b border-[#f0efe6] bg-[#faf9f5]">
+        <div class="p-5 border-b border-[#e6e1d5] bg-[#f7f5f0]">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 @foreach($summary['by_business_unit'] as $idx => $bu)
                 @php
                     $totalRev = $summary['kpis']['revenue'] ?? 1;
                     $pct = $totalRev > 0 ? round(($bu['revenue'] / $totalRev) * 100, 1) : 0;
-                    $toneColor = $amberPalette[$idx % count($amberPalette)];
+                    $toneColor = $earthPalette[$idx % count($earthPalette)];
                 @endphp
-                <div class="bg-white p-3.5 rounded-xl border border-[#f0efe6]">
+                <div class="bg-white p-3.5 rounded-xl border border-[#e6e1d5]">
                     <div class="flex items-center justify-between text-xs mb-2">
                         <span class="font-bold text-slate-800 truncate">{{ $bu['name'] }}</span>
                         <span class="font-mono font-bold text-slate-900">{{ $pct }}%</span>
                     </div>
-                    <div class="w-full bg-[#f1f4f1] rounded-full h-2 overflow-hidden">
+                    <div class="w-full bg-[#ede8df] rounded-full h-2 overflow-hidden">
                         <div class="h-2 rounded-full transition-all duration-300" style="width: {{ $pct }}%; background-color: {{ $toneColor }}"></div>
                     </div>
                     <div class="text-[11px] text-slate-500 mt-2 font-mono font-semibold">
@@ -393,7 +393,7 @@
         <div class="overflow-x-auto custom-scrollbar">
             <table class="w-full text-left border-collapse text-xs">
                 <thead>
-                    <tr class="bg-white text-slate-400 font-bold uppercase tracking-wider border-b border-[#f0efe6] text-[10px]">
+                    <tr class="bg-white text-slate-400 font-bold uppercase tracking-wider border-b border-[#e6e1d5] text-[10px]">
                         <th class="p-4 pl-6">Unit Bisnis</th>
                         <th class="p-4 text-right">Pendapatan (Revenue)</th>
                         <th class="p-4 text-right">HPP (COGS)</th>
@@ -403,10 +403,10 @@
                         <th class="p-4 text-center pr-6">Net Margin</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-[#f0efe6] font-medium text-slate-700">
+                <tbody class="divide-y divide-[#e6e1d5] font-medium text-slate-700">
                     @foreach($summary['by_business_unit'] as $idx => $bu)
-                    @php $tableTone = $amberPalette[$idx % count($amberPalette)]; @endphp
-                    <tr class="hover:bg-amber-50/40 transition-colors">
+                    @php $tableTone = $earthPalette[$idx % count($earthPalette)]; @endphp
+                    <tr class="hover:bg-[#f8ede7]/40 transition-colors">
                         <td class="p-4 pl-6 font-bold text-slate-900 flex items-center gap-2.5">
                             <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color: {{ $tableTone }}"></span>
                             <span>{{ $bu['name'] }}</span>
@@ -415,11 +415,11 @@
                         <td class="p-4 text-right text-slate-600 font-mono">Rp {{ number_format($bu['cogs'], 0, ',', '.') }}</td>
                         <td class="p-4 text-right text-slate-800 font-mono">Rp {{ number_format($bu['gross_profit'], 0, ',', '.') }}</td>
                         <td class="p-4 text-right text-slate-600 font-mono">Rp {{ number_format($bu['opex'], 0, ',', '.') }}</td>
-                        <td class="p-4 text-right font-bold font-mono {{ $bu['net_profit'] >= 0 ? 'text-[#16a34a]' : 'text-rose-600' }}">
+                        <td class="p-4 text-right font-bold font-mono {{ $bu['net_profit'] >= 0 ? 'text-[#445e3d]' : 'text-rose-600' }}">
                             Rp {{ number_format($bu['net_profit'], 0, ',', '.') }}
                         </td>
                         <td class="p-4 text-center pr-6">
-                            <span class="px-2.5 py-0.5 rounded-full font-bold text-[11px] {{ $bu['net_profit'] >= 0 ? 'bg-amber-50 text-amber-900 border border-amber-200' : 'bg-rose-50 text-rose-700 border border-rose-200' }}">
+                            <span class="px-2.5 py-0.5 rounded-full font-bold text-[11px] {{ $bu['net_profit'] >= 0 ? 'bg-[#edf3ec] text-[#2d4529] border border-[#c4d8c1]' : 'bg-rose-50 text-rose-700 border border-rose-200' }}">
                                 {{ $bu['net_margin'] }}%
                             </span>
                         </td>
@@ -427,17 +427,17 @@
                     @endforeach
 
                     <!-- TOTAL ROW -->
-                    <tr class="bg-amber-50/70 font-black text-slate-900 border-t-2 border-amber-300">
+                    <tr class="bg-[#f8ede7]/70 font-black text-slate-900 border-t-2 border-[#e2beaf]">
                         <td class="p-4 pl-6 uppercase text-[11px] tracking-wider text-slate-900">TOTAL HOLDING TERKONSOLIDASI</td>
                         <td class="p-4 text-right font-mono text-slate-900 font-black">Rp {{ number_format($summary['kpis']['revenue'] ?? 0, 0, ',', '.') }}</td>
                         <td class="p-4 text-right font-mono">Rp {{ number_format($summary['kpis']['cogs'] ?? 0, 0, ',', '.') }}</td>
                         <td class="p-4 text-right font-mono">Rp {{ number_format($summary['kpis']['gross_profit'] ?? 0, 0, ',', '.') }}</td>
                         <td class="p-4 text-right font-mono">Rp {{ number_format($summary['kpis']['opex'] ?? 0, 0, ',', '.') }}</td>
-                        <td class="p-4 text-right font-mono {{ ($summary['kpis']['net_profit'] ?? 0) >= 0 ? 'text-[#16a34a]' : 'text-rose-600' }}">
+                        <td class="p-4 text-right font-mono {{ ($summary['kpis']['net_profit'] ?? 0) >= 0 ? 'text-[#445e3d]' : 'text-rose-600' }}">
                             Rp {{ number_format($summary['kpis']['net_profit'] ?? 0, 0, ',', '.') }}
                         </td>
                         <td class="p-4 text-center pr-6">
-                            <span class="px-2.5 py-1 rounded-full font-black text-xs bg-amber-100 text-amber-950 border border-amber-300">
+                            <span class="px-2.5 py-1 rounded-full font-black text-xs bg-[#f8ede7] text-[#782f18] border border-[#e2beaf]">
                                 {{ $summary['kpis']['net_margin_percentage'] ?? 0 }}%
                             </span>
                         </td>
@@ -490,81 +490,81 @@
 
         const isLine = type === 'line';
 
-        // Warna Harmonis (Executive Warm Golden Yellow Palette)
-        // 1. Omzet Penjualan (Golden Amber)
+        // Warna Harmonis (Palet Bumi / Earth Tone Palette)
+        // 1. Omzet Penjualan (Terracotta Earth)
         const revGrad = ctx.createLinearGradient(0, 0, 0, 320);
-        revGrad.addColorStop(0, 'rgba(245, 158, 11, 0.95)');
-        revGrad.addColorStop(1, isLine ? 'rgba(245, 158, 11, 0.08)' : 'rgba(245, 158, 11, 0.45)');
+        revGrad.addColorStop(0, 'rgba(156, 74, 47, 0.95)');
+        revGrad.addColorStop(1, isLine ? 'rgba(156, 74, 47, 0.08)' : 'rgba(156, 74, 47, 0.45)');
 
-        // 2. HPP (COGS) (Warm Golden Yellow)
+        // 2. HPP (COGS) (Warm Tan Sand)
         const cogsGrad = ctx.createLinearGradient(0, 0, 0, 320);
-        cogsGrad.addColorStop(0, 'rgba(234, 179, 8, 0.95)');
-        cogsGrad.addColorStop(1, isLine ? 'rgba(234, 179, 8, 0.08)' : 'rgba(234, 179, 8, 0.45)');
+        cogsGrad.addColorStop(0, 'rgba(194, 139, 91, 0.95)');
+        cogsGrad.addColorStop(1, isLine ? 'rgba(194, 139, 91, 0.08)' : 'rgba(194, 139, 91, 0.45)');
 
-        // 3. Beban OPEX (Honey Amber Gold)
+        // 3. Beban OPEX (Warm Walnut)
         const opexGrad = ctx.createLinearGradient(0, 0, 0, 320);
-        opexGrad.addColorStop(0, 'rgba(217, 119, 6, 0.90)');
-        opexGrad.addColorStop(1, isLine ? 'rgba(217, 119, 6, 0.08)' : 'rgba(217, 119, 6, 0.45)');
+        opexGrad.addColorStop(0, 'rgba(120, 96, 72, 0.90)');
+        opexGrad.addColorStop(1, isLine ? 'rgba(120, 96, 72, 0.08)' : 'rgba(120, 96, 72, 0.45)');
 
-        // 4. Laba Bersih (Rich Deep Gold/Bronze)
+        // 4. Laba Bersih (Forest Sage)
         const profitGrad = ctx.createLinearGradient(0, 0, 0, 320);
-        profitGrad.addColorStop(0, 'rgba(180, 83, 9, 0.95)');
-        profitGrad.addColorStop(1, isLine ? 'rgba(180, 83, 9, 0.08)' : 'rgba(180, 83, 9, 0.45)');
+        profitGrad.addColorStop(0, 'rgba(68, 94, 61, 0.95)');
+        profitGrad.addColorStop(1, isLine ? 'rgba(68, 94, 61, 0.08)' : 'rgba(68, 94, 61, 0.45)');
 
         const datasets = isLine ? [
             {
                 label: 'Omzet Penjualan',
                 data: revData,
-                borderColor: '#f59e0b',
-                backgroundColor: '#f59e0b',
+                borderColor: '#9c4a2f',
+                backgroundColor: '#9c4a2f',
                 borderWidth: 2.5,
                 tension: 0.3,
                 fill: false,
                 pointRadius: 4,
                 pointHoverRadius: 6,
-                pointBackgroundColor: '#f59e0b',
+                pointBackgroundColor: '#9c4a2f',
                 pointBorderColor: '#ffffff',
                 pointBorderWidth: 2,
             },
             {
                 label: 'HPP (COGS)',
                 data: cogsData,
-                borderColor: '#eab308',
-                backgroundColor: '#eab308',
+                borderColor: '#c28b5b',
+                backgroundColor: '#c28b5b',
                 borderWidth: 2,
                 tension: 0.3,
                 fill: false,
                 pointRadius: 3.5,
                 pointHoverRadius: 5.5,
-                pointBackgroundColor: '#eab308',
+                pointBackgroundColor: '#c28b5b',
                 pointBorderColor: '#ffffff',
                 pointBorderWidth: 2,
             },
             {
                 label: 'Beban OPEX',
                 data: opexData,
-                borderColor: '#d97706',
-                backgroundColor: '#d97706',
+                borderColor: '#786048',
+                backgroundColor: '#786048',
                 borderWidth: 2,
                 tension: 0.3,
                 fill: false,
                 pointRadius: 3.5,
                 pointHoverRadius: 5.5,
-                pointBackgroundColor: '#d97706',
+                pointBackgroundColor: '#786048',
                 pointBorderColor: '#ffffff',
                 pointBorderWidth: 2,
             },
             {
                 label: 'Laba Bersih',
                 data: profitData,
-                borderColor: '#b45309',
-                backgroundColor: '#b45309',
+                borderColor: '#445e3d',
+                backgroundColor: '#445e3d',
                 borderWidth: 2.5,
                 tension: 0.3,
                 fill: false,
                 pointRadius: 4,
                 pointHoverRadius: 6,
-                pointBackgroundColor: '#b45309',
+                pointBackgroundColor: '#445e3d',
                 pointBorderColor: '#ffffff',
                 pointBorderWidth: 2,
             }
@@ -573,7 +573,7 @@
                 label: 'Omzet Penjualan',
                 data: revData,
                 backgroundColor: revGrad,
-                borderColor: '#f59e0b',
+                borderColor: '#9c4a2f',
                 borderWidth: 1,
                 borderRadius: { topLeft: 5, topRight: 5, bottomLeft: 0, bottomRight: 0 },
                 barPercentage: 0.7,
@@ -583,7 +583,7 @@
                 label: 'HPP (COGS)',
                 data: cogsData,
                 backgroundColor: cogsGrad,
-                borderColor: '#eab308',
+                borderColor: '#c28b5b',
                 borderWidth: 1,
                 borderRadius: { topLeft: 5, topRight: 5, bottomLeft: 0, bottomRight: 0 },
                 barPercentage: 0.7,
@@ -593,7 +593,7 @@
                 label: 'Beban OPEX',
                 data: opexData,
                 backgroundColor: opexGrad,
-                borderColor: '#d97706',
+                borderColor: '#786048',
                 borderWidth: 1,
                 borderRadius: { topLeft: 5, topRight: 5, bottomLeft: 0, bottomRight: 0 },
                 barPercentage: 0.7,
@@ -603,7 +603,7 @@
                 label: 'Laba Bersih',
                 data: profitData,
                 backgroundColor: profitGrad,
-                borderColor: '#b45309',
+                borderColor: '#445e3d',
                 borderWidth: 1,
                 borderRadius: { topLeft: 5, topRight: 5, bottomLeft: 0, bottomRight: 0 },
                 barPercentage: 0.7,
@@ -704,19 +704,19 @@
         const labels = buList.map(b => b.name);
         const data = buList.map(b => Number(b.revenue || 0));
 
-        // Palet Harmoni Golden Amber / Honey Gold (Setema dengan sistem)
-        const amberPalette = [
-            '#d97706', // Rich Honey Amber (Amber 600)
-            '#f59e0b', // Vibrant Gold (Amber 500)
-            '#b45309', // Warm Bronze (Amber 700)
-            '#fbbf24', // Sun Gold (Amber 400)
-            '#78350f', // Deep Amber / Mocha (Amber 900)
-            '#fcd34d', // Soft Champagne (Amber 300)
-            '#92400e', // Dark Bronze (Amber 800)
-            '#fde68a', // Pale Gold (Amber 200)
+        // Palet Harmoni Bumi (Earth Tone Palette)
+        const earthPalette = [
+            '#9c4a2f', // Rich Terracotta Earth (Tanah Liat)
+            '#445e3d', // Forest Sage (Hijau Daun)
+            '#c28b5b', // Warm Tan Sand (Pasir Hangat)
+            '#786048', // Warm Walnut (Kayu Tua)
+            '#5c7355', // Olive Foliage (Zaitun)
+            '#b87d3b', // Warm Ochre (Tanah Kering)
+            '#8a4325', // Deep Terracotta (Bata Bakar)
+            '#364f33', // Deep Moss (Lumut Hutan)
         ];
 
-        const colors = buList.map((b, idx) => amberPalette[idx % amberPalette.length]);
+        const colors = buList.map((b, idx) => earthPalette[idx % earthPalette.length]);
 
         new Chart(ctx, {
             type: 'doughnut',
