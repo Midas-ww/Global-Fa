@@ -19,12 +19,27 @@ class SpbuSyncService
         $endDate = Carbon::createFromFormat('Y-m', $yearMonth)->endOfMonth()->format('Y-m-d');
         $periodDate = $startDate;
 
-        $spbuPath = env('SPBU_PROJECT_PATH', 'D:/Mekar Jaya/API-SPBU');
-        if (! file_exists($spbuPath.'/vendor/autoload.php')) {
+        $spbuPath = env('SPBU_PROJECT_PATH');
+        if (! $spbuPath || ! file_exists($spbuPath.'/vendor/autoload.php')) {
             $fallbacks = [
                 base_path('../API-SPBU'),
                 base_path('../api-spbu'),
+                base_path('../spbu'),
+                base_path('../spbu-api'),
+                base_path('../api_spbu'),
+                base_path('../../API-SPBU'),
+                base_path('../../api-spbu'),
+                '/var/www/API-SPBU',
                 '/var/www/api-spbu',
+                '/var/www/spbu',
+                '/var/www/api_spbu',
+                '/var/www/spbu.mekarjayagroup.biz.id',
+                '/var/www/api-spbu.mekarjayagroup.biz.id',
+                '/var/www/html/API-SPBU',
+                '/var/www/html/api-spbu',
+                '/home/ubuntu/API-SPBU',
+                '/home/ubuntu/api-spbu',
+                'D:/Mekar Jaya/API-SPBU',
                 'C:/Mekar Jaya/API-SPBU',
             ];
             foreach ($fallbacks as $fb) {
@@ -35,7 +50,7 @@ class SpbuSyncService
             }
         }
 
-        $spbuPathNormalized = str_replace('\\', '/', $spbuPath);
+        $spbuPathNormalized = $spbuPath ? str_replace('\\', '/', $spbuPath) : 'D:/Mekar Jaya/API-SPBU';
         if (! file_exists($spbuPathNormalized.'/vendor/autoload.php')) {
             throw new \RuntimeException("Path project API-SPBU tidak ditemukan di: [{$spbuPathNormalized}]. Harap atur 'SPBU_PROJECT_PATH' di file .env server.");
         }
