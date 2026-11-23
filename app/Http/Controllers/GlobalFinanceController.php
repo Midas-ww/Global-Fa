@@ -137,8 +137,11 @@ class GlobalFinanceController extends Controller
         $period = $request->input('period', '2026-07');
         $results = [];
 
-        try {
-            if ($target === 'all' || $target === 'iqos') {
+        $results = [];
+        $errors = [];
+
+        if ($target === 'all' || $target === 'iqos') {
+            try {
                 $iqos = new IqosSyncService;
                 $resIqos = $iqos->sync();
                 $results[] = 'Retail Store: '.($resIqos['count'] ?? 0).' periode disinkronkan.';
@@ -151,9 +154,21 @@ class GlobalFinanceController extends Controller
                     'status' => 'success',
                     'details' => json_encode($resIqos),
                 ]);
+            } catch (\Throwable $e) {
+                $errors[] = 'IQOS: '.$e->getMessage();
+                GlobalIngestionLog::create([
+                    'business_unit_code' => 'iqos',
+                    'source_type' => 'database_sync',
+                    'filename' => 'sir_iqos_error',
+                    'records_count' => 0,
+                    'status' => 'failed',
+                    'details' => $e->getMessage(),
+                ]);
             }
+        }
 
-            if ($target === 'all' || $target === 'spbu') {
+        if ($target === 'all' || $target === 'spbu') {
+            try {
                 $spbu = new SpbuSyncService;
                 $resSpbu = $spbu->sync($period);
                 $isReconciled = $resSpbu['reconciled'] ?? true;
@@ -169,24 +184,34 @@ class GlobalFinanceController extends Controller
                     'status' => $statusLog,
                     'details' => json_encode($resSpbu),
                 ]);
+            } catch (\Throwable $e) {
+                $errors[] = 'SPBU: '.$e->getMessage();
+                GlobalIngestionLog::create([
+                    'business_unit_code' => 'spbu',
+                    'source_type' => 'database_sync',
+                    'filename' => 'spbu_error',
+                    'records_count' => 0,
+                    'status' => 'failed',
+                    'details' => $e->getMessage(),
+                ]);
             }
-
-            // Otomatis sinkronkan eliminasi intercompany setelah sync database
-            $this->eliminationService->syncAllPeriods();
-
-            return back()->with('success', 'Sinkronisasi Database Berhasil: '.implode(' | ', $results));
-        } catch (\Throwable $e) {
-            GlobalIngestionLog::create([
-                'business_unit_code' => $target,
-                'source_type' => 'database_sync',
-                'filename' => 'database_error',
-                'records_count' => 0,
-                'status' => 'failed',
-                'details' => $e->getMessage(),
-            ]);
-
-            return back()->with('error', 'Gagal sinkronisasi: '.$e->getMessage());
         }
+
+        // Otomatis sinkronkan eliminasi intercompany setelah sync database
+        try {
+            $this->eliminationService->syncAllPeriods();
+        } catch (\Throwable) {
+        }
+
+        if (! empty($errors) && empty($results)) {
+            return back()->with('error', 'Gagal sinkronisasi: '.implode(' | ', $errors));
+        }
+
+        if (! empty($errors)) {
+            return back()->with('warning', 'Sinkronisasi sebagian berhasil: '.implode(' | ', $results).'. Namun ada kendala pada: '.implode(' | ', $errors));
+        }
+
+        return back()->with('success', 'Sinkronisasi Database Berhasil: '.implode(' | ', $results));
     }
 
     /**
