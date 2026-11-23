@@ -110,6 +110,8 @@ class SpbuSyncService
         $spbuDb = config('database.connections.mysql_spbu.database', 'api_air');
 
         $script = "
+        error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED & ~E_NOTICE & ~E_WARNING);
+        ini_set('display_errors', '0');
         require '{$spbuPathNormalized}/vendor/autoload.php';
         if (class_exists(Dotenv\Dotenv::class)) {
             \$dotenv = Dotenv\Dotenv::createMutable('{$spbuPathNormalized}');
@@ -139,7 +141,20 @@ class SpbuSyncService
         $tempFile = storage_path('temp_spbu_calc_'.time().'.php');
         file_put_contents($tempFile, "<?php\n".$script);
 
-        $phpBinary = PHP_BINARY ?: 'php';
+        $phpBinary = 'php';
+        if (PHP_BINARY && ! str_contains(PHP_BINARY, 'fpm')) {
+            $phpBinary = PHP_BINARY;
+        } else {
+            // Pada environment Nginx / aaPanel PHP-FPM, PHP_BINARY merujuk ke sbin/php-fpm
+            $fpmDir = dirname(PHP_BINARY);
+            $candidate = dirname($fpmDir).'/bin/php';
+            if (@file_exists($candidate)) {
+                $phpBinary = $candidate;
+            } elseif (@file_exists('/usr/bin/php')) {
+                $phpBinary = '/usr/bin/php';
+            }
+        }
+
         $output = $this->executeCommand(escapeshellarg($phpBinary).' '.escapeshellarg($tempFile).' 2>&1');
         @unlink($tempFile);
 
@@ -149,7 +164,15 @@ class SpbuSyncService
 
         $data = json_decode($output, true);
         if (! $data || ! isset($data['pnl']) || ! isset($data['bs'])) {
-            throw new \RuntimeException('Output kalkulasi SPBU tidak valid.');
+            if (preg_match('/\{.*"pnl".*"bs".*\}/s', $output, $matches)) {
+                $data = json_decode($matches[0], true);
+            }
+        }
+
+        if (! $data || ! isset($data['pnl']) || ! isset($data['bs'])) {
+            $cleanSnippet = trim(strip_tags($output));
+            $cleanSnippet = mb_substr($cleanSnippet, 0, 300);
+            throw new \RuntimeException("Output kalkulasi SPBU tidak valid: [{$cleanSnippet}]");
         }
 
         $pnl = $data['pnl'];

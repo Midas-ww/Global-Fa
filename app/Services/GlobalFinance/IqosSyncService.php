@@ -637,7 +637,18 @@ PHP;
         $tempFile = storage_path('temp_iqos_calc_'.time().'_'.mt_rand(1000, 9999).'.php');
         file_put_contents($tempFile, "<?php\n".$scriptFormatted);
 
-        $phpBinary = PHP_BINARY ?: 'php';
+        $phpBinary = 'php';
+        if (PHP_BINARY && ! str_contains(PHP_BINARY, 'fpm')) {
+            $phpBinary = PHP_BINARY;
+        } else {
+            $fpmDir = dirname(PHP_BINARY);
+            $candidate = dirname($fpmDir).'/bin/php';
+            if (@file_exists($candidate)) {
+                $phpBinary = $candidate;
+            } elseif (@file_exists('/usr/bin/php')) {
+                $phpBinary = '/usr/bin/php';
+            }
+        }
         $output = $this->executeCommand(escapeshellarg($phpBinary).' '.escapeshellarg($tempFile).' 2>&1');
         @unlink($tempFile);
 
