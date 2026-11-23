@@ -22,6 +22,7 @@ class SpbuSyncService
         $spbuPath = env('SPBU_PROJECT_PATH');
         if (! $spbuPath || ! file_exists($spbuPath.'/vendor/autoload.php')) {
             $fallbacks = [
+                // Relatif dari root Global FA
                 base_path('../API-SPBU'),
                 base_path('../api-spbu'),
                 base_path('../spbu'),
@@ -29,6 +30,20 @@ class SpbuSyncService
                 base_path('../api_spbu'),
                 base_path('../../API-SPBU'),
                 base_path('../../api-spbu'),
+
+                // aaPanel default root (/www/wwwroot/...)
+                '/www/wwwroot/API-SPBU',
+                '/www/wwwroot/api-spbu',
+                '/www/wwwroot/spbu',
+                '/www/wwwroot/api_spbu',
+                '/www/wwwroot/spbu.mekarjayagroup.biz.id',
+                '/www/wwwroot/api-spbu.mekarjayagroup.biz.id',
+                '/www/wwwroot/api.spbu.mekarjayagroup.biz.id',
+                '/www/wwwroot/spbu-api.mekarjayagroup.biz.id',
+                '/www/wwwroot/spbu44.mekarjayagroup.biz.id',
+                '/www/wwwroot/spbu-44.mekarjayagroup.biz.id',
+
+                // Linux standard paths (/var/www/...)
                 '/var/www/API-SPBU',
                 '/var/www/api-spbu',
                 '/var/www/spbu',
@@ -39,20 +54,52 @@ class SpbuSyncService
                 '/var/www/html/api-spbu',
                 '/home/ubuntu/API-SPBU',
                 '/home/ubuntu/api-spbu',
+
+                // Local Windows
                 'D:/Mekar Jaya/API-SPBU',
                 'C:/Mekar Jaya/API-SPBU',
             ];
+
             foreach ($fallbacks as $fb) {
                 if (file_exists($fb.'/vendor/autoload.php')) {
                     $spbuPath = $fb;
                     break;
                 }
             }
+
+            // Jika masih belum ketemu, lakukan auto-discovery di folder induk dan /www/wwwroot
+            if (! $spbuPath) {
+                $searchRoots = array_filter([
+                    dirname(base_path()),
+                    '/www/wwwroot',
+                    '/var/www',
+                ], 'is_dir');
+
+                foreach ($searchRoots as $root) {
+                    $subdirs = @glob($root.'/*', GLOB_ONLYDIR) ?: [];
+                    foreach ($subdirs as $dir) {
+                        if (file_exists($dir.'/vendor/autoload.php') && file_exists($dir.'/bootstrap/app.php')) {
+                            $dirLower = strtolower(basename($dir));
+                            if (str_contains($dirLower, 'spbu') || file_exists($dir.'/app/Services/PnlService.php')) {
+                                $spbuPath = $dir;
+                                break 2;
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         $spbuPathNormalized = $spbuPath ? str_replace('\\', '/', $spbuPath) : 'D:/Mekar Jaya/API-SPBU';
         if (! file_exists($spbuPathNormalized.'/vendor/autoload.php')) {
-            throw new \RuntimeException("Path project API-SPBU tidak ditemukan di: [{$spbuPathNormalized}]. Harap atur 'SPBU_PROJECT_PATH' di file .env server.");
+            $existingDirs = [];
+            if (is_dir('/www/wwwroot')) {
+                $existingDirs = array_map('basename', @glob('/www/wwwroot/*', GLOB_ONLYDIR) ?: []);
+            }
+            $hint = ! empty($existingDirs)
+                ? ' Folder website yang terdeteksi di /www/wwwroot: ['.implode(', ', $existingDirs).'].'
+                : '';
+            throw new \RuntimeException("Path project API-SPBU tidak ditemukan di server.{$hint} Harap atur 'SPBU_PROJECT_PATH' di file .env server.");
         }
 
         $spbuDb = config('database.connections.mysql_spbu.database', 'api_air');
