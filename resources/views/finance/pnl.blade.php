@@ -52,6 +52,20 @@
                     </div>
                 </form>
 
+                @if($selectedBu === 'spbu')
+                <form action="{{ route('finance.sync.database') }}" method="POST" class="inline">
+                    @csrf
+                    <input type="hidden" name="target" value="spbu">
+                    <input type="hidden" name="period" value="{{ substr($selectedPeriod, 0, 7) }}">
+                    <button type="submit"
+                        class="px-3 py-1.5 rounded-xl bg-[#ca8a04]/10 hover:bg-[#ca8a04]/20 text-[#713f12] border border-[#fde047] text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                        title="Tarik data transaksi terbaru langsung dari sistem database SPBU untuk periode {{ \Carbon\Carbon::parse($selectedPeriod)->translatedFormat('F Y') }}">
+                        <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-[#ca8a04]"></i>
+                        <span>Sync SPBU</span>
+                    </button>
+                </form>
+                @endif
+
                 <div class="text-xs font-semibold text-slate-400">
                     Vs Prev: <span class="font-bold text-slate-700 font-mono">{{ $pnl['previous_period_label'] }}</span>
                 </div>

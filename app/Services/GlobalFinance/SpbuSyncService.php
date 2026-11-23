@@ -98,8 +98,11 @@ class SpbuSyncService
         $status = 'final';
 
         // --- 1. REVENUE ---
+        $sumProductRev = 0.0;
         if (! empty($pnl['revenue']['products'])) {
             foreach ($pnl['revenue']['products'] as $idx => $prod) {
+                $pAmt = (float) ($prod['net_amount'] ?? $prod['amount'] ?? 0);
+                $sumProductRev += $pAmt;
                 $records[] = [
                     'business_unit_code' => 'spbu',
                     'entity_code' => 'SPBU_44',
@@ -109,10 +112,32 @@ class SpbuSyncService
                     'sub_category' => 'fuel_sales',
                     'account_code' => '40'.str_pad((string) ($idx + 1), 2, '0', STR_PAD_LEFT),
                     'account_name' => 'Penjualan '.($prod['name'] ?? 'BBM'),
-                    'amount' => (float) ($prod['net_amount'] ?? $prod['amount'] ?? 0),
+                    'amount' => $pAmt,
                     'status' => $status,
                     'source_type' => 'database_sync',
                     'notes' => 'Volume: '.number_format((float) ($prod['volume'] ?? 0), 0, ',', '.').' L',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+
+            // Defensive Fallback: Bila ada selisih antara total omzet dan rincian produk
+            $expectedRev = (float) ($pnl['revenue']['total'] ?? 0);
+            $diffRev = round($expectedRev - $sumProductRev, 2);
+            if (abs($diffRev) > 1.0) {
+                $records[] = [
+                    'business_unit_code' => 'spbu',
+                    'entity_code' => 'SPBU_44',
+                    'period' => $periodDate,
+                    'report_type' => 'pnl',
+                    'category' => 'revenue',
+                    'sub_category' => 'fuel_sales',
+                    'account_code' => '4090',
+                    'account_name' => 'Penyesuaian Penjualan BBM Belum Terklasifikasi',
+                    'amount' => $diffRev,
+                    'status' => $status,
+                    'source_type' => 'database_sync',
+                    'notes' => 'Otomatis dibuat untuk menjaga konsistensi total pendapatan dengan sistem SPBU',
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
@@ -181,20 +206,21 @@ class SpbuSyncService
             ];
         }
 
-        // Losis & Tera HPP
+        // Losis & Tera BBM (Dipetakan ke pos Beban Operasional / Susut agar COGS & Gross Profit identik dengan sistem SPBU)
         if (! empty($pnl['cost_of_goods_sold']['bbm_losis'])) {
             $records[] = [
                 'business_unit_code' => 'spbu',
                 'entity_code' => 'SPBU_44',
                 'period' => $periodDate,
                 'report_type' => 'pnl',
-                'category' => 'cogs',
-                'sub_category' => 'shrinkage_and_losses',
-                'account_code' => '5098',
-                'account_name' => 'Losses BBM (Penguapan & Susut)',
+                'category' => 'opex',
+                'sub_category' => 'susut_dan_losis',
+                'account_code' => '6098',
+                'account_name' => 'Biaya Losses BBM (Penguapan & Susut)',
                 'amount' => (float) $pnl['cost_of_goods_sold']['bbm_losis'],
                 'status' => $status,
                 'source_type' => 'database_sync',
+                'notes' => 'Tersinkronisasi dari pos Losis Sistem SPBU',
                 'created_at' => now(),
                 'updated_at' => now(),
             ];
@@ -206,13 +232,14 @@ class SpbuSyncService
                 'entity_code' => 'SPBU_44',
                 'period' => $periodDate,
                 'report_type' => 'pnl',
-                'category' => 'cogs',
-                'sub_category' => 'shrinkage_and_losses',
-                'account_code' => '5099',
+                'category' => 'opex',
+                'sub_category' => 'susut_dan_losis',
+                'account_code' => '6099',
                 'account_name' => 'Biaya Tera BBM (Pengujian Takaran Dispenser)',
                 'amount' => (float) $pnl['cost_of_goods_sold']['bbm_tera'],
                 'status' => $status,
                 'source_type' => 'database_sync',
+                'notes' => 'Tersinkronisasi dari pos Tera Sistem SPBU',
                 'created_at' => now(),
                 'updated_at' => now(),
             ];
@@ -291,104 +318,260 @@ class SpbuSyncService
             }
         }
 
-        // --- 4. NERACA: AKTIVA ---
+        // --- 4. NERACA: AKTIVA (DIRINCI SESUAI DATA RIIL SISTEM SPBU) ---
         $summary = $bs['summary'] ?? [];
-        $records[] = [
-            'business_unit_code' => 'spbu',
-            'entity_code' => 'SPBU_44',
-            'period' => $periodDate,
-            'report_type' => 'balance_sheet',
-            'category' => 'asset',
-            'sub_category' => 'cash_and_bank',
-            'account_code' => '1101',
-            'account_name' => 'Kas & Saldo Bank SPBU',
-            'amount' => (float) ($summary['total_kas'] ?? 0),
-            'status' => $status,
-            'source_type' => 'database_sync',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ];
 
-        $records[] = [
-            'business_unit_code' => 'spbu',
-            'entity_code' => 'SPBU_44',
-            'period' => $periodDate,
-            'report_type' => 'balance_sheet',
-            'category' => 'asset',
-            'sub_category' => 'inventory',
-            'account_code' => '1301',
-            'account_name' => 'Persediaan Stok BBM & Pelumas',
-            'amount' => (float) ($summary['total_stok'] ?? 0),
-            'status' => $status,
-            'source_type' => 'database_sync',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ];
+        // 4.1 Kas & Setara Kas
+        if (! empty($bs['aktiva']['kas']['items'])) {
+            foreach ($bs['aktiva']['kas']['items'] as $idx => $kItem) {
+                $records[] = [
+                    'business_unit_code' => 'spbu',
+                    'entity_code' => 'SPBU_44',
+                    'period' => $periodDate,
+                    'report_type' => 'balance_sheet',
+                    'category' => 'asset',
+                    'sub_category' => 'cash_and_bank',
+                    'account_code' => '11'.str_pad((string) ($idx + 1), 2, '0', STR_PAD_LEFT),
+                    'account_name' => trim($kItem['name'] ?? 'Kas & Bank SPBU'),
+                    'amount' => (float) ($kItem['amount'] ?? 0),
+                    'status' => $status,
+                    'source_type' => 'database_sync',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+        } else {
+            $records[] = [
+                'business_unit_code' => 'spbu',
+                'entity_code' => 'SPBU_44',
+                'period' => $periodDate,
+                'report_type' => 'balance_sheet',
+                'category' => 'asset',
+                'sub_category' => 'cash_and_bank',
+                'account_code' => '1101',
+                'account_name' => 'Kas & Saldo Bank SPBU',
+                'amount' => (float) ($summary['total_kas'] ?? 0),
+                'status' => $status,
+                'source_type' => 'database_sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
 
-        $records[] = [
-            'business_unit_code' => 'spbu',
-            'entity_code' => 'SPBU_44',
-            'period' => $periodDate,
-            'report_type' => 'balance_sheet',
-            'category' => 'asset',
-            'sub_category' => 'accounts_receivable',
-            'account_code' => '1201',
-            'account_name' => 'Piutang Customer & Pertamina',
-            'amount' => (float) ($summary['total_piutang'] ?? 0),
-            'status' => $status,
-            'source_type' => 'database_sync',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ];
+        // 4.2 Persediaan Stok BBM & Pelumas
+        if (! empty($bs['aktiva']['stok']['items'])) {
+            foreach ($bs['aktiva']['stok']['items'] as $idx => $sItem) {
+                $notes = isset($sItem['qty']) && (float) $sItem['qty'] > 0
+                    ? 'Volume: '.number_format((float) $sItem['qty'], 0, ',', '.').' L'
+                    : null;
+                $records[] = [
+                    'business_unit_code' => 'spbu',
+                    'entity_code' => 'SPBU_44',
+                    'period' => $periodDate,
+                    'report_type' => 'balance_sheet',
+                    'category' => 'asset',
+                    'sub_category' => 'inventory',
+                    'account_code' => '13'.str_pad((string) ($idx + 1), 2, '0', STR_PAD_LEFT),
+                    'account_name' => 'Stok '.trim($sItem['name'] ?? 'BBM'),
+                    'amount' => (float) ($sItem['amount'] ?? 0),
+                    'status' => $status,
+                    'source_type' => 'database_sync',
+                    'notes' => $notes,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+        } else {
+            $records[] = [
+                'business_unit_code' => 'spbu',
+                'entity_code' => 'SPBU_44',
+                'period' => $periodDate,
+                'report_type' => 'balance_sheet',
+                'category' => 'asset',
+                'sub_category' => 'inventory',
+                'account_code' => '1301',
+                'account_name' => 'Persediaan Stok BBM & Pelumas',
+                'amount' => (float) ($summary['total_stok'] ?? 0),
+                'status' => $status,
+                'source_type' => 'database_sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
 
-        $records[] = [
-            'business_unit_code' => 'spbu',
-            'entity_code' => 'SPBU_44',
-            'period' => $periodDate,
-            'report_type' => 'balance_sheet',
-            'category' => 'asset',
-            'sub_category' => 'fixed_assets',
-            'account_code' => '1601',
-            'account_name' => 'Aktiva Tetap (Bangunan, Tangki, Dispenser, ATG)',
-            'amount' => (float) ($summary['total_aktiva_tetap'] ?? 0),
-            'status' => $status,
-            'source_type' => 'database_sync',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ];
+        // 4.3 Piutang Usaha & Pertamina
+        if (! empty($bs['aktiva']['piutang']['items'])) {
+            foreach ($bs['aktiva']['piutang']['items'] as $idx => $pItem) {
+                $records[] = [
+                    'business_unit_code' => 'spbu',
+                    'entity_code' => 'SPBU_44',
+                    'period' => $periodDate,
+                    'report_type' => 'balance_sheet',
+                    'category' => 'asset',
+                    'sub_category' => 'accounts_receivable',
+                    'account_code' => '12'.str_pad((string) ($idx + 1), 2, '0', STR_PAD_LEFT),
+                    'account_name' => trim($pItem['name'] ?? 'Piutang Usaha'),
+                    'amount' => (float) ($pItem['amount'] ?? 0),
+                    'status' => $status,
+                    'source_type' => 'database_sync',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+        } else {
+            $records[] = [
+                'business_unit_code' => 'spbu',
+                'entity_code' => 'SPBU_44',
+                'period' => $periodDate,
+                'report_type' => 'balance_sheet',
+                'category' => 'asset',
+                'sub_category' => 'accounts_receivable',
+                'account_code' => '1201',
+                'account_name' => 'Piutang Customer & Pertamina',
+                'amount' => (float) ($summary['total_piutang'] ?? 0),
+                'status' => $status,
+                'source_type' => 'database_sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
 
-        // --- 5. NERACA: PASIVA ---
-        $records[] = [
-            'business_unit_code' => 'spbu',
-            'entity_code' => 'SPBU_44',
-            'period' => $periodDate,
-            'report_type' => 'balance_sheet',
-            'category' => 'liability',
-            'sub_category' => 'accounts_payable',
-            'account_code' => '2101',
-            'account_name' => 'Hutang Lancar & Polair',
-            'amount' => (float) ($summary['total_hutang'] ?? 0),
-            'status' => $status,
-            'source_type' => 'database_sync',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ];
+        // 4.4 Aktiva Tetap
+        if (! empty($bs['aktiva']['aktiva_tetap']['items'])) {
+            foreach ($bs['aktiva']['aktiva_tetap']['items'] as $idx => $aItem) {
+                $records[] = [
+                    'business_unit_code' => 'spbu',
+                    'entity_code' => 'SPBU_44',
+                    'period' => $periodDate,
+                    'report_type' => 'balance_sheet',
+                    'category' => 'asset',
+                    'sub_category' => 'fixed_assets',
+                    'account_code' => '16'.str_pad((string) ($idx + 1), 2, '0', STR_PAD_LEFT),
+                    'account_name' => trim($aItem['name'] ?? 'Aktiva Tetap'),
+                    'amount' => (float) ($aItem['amount'] ?? 0),
+                    'status' => $status,
+                    'source_type' => 'database_sync',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+        } else {
+            $records[] = [
+                'business_unit_code' => 'spbu',
+                'entity_code' => 'SPBU_44',
+                'period' => $periodDate,
+                'report_type' => 'balance_sheet',
+                'category' => 'asset',
+                'sub_category' => 'fixed_assets',
+                'account_code' => '1601',
+                'account_name' => 'Aktiva Tetap (Bangunan, Tangki, Dispenser, ATG)',
+                'amount' => (float) ($summary['total_aktiva_tetap'] ?? 0),
+                'status' => $status,
+                'source_type' => 'database_sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
 
-        $records[] = [
-            'business_unit_code' => 'spbu',
-            'entity_code' => 'SPBU_44',
-            'period' => $periodDate,
-            'report_type' => 'balance_sheet',
-            'category' => 'equity',
-            'sub_category' => 'retained_earnings',
-            'account_code' => '3201',
-            'account_name' => 'Modal & Akumulasi Laba Ditahan SPBU',
-            'amount' => (float) ($summary['total_modal'] ?? 0),
-            'status' => $status,
-            'source_type' => 'database_sync',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ];
+        // --- 5. NERACA: PASIVA (DIRINCI SESUAI DATA RIIL SISTEM SPBU) ---
+        // 5.1 Kewajiban / Hutang
+        $hasHutangItems = ! empty($bs['pasiva']['hutang']['operasional']) || ! empty($bs['pasiva']['hutang']['dp']);
+        if ($hasHutangItems) {
+            $hIdx = 0;
+            if (! empty($bs['pasiva']['hutang']['operasional'])) {
+                foreach ($bs['pasiva']['hutang']['operasional'] as $hItem) {
+                    $hIdx++;
+                    $records[] = [
+                        'business_unit_code' => 'spbu',
+                        'entity_code' => 'SPBU_44',
+                        'period' => $periodDate,
+                        'report_type' => 'balance_sheet',
+                        'category' => 'liability',
+                        'sub_category' => 'accounts_payable',
+                        'account_code' => '21'.str_pad((string) $hIdx, 2, '0', STR_PAD_LEFT),
+                        'account_name' => 'Hutang '.trim($hItem['name'] ?? 'Operasional'),
+                        'amount' => (float) ($hItem['amount'] ?? 0),
+                        'status' => $status,
+                        'source_type' => 'database_sync',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+            }
+            if (! empty($bs['pasiva']['hutang']['dp'])) {
+                foreach ($bs['pasiva']['hutang']['dp'] as $dItem) {
+                    $hIdx++;
+                    $records[] = [
+                        'business_unit_code' => 'spbu',
+                        'entity_code' => 'SPBU_44',
+                        'period' => $periodDate,
+                        'report_type' => 'balance_sheet',
+                        'category' => 'liability',
+                        'sub_category' => 'customer_deposits',
+                        'account_code' => '22'.str_pad((string) $hIdx, 2, '0', STR_PAD_LEFT),
+                        'account_name' => 'DP / Uang Muka '.trim($dItem['name'] ?? 'Customer'),
+                        'amount' => (float) ($dItem['amount'] ?? 0),
+                        'status' => $status,
+                        'source_type' => 'database_sync',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+            }
+        } else {
+            $records[] = [
+                'business_unit_code' => 'spbu',
+                'entity_code' => 'SPBU_44',
+                'period' => $periodDate,
+                'report_type' => 'balance_sheet',
+                'category' => 'liability',
+                'sub_category' => 'accounts_payable',
+                'account_code' => '2101',
+                'account_name' => 'Hutang Lancar & Polair',
+                'amount' => (float) ($summary['total_hutang'] ?? 0),
+                'status' => $status,
+                'source_type' => 'database_sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+
+        // 5.2 Modal & Ekuitas
+        if (! empty($bs['pasiva']['modal']['items'])) {
+            foreach ($bs['pasiva']['modal']['items'] as $idx => $mItem) {
+                $records[] = [
+                    'business_unit_code' => 'spbu',
+                    'entity_code' => 'SPBU_44',
+                    'period' => $periodDate,
+                    'report_type' => 'balance_sheet',
+                    'category' => 'equity',
+                    'sub_category' => 'retained_earnings',
+                    'account_code' => '31'.str_pad((string) ($idx + 1), 2, '0', STR_PAD_LEFT),
+                    'account_name' => trim($mItem['name'] ?? 'Modal SPBU'),
+                    'amount' => (float) ($mItem['amount'] ?? 0),
+                    'status' => $status,
+                    'source_type' => 'database_sync',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+        } else {
+            $records[] = [
+                'business_unit_code' => 'spbu',
+                'entity_code' => 'SPBU_44',
+                'period' => $periodDate,
+                'report_type' => 'balance_sheet',
+                'category' => 'equity',
+                'sub_category' => 'retained_earnings',
+                'account_code' => '3201',
+                'account_name' => 'Modal & Akumulasi Laba Ditahan SPBU',
+                'amount' => (float) ($summary['total_modal'] ?? 0),
+                'status' => $status,
+                'source_type' => 'database_sync',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
 
         $defaultRecord = [
             'business_unit_code' => 'spbu',

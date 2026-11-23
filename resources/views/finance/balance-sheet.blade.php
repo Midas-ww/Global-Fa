@@ -64,6 +64,20 @@
                     </div>
                 </form>
 
+                @if($selectedBu === 'spbu')
+                <form action="{{ route('finance.sync.database') }}" method="POST" class="inline">
+                    @csrf
+                    <input type="hidden" name="target" value="spbu">
+                    <input type="hidden" name="period" value="{{ substr($selectedPeriod, 0, 7) }}">
+                    <button type="submit"
+                        class="px-3 py-1.5 rounded-xl bg-[#ca8a04]/10 hover:bg-[#ca8a04]/20 text-[#713f12] border border-[#fde047] text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                        title="Tarik data transaksi terbaru langsung dari sistem database SPBU untuk periode {{ \Carbon\Carbon::parse($selectedPeriod)->translatedFormat('F Y') }}">
+                        <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-[#ca8a04]"></i>
+                        <span>Sync SPBU</span>
+                    </button>
+                </form>
+                @endif
+
                 @if($bs['is_balanced'])
                 <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#edf5ee] text-[#14532d] border border-[#c2e7cb] text-xs font-black shadow-2xs">
                     <i data-lucide="check-circle" class="w-4 h-4 text-[#15803d]"></i>
