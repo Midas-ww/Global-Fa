@@ -135,7 +135,7 @@ class SpbuSyncService
         file_put_contents($tempFile, "<?php\n".$script);
 
         $phpBinary = PHP_BINARY ?: 'php';
-        $output = shell_exec(escapeshellarg($phpBinary).' '.escapeshellarg($tempFile).' 2>&1');
+        $output = $this->executeCommand(escapeshellarg($phpBinary).' '.escapeshellarg($tempFile).' 2>&1');
         @unlink($tempFile);
 
         if (! $output) {
@@ -698,5 +698,66 @@ class SpbuSyncService
             'variance' => $variance,
             'total_aktiva' => (float) ($summary['total_aktiva'] ?? 0),
         ];
+    }
+
+    /**
+     * Jalankan perintah CLI dengan dukungan fallback multi-eksekutor
+     * untuk kompatibilitas penuh dengan lingkungan hosting/aaPanel.
+     */
+    private function executeCommand(string $command): string
+    {
+        if (function_exists('shell_exec')) {
+            $out = @\shell_exec($command);
+            if ($out !== null && $out !== false && $out !== '') {
+                return (string) $out;
+            }
+        }
+
+        if (function_exists('exec')) {
+            $lines = [];
+            $status = 0;
+            @\exec($command, $lines, $status);
+            if (! empty($lines)) {
+                return implode("\n", $lines);
+            }
+        }
+
+        if (function_exists('proc_open')) {
+            $descriptorspec = [
+                0 => ['pipe', 'r'],
+                1 => ['pipe', 'w'],
+                2 => ['pipe', 'w'],
+            ];
+            $process = @\proc_open($command, $descriptorspec, $pipes);
+            if (is_resource($process)) {
+                fclose($pipes[0]);
+                $output = stream_get_contents($pipes[1]);
+                fclose($pipes[1]);
+                fclose($pipes[2]);
+                proc_close($process);
+                if ($output) {
+                    return (string) $output;
+                }
+            }
+        }
+
+        if (function_exists('popen')) {
+            $handle = @\popen($command, 'r');
+            if ($handle) {
+                $output = '';
+                while (! feof($handle)) {
+                    $output .= fread($handle, 4096);
+                }
+                pclose($handle);
+                if ($output) {
+                    return $output;
+                }
+            }
+        }
+
+        throw new \RuntimeException(
+            'Fungsi CLI (shell_exec / exec / proc_open) dinonaktifkan di PHP server (disable_functions). '.
+            "Di aaPanel: buka App Store -> Installed -> PHP-8.x -> Setting -> Disabled functions, lalu hapus 'shell_exec' dan 'exec'."
+        );
     }
 }
