@@ -4,17 +4,22 @@ namespace App\Services\GlobalFinance;
 
 use App\Models\GlobalFinancialRecord;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class SpbuSyncService
 {
     /**
-     * Jalankan kalkulasi dan sinkronisasi laporan SPBU untuk bulan tertentu.
+     * Jalankan kalkulasi dan sinkronisasi laporan SPBU untuk satu atau semua periode.
      *
-     * @param  string  $yearMonth  Format YYYY-MM (contoh: '2026-07')
+     * @param  string  $yearMonth  Format YYYY-MM (contoh: '2026-07') atau 'all' untuk semua periode.
      */
     public function sync(string $yearMonth = '2026-07'): array
     {
+        if (strtolower($yearMonth) === 'all') {
+            return $this->syncAll();
+        }
+
         $startDate = Carbon::createFromFormat('Y-m', $yearMonth)->startOfMonth()->format('Y-m-d');
         $endDate = Carbon::createFromFormat('Y-m', $yearMonth)->endOfMonth()->format('Y-m-d');
         $periodDate = $startDate;
@@ -697,6 +702,50 @@ class SpbuSyncService
             'reconciled' => $isReconciled,
             'variance' => $variance,
             'total_aktiva' => (float) ($summary['total_aktiva'] ?? 0),
+        ];
+    }
+
+    /**
+     * Sinkronisasikan seluruh periode yang tersedia di database SPBU.
+     */
+    public function syncAll(): array
+    {
+        $months = [];
+        try {
+            $months = DB::connection('mysql_spbu')
+                ->table('shift_sales')
+                ->selectRaw('DISTINCT SUBSTRING(posted_at, 1, 7) as ym')
+                ->whereNotNull('posted_at')
+                ->where('posted_at', '!=', '')
+                ->orderBy('ym')
+                ->pluck('ym')
+                ->toArray();
+        } catch (\Throwable) {
+        }
+
+        if (empty($months)) {
+            $months = ['2026-07', '2026-08', '2026-09', '2026-10', '2026-11'];
+        }
+
+        $results = [];
+        $totalRecords = 0;
+        foreach ($months as $m) {
+            try {
+                $res = $this->sync($m);
+                $results[$m] = $res;
+                $totalRecords += ($res['records_count'] ?? 0);
+            } catch (\Throwable $e) {
+                $results[$m] = ['error' => $e->getMessage()];
+            }
+        }
+
+        return [
+            'success' => true,
+            'business_unit' => 'spbu',
+            'periods_synced' => count($results),
+            'months' => array_keys($results),
+            'total_records' => $totalRecords,
+            'details' => $results,
         ];
     }
 

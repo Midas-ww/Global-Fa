@@ -170,20 +170,33 @@ class GlobalFinanceController extends Controller
         if ($target === 'all' || $target === 'spbu') {
             try {
                 $spbu = new SpbuSyncService;
-                $resSpbu = $spbu->sync($period);
-                $isReconciled = $resSpbu['reconciled'] ?? true;
-                $statusLog = $isReconciled ? 'success' : 'warning';
-                $reconcileNote = $isReconciled ? ' (Rekonsiliasi 100% Cocok)' : ' (Perhatian: Selisih Rekonsiliasi Rp '.number_format((float) ($resSpbu['variance'] ?? 0), 2, ',', '.').')';
-                $results[] = "SPBU ({$period}): {$resSpbu['records_count']} akun finansial diserap (Omzet: Rp ".number_format($resSpbu['revenue_total'], 0, ',', '.')."){$reconcileNote}.";
+                if ($period === 'all') {
+                    $resSpbu = $spbu->syncAll();
+                    $results[] = "SPBU: Seluruh periode ({$resSpbu['periods_synced']} bulan) disinkronkan ({$resSpbu['total_records']} record tersimpan).";
+                    GlobalIngestionLog::create([
+                        'business_unit_code' => 'spbu',
+                        'source_type' => 'database_sync',
+                        'filename' => 'api_air.shift_sales (all)',
+                        'records_count' => $resSpbu['total_records'] ?? 0,
+                        'status' => 'success',
+                        'details' => json_encode($resSpbu),
+                    ]);
+                } else {
+                    $resSpbu = $spbu->sync($period);
+                    $isReconciled = $resSpbu['reconciled'] ?? true;
+                    $statusLog = $isReconciled ? 'success' : 'warning';
+                    $reconcileNote = $isReconciled ? ' (Rekonsiliasi 100% Cocok)' : ' (Perhatian: Selisih Rekonsiliasi Rp '.number_format((float) ($resSpbu['variance'] ?? 0), 2, ',', '.').')';
+                    $results[] = "SPBU ({$period}): {$resSpbu['records_count']} akun finansial diserap (Omzet: Rp ".number_format($resSpbu['revenue_total'], 0, ',', '.')."){$reconcileNote}.";
 
-                GlobalIngestionLog::create([
-                    'business_unit_code' => 'spbu',
-                    'source_type' => 'database_sync',
-                    'filename' => "api_air.shift_sales ({$period})",
-                    'records_count' => $resSpbu['records_count'] ?? 0,
-                    'status' => $statusLog,
-                    'details' => json_encode($resSpbu),
-                ]);
+                    GlobalIngestionLog::create([
+                        'business_unit_code' => 'spbu',
+                        'source_type' => 'database_sync',
+                        'filename' => "api_air.shift_sales ({$period})",
+                        'records_count' => $resSpbu['records_count'] ?? 0,
+                        'status' => $statusLog,
+                        'details' => json_encode($resSpbu),
+                    ]);
+                }
             } catch (\Throwable $e) {
                 $errors[] = 'SPBU: '.$e->getMessage();
                 GlobalIngestionLog::create([
