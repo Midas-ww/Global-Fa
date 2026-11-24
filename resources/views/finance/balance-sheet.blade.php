@@ -108,7 +108,7 @@
                 default => 'Cabang / Entitas',
             };
         @endphp
-        @if(count($entities) > 0)
+        @if(count($entities) > 0 && ($hasEntitySpecificBs ?? true))
         <div class="pt-3 border-t border-[#e9e5d6] flex items-center justify-between flex-wrap gap-3">
             <div class="flex items-center gap-1.5 flex-wrap">
                 <span class="text-xs font-bold text-slate-700 mr-1 flex items-center gap-1.5">

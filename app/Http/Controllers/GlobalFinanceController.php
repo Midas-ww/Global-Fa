@@ -94,6 +94,16 @@ class GlobalFinanceController extends Controller
         $balanceSheetData = $this->reportService->getConsolidatedBalanceSheet($selectedPeriod, $selectedBu, $selectedEntity);
         $businessUnits = $this->reportService->getBusinessUnitsWithEntities();
 
+        $hasEntitySpecificBs = false;
+        if ($selectedBu && ! empty($businessUnits)) {
+            $curBu = collect($businessUnits)->firstWhere('code', $selectedBu);
+            $codes = collect($curBu['entities'] ?? [])->pluck('code');
+            $hasEntitySpecificBs = GlobalFinancialRecord::where('business_unit_code', $selectedBu)
+                ->whereIn('entity_code', $codes)
+                ->where('report_type', 'balance_sheet')
+                ->exists();
+        }
+
         return view('finance.balance-sheet', [
             'bs' => $balanceSheetData,
             'selectedPeriod' => $selectedPeriod,
@@ -101,6 +111,7 @@ class GlobalFinanceController extends Controller
             'selectedEntity' => $selectedEntity,
             'availablePeriods' => $availablePeriods,
             'businessUnits' => $businessUnits,
+            'hasEntitySpecificBs' => $hasEntitySpecificBs,
         ]);
     }
 
@@ -306,8 +317,13 @@ class GlobalFinanceController extends Controller
                 $unitName = GlobalBusinessUnit::where('code', $type)->value('name') ?? strtoupper($type);
                 $msg = "{$unitName}: Berhasil mengimpor {$res['records_inserted']} data transaksi via Template Universal Holding.";
             } elseif ($type === 'fmcg') {
-                $res = $service->ingestFmcgFile($fullPath, $filename);
-                $msg = "Unilever: Berhasil mengimpor {$res['records_inserted']} data transaksi dari ".count($res['sheets_processed'] ?? []).' lembar kerja (sheets).';
+                if (($detected['type'] ?? '') === 'fmcg_bs') {
+                    $res = $service->ingestFmcgBalanceSheetFile($fullPath, $filename);
+                    $msg = "Unilever: Berhasil mengimpor {$res['records_inserted']} data Neraca Konsolidasi CV Mekar Jaya Perkasa ({$res['periods_count']} periode).";
+                } else {
+                    $res = $service->ingestFmcgFile($fullPath, $filename);
+                    $msg = "Unilever: Berhasil mengimpor {$res['records_inserted']} data transaksi dari ".count($res['sheets_processed'] ?? []).' lembar kerja (sheets).';
+                }
             } elseif ($type === 'aqua') {
                 $res = $service->ingestAquaFile($fullPath, $filename);
                 $msg = "AQUA: Berhasil mengimpor {$res['records_inserted']} data transaksi P&L dan Neraca Danone AQUA.";

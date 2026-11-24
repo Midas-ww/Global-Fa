@@ -85,6 +85,18 @@ class ExcelIngestionService
             ];
         }
 
+        // 2b. Deteksi Neraca FMCG (CV Mekar Jaya Perkasa - Balance Sheet)
+        if (
+            str_contains($upperHeader, 'MEKAR JAYA PERKASA') &&
+            (str_contains($upperHeader, 'BALANCE SHEET') || str_contains($upperHeader, 'NERACA') || in_array('BALANCE SHEET', $upperSheets) || in_array('BS', $upperSheets))
+        ) {
+            return [
+                'type' => 'fmcg_bs',
+                'label' => 'Neraca FMCG (CV Mekar Jaya Perkasa)',
+                'sheets' => $sheetNames,
+            ];
+        }
+
         // 3. Deteksi Unilever FMCG (9 Depo Cabang)
         $fmcgDepoKnown = ['BMG', 'PWT', 'PML GT', 'PML MT', 'WLR', 'RDK', 'PWJ', 'KBM', 'PKL', 'TGL', 'KDS', 'CRB', 'KNG'];
         $hasDepoSheets = count(array_intersect($upperSheets, $fmcgDepoKnown)) > 0;
@@ -204,9 +216,9 @@ class ExcelIngestionService
         $fmcgDepoKnown = ['BMG', 'PWT', 'PML GT', 'PML MT', 'WLR', 'RDK', 'PWJ', 'KBM', 'PKL'];
         $hasDepoSheets = count(array_intersect($upperSheets, $fmcgDepoKnown)) > 0;
 
-        if ($selectedType === 'fmcg' && ! $hasDepoSheets) {
+        if ($selectedType === 'fmcg' && ! $hasDepoSheets && $detected['type'] !== 'fmcg_bs') {
             throw new \InvalidArgumentException(
-                'Validasi Format Gagal: File ini tidak memiliki lembar kerja cabang 9 Depo FMCG (BMG, PWT, PML GT, PML MT, WLR, RDK, PWJ, KBM, PKL). '.
+                'Validasi Format Gagal: File ini tidak memiliki lembar kerja cabang 9 Depo FMCG (BMG, PWT, PML GT, PML MT, WLR, RDK, PWJ, KBM, PKL) maupun format Neraca Resmi CV Mekar Jaya Perkasa. '.
                 'Pastikan Anda mengunggah file laporan resmi per-depo FMCG atau menggunakan Template Universal Holding.'
             );
         }
@@ -609,6 +621,206 @@ class ExcelIngestionService
                 'error' => $e->getMessage(),
             ];
         }
+    }
+
+    /**
+     * Ingest file Laporan Neraca (Balance Sheet) CV Mekar Jaya Perkasa (FMCG).
+     *
+     * @return array<string, mixed>
+     */
+    public function ingestFmcgBalanceSheetFile(string $filePath, ?string $filename = null): array
+    {
+        $lines = file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        if ($lines === false || empty($lines)) {
+            $spreadsheet = IOFactory::load($filePath);
+            $sheet = $spreadsheet->getActiveSheet();
+            $rows = $sheet->toArray(null, true, false, false);
+            $lines = array_map(function ($row) {
+                return implode(',', array_map(fn ($val) => '"'.str_replace('"', '""', (string) $val).'"', $row));
+            }, $rows);
+        }
+
+        $periodsData = [];
+        $currentPeriod = null;
+
+        foreach ($lines as $line) {
+            $cols = str_getcsv($line);
+
+            // Deteksi baris awal periode: "Untuk Periode yang Berakhir 31 January 2026"
+            if (isset($cols[0]) && str_contains($cols[0], 'Untuk Periode yang Berakhir')) {
+                $rawDate = trim(str_replace('Untuk Periode yang Berakhir', '', $cols[0]));
+                $dt = Carbon::parse($rawDate);
+                $currentPeriod = $dt->startOfMonth()->toDateString();
+                $periodsData[$currentPeriod] = [
+                    'assets' => [],
+                    'liabilities' => [],
+                    'equity' => [],
+                ];
+
+                continue;
+            }
+
+            if (! $currentPeriod) {
+                continue;
+            }
+
+            // Sisi Kiri (Aktiva)
+            $codeLeft = trim($cols[0] ?? '');
+            $nameLeft = trim($cols[1] ?? '');
+            $valLeft = trim($cols[3] ?? '');
+
+            if (! empty($nameLeft) && is_numeric($valLeft) && ! in_array(strtoupper($nameLeft), ['AKTIVA', 'PASSIVA'])) {
+                $subCat = match (true) {
+                    str_starts_with($codeLeft, 'A.') => 'cash',
+                    str_starts_with($codeLeft, 'B.') => 'accounts_receivable',
+                    str_starts_with($codeLeft, 'C.') => 'inventory',
+                    str_contains(strtoupper($nameLeft), 'TETAP') => 'fixed_assets',
+                    default => 'other_current_assets',
+                };
+
+                $periodsData[$currentPeriod]['assets'][] = [
+                    'code' => $codeLeft ?: '1000',
+                    'name' => $nameLeft,
+                    'amount' => (float) $valLeft,
+                    'sub_category' => $subCat,
+                ];
+            }
+
+            // Sisi Kanan (Passiva)
+            $codeRight = trim($cols[5] ?? '');
+            $nameRight = trim($cols[6] ?? '');
+            $valRight = trim($cols[8] ?? '');
+
+            if (! empty($nameRight) && is_numeric($valRight) && ! in_array(strtoupper($nameRight), ['AKTIVA', 'PASSIVA'])) {
+                $uName = strtoupper($nameRight);
+                $isEquity = str_contains($uName, 'EQUITY') ||
+                            str_contains($uName, 'INCOME') ||
+                            str_contains($uName, 'PRIVE') ||
+                            str_contains($uName, 'RETAINED') ||
+                            str_contains($uName, 'EARNING');
+
+                if ($isEquity) {
+                    $subCat = match (true) {
+                        str_contains($uName, 'INCOME') => 'current_year_earnings',
+                        str_contains($uName, 'PRIVE') => 'drawings',
+                        default => 'retained_earnings',
+                    };
+
+                    $periodsData[$currentPeriod]['equity'][] = [
+                        'code' => $codeRight ?: '3000',
+                        'name' => $nameRight,
+                        'amount' => (float) $valRight,
+                        'sub_category' => $subCat,
+                    ];
+                } else {
+                    $subCat = match (true) {
+                        $codeRight === 'E' || str_contains($uName, 'DAGANG') => 'accounts_payable',
+                        $codeRight === 'F' || str_contains($uName, 'PAJAK') => 'taxes_payable',
+                        $codeRight === 'H' || str_contains($uName, 'PANJANG') => 'long_term_debt',
+                        default => 'other_current_liabilities',
+                    };
+
+                    $periodsData[$currentPeriod]['liabilities'][] = [
+                        'code' => $codeRight ?: '2000',
+                        'name' => $nameRight,
+                        'amount' => (float) $valRight,
+                        'sub_category' => $subCat,
+                    ];
+                }
+            }
+        }
+
+        $allPeriods = array_keys($periodsData);
+        if (! empty($allPeriods)) {
+            GlobalFinancialRecord::query()
+                ->where('business_unit_code', 'fmcg')
+                ->where('report_type', 'balance_sheet')
+                ->whereIn('period', $allPeriods)
+                ->delete();
+        }
+
+        $recordsToInsert = [];
+        $now = now();
+
+        foreach ($periodsData as $period => $data) {
+            $sumA = array_sum(array_column($data['assets'], 'amount'));
+            $sumL = array_sum(array_column($data['liabilities'], 'amount'));
+            $sumE = array_sum(array_column($data['equity'], 'amount'));
+            $diff = round($sumA - ($sumL + $sumE), 2);
+
+            foreach ($data['assets'] as $item) {
+                $recordsToInsert[] = [
+                    'business_unit_code' => 'fmcg',
+                    'entity_code' => 'MJP',
+                    'period' => $period,
+                    'report_type' => 'balance_sheet',
+                    'category' => 'asset',
+                    'sub_category' => $item['sub_category'],
+                    'account_code' => $item['code'],
+                    'account_name' => $item['name'],
+                    'amount' => $item['amount'],
+                    'status' => 'final',
+                    'source_type' => 'excel_upload',
+                    'notes' => $filename ?: 'Neraca Resmi CV Mekar Jaya Perkasa (FMCG)',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+
+            foreach ($data['liabilities'] as $item) {
+                $recordsToInsert[] = [
+                    'business_unit_code' => 'fmcg',
+                    'entity_code' => 'MJP',
+                    'period' => $period,
+                    'report_type' => 'balance_sheet',
+                    'category' => 'liability',
+                    'sub_category' => $item['sub_category'],
+                    'account_code' => $item['code'],
+                    'account_name' => $item['name'],
+                    'amount' => $item['amount'],
+                    'status' => 'final',
+                    'source_type' => 'excel_upload',
+                    'notes' => $filename ?: 'Neraca Resmi CV Mekar Jaya Perkasa (FMCG)',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+
+            foreach ($data['equity'] as $item) {
+                $amount = $item['amount'];
+                // Sesuaikan pembulatan pecahan pada Retained Earning agar Neraca 100% seimbang
+                if ($item['sub_category'] === 'retained_earnings' && abs($diff) > 0.001) {
+                    $amount += $diff;
+                }
+
+                $recordsToInsert[] = [
+                    'business_unit_code' => 'fmcg',
+                    'entity_code' => 'MJP',
+                    'period' => $period,
+                    'report_type' => 'balance_sheet',
+                    'category' => 'equity',
+                    'sub_category' => $item['sub_category'],
+                    'account_code' => $item['code'],
+                    'account_name' => $item['name'],
+                    'amount' => $amount,
+                    'status' => 'final',
+                    'source_type' => 'excel_upload',
+                    'notes' => $filename ?: 'Neraca Resmi CV Mekar Jaya Perkasa (FMCG)',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+        }
+
+        foreach (array_chunk($recordsToInsert, 100) as $chunk) {
+            GlobalFinancialRecord::insert($chunk);
+        }
+
+        return [
+            'records_inserted' => count($recordsToInsert),
+            'periods_count' => count($allPeriods),
+            'periods' => $allPeriods,
+        ];
     }
 
     /**

@@ -283,6 +283,23 @@ class GlobalFinanceSeeder extends Seeder
             }
         }
 
+        $fmcgBsCandidates = [
+            'D:/BKU MJS/Neraca CV Mekar Jaya Perkasa 2026.csv',
+            storage_path('app/private/imports/Neraca_CV_Mekar_Jaya_Perkasa_2026.csv'),
+        ];
+        foreach ($fmcgBsCandidates as $path) {
+            if (file_exists($path)) {
+                echo "Ingesting FMCG Balance Sheet from {$path}...\n";
+                try {
+                    $resFmcgBs = $excelService->ingestFmcgBalanceSheetFile($path);
+                    echo 'FMCG Balance Sheet Ingested: '.($resFmcgBs['records_inserted'] ?? 0)." records\n";
+                } catch (\Throwable $e) {
+                    echo 'FMCG Balance Sheet Ingest Warning: '.$e->getMessage()."\n";
+                }
+                break;
+            }
+        }
+
         $xtransCandidates = [
             'D:/BKU MJS/PL & BS Detail MJX Sept 26.xlsx',
             storage_path('app/private/imports/MJX_Ekspedisi.xlsx'),

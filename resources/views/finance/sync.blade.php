@@ -197,7 +197,7 @@
                         </div>
                         <div>
                             <h4 class="text-sm font-bold text-slate-900">Unilever - 9 Depo Cabang (CV Mekar Jaya Perkasa)</h4>
-                            <p class="text-[11px] text-slate-400">Pekalongan, Banyumas, Purwokerto, Pemalang, Weleri, Randudongkal, Purworejo, Kebumen</p>
+                            <p class="text-[11px] text-slate-400">Laporan Laba Rugi 9 Depo Cabang & Neraca Konsolidasi CV Mekar Jaya Perkasa</p>
                         </div>
                     </div>
                 </div>
@@ -206,10 +206,10 @@
                     @csrf
                     <input type="hidden" name="type" value="fmcg">
                     <div class="relative flex items-center justify-center border-2 border-dashed border-slate-200 hover:border-emerald-400 rounded-xl p-3 bg-white transition cursor-pointer group">
-                        <input type="file" name="file" accept=".xlsx,.xls,.csv" required class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" onchange="this.nextElementSibling.innerText = this.files[0]?.name || 'Pilih file Excel Unilever...'">
+                        <input type="file" name="file" accept=".xlsx,.xls,.csv" required class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" onchange="this.nextElementSibling.innerText = this.files[0]?.name || 'Pilih file Excel / CSV Unilever...'">
                         <div class="text-center text-xs text-slate-500 flex items-center gap-2 pointer-events-none group-hover:text-emerald-700">
                             <i data-lucide="upload-cloud" class="w-4 h-4 text-emerald-500"></i>
-                            <span class="font-medium text-slate-600">Pilih file Excel Unilever (.xlsx / .xls)</span>
+                            <span class="font-medium text-slate-600">Pilih file Excel / CSV Unilever (.xlsx / .xls / .csv)</span>
                         </div>
                     </div>
                     <div class="flex items-center justify-between flex-wrap gap-2 pt-1">
