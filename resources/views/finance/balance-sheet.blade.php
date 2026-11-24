@@ -104,6 +104,7 @@
                 'xtrans' => 'Divisi / Rute',
                 'spbu' => 'Unit SPBU',
                 'iqos' => 'Outlet IQOS',
+                'kandang' => 'Kandang',
                 default => 'Cabang / Entitas',
             };
         @endphp
