@@ -118,36 +118,15 @@
                 <p class="text-xs text-slate-500 mt-2.5 leading-relaxed">
                     Menghitung omzet BBM (Pertalite, Pertamax, Biosolar, Dexlite), HPP modal tebusan Pertamina, dan laba kotor per shift untuk dikonversi ke akun Finansial Holding.
                 </p>
-                <form action="{{ route('finance.sync.database') }}" method="POST" class="mt-4 flex items-center gap-3">
+                <form action="{{ route('finance.sync.database') }}" method="POST" class="mt-4 flex items-center justify-between pt-1">
                     @csrf
                     <input type="hidden" name="target" value="spbu">
-                    <div class="flex-1">
-                        <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Pilihan Periode Sinkronisasi</label>
-                        <select name="period" class="w-full bg-white border border-[#e9e5d6] rounded-xl text-xs font-mono font-medium px-3 py-2 text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#059669]">
-                            <option value="all" selected>⚡ Semua Periode (Sept 2025 - Sekarang)</option>
-                            <option value="2026-11">November 2026 (Bulan Berjalan)</option>
-                            <option value="2026-10">Oktober 2026</option>
-                            <option value="2026-09">September 2026</option>
-                            <option value="2026-08">Agustus 2026</option>
-                            <option value="2026-07">Juli 2026</option>
-                            <option value="2026-06">Juni 2026</option>
-                            <option value="2026-05">Mei 2026</option>
-                            <option value="2026-04">April 2026</option>
-                            <option value="2026-03">Maret 2026</option>
-                            <option value="2026-02">Februari 2026</option>
-                            <option value="2026-01">Januari 2026</option>
-                            <option value="2025-12">Desember 2025</option>
-                            <option value="2025-11">November 2025</option>
-                            <option value="2025-10">Oktober 2025</option>
-                            <option value="2025-09">September 2025</option>
-                        </select>
-                    </div>
-                    <div class="pt-5">
-                        <button type="submit" class="px-4 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-[#e9e5d6] text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer">
-                            <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-[#ca8a04]"></i>
-                            Sinkron SPBU
-                        </button>
-                    </div>
+                    <input type="hidden" name="period" value="all">
+                    <span class="text-xs text-slate-400">Mencakup seluruh periode historis terdata di database operasional SPBU.</span>
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition flex items-center gap-1.5 shadow-2xs cursor-pointer">
+                        <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                        Sinkron SPBU
+                    </button>
                 </form>
             </div>
 
