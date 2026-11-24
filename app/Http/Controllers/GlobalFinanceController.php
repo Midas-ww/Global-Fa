@@ -317,6 +317,9 @@ class GlobalFinanceController extends Controller
             } elseif ($type === 'xtrans') {
                 $res = $service->ingestXtransFile($fullPath, $filename);
                 $msg = "Xtrans: Berhasil mengimpor {$res['records_inserted']} data P&L dan Neraca armada Xtrans.";
+            } elseif ($type === 'kandang') {
+                $res = $service->ingestKandangFile($fullPath, $filename);
+                $msg = "Kandang: Berhasil mengimpor {$res['records_inserted']} data P&L dan Neraca PT Mekar Jaya Kurnia Bersama.";
             } else {
                 $res = $service->ingestUniversalTemplate($fullPath, $type, $filename);
                 $unitName = GlobalBusinessUnit::where('code', $type)->value('name') ?? strtoupper($type);

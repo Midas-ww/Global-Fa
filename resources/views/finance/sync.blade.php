@@ -344,6 +344,45 @@
                 </form>
             </div>
 
+            <!-- KANDANG (PT MEKAR JAYA KURNIA BERSAMA) UPLOAD BOX -->
+            <div class="p-4 rounded-xl border border-dashed border-amber-300 bg-[#fbfdfa] hover:bg-white transition">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 font-black text-xs flex items-center justify-center">
+                            MJKB
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-bold text-slate-900">Kandang - PT Mekar Jaya Kurnia Bersama</h4>
+                            <p class="text-[11px] text-slate-400">Laporan Laba Rugi Operasional Kandang Pemalang & Kebumen, serta Neraca Konsolidasi MJKB</p>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="formKandangUpload" action="{{ route('finance.sync.excel') }}" method="POST" enctype="multipart/form-data" class="mt-3 space-y-3" onsubmit="return handleExcelImportSubmit(event, this)">
+                    @csrf
+                    <input type="hidden" name="type" value="kandang">
+                    <div class="relative flex items-center justify-center border-2 border-dashed border-slate-200 hover:border-amber-400 rounded-xl p-3 bg-white transition cursor-pointer group">
+                        <input type="file" name="file" accept=".xlsx,.xls,.csv" required class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" onchange="this.nextElementSibling.innerText = this.files[0]?.name || 'Pilih file Excel Kandang...'">
+                        <div class="text-center text-xs text-slate-500 flex items-center gap-2 pointer-events-none group-hover:text-amber-700">
+                            <i data-lucide="upload-cloud" class="w-4 h-4 text-amber-500"></i>
+                            <span class="font-medium text-slate-600">Pilih file Excel Kandang PT MJKB (.xlsx / .xls)</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between flex-wrap gap-2 pt-1">
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" name="overwrite" id="overwriteKandang" value="1" class="w-4 h-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500 cursor-pointer">
+                            <label for="overwriteKandang" class="text-xs text-slate-600 font-medium cursor-pointer select-none">
+                                Timpa data jika file sudah ada (<span class="font-mono text-slate-400">Overwrite</span>)
+                            </label>
+                        </div>
+                        <button type="submit" class="px-4 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer">
+                            <i data-lucide="search-check" class="w-3.5 h-3.5 text-amber-600"></i>
+                            Cek & Import Kandang
+                        </button>
+                    </div>
+                </form>
+            </div>
+
             <!-- UNIVERSAL TEMPLATE UPLOAD BOX (FOR ANY REGISTERED / NEW BUSINESS UNIT) -->
             <div class="p-4 rounded-xl border border-dashed border-[#fde047] bg-[#faf8f0] hover:bg-white transition">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
@@ -485,6 +524,7 @@
                                 @elseif(str_contains(strtolower($log->business_unit_code), 'fmcg')) bg-sky-50 text-sky-700 border border-sky-200
                                 @elseif(str_contains(strtolower($log->business_unit_code), 'xtrans')) bg-[#fef9c3] text-[#ca8a04] border border-[#edd7ce]
                                 @elseif(str_contains(strtolower($log->business_unit_code), 'ccod')) bg-indigo-50 text-indigo-700 border border-indigo-200
+                                @elseif(str_contains(strtolower($log->business_unit_code), 'kandang')) bg-amber-50 text-amber-700 border border-amber-200
                                 @else bg-slate-100 text-slate-700 border border-slate-200 @endif">
                                 {{ $log->business_unit_code }}
                             </span>

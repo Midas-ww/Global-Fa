@@ -108,6 +108,19 @@ class GlobalFinanceSeeder extends Seeder
             ]
         );
 
+        $buKandang = GlobalBusinessUnit::updateOrCreate(
+            ['code' => 'kandang'],
+            [
+                'name' => 'Kandang',
+                'description' => 'PT Mekar Jaya Kurnia Bersama - Peternakan ayam pedaging (broiler) kandang Pemalang dan Kebumen.',
+                'icon' => 'egg',
+                'color' => '#D97706',
+                'data_source' => 'excel',
+                'sort_order' => 7,
+                'is_active' => true,
+            ]
+        );
+
         // 2. Entities
         $fmcgEntities = [
             ['code' => 'BMG', 'name' => 'Depo Banyumas (BMG)', 'location' => 'Banyumas'],
@@ -206,6 +219,27 @@ class GlobalFinanceSeeder extends Seeder
             ]
         );
 
+        $kandangEntities = [
+            ['code' => 'KD_PML_1', 'name' => 'Kandang 1 Pemalang', 'location' => 'Pemalang'],
+            ['code' => 'KD_PML_2', 'name' => 'Kandang 2 Pemalang', 'location' => 'Pemalang'],
+            ['code' => 'KD_KBM', 'name' => 'Kandang Kebumen', 'location' => 'Kebumen'],
+            ['code' => 'MJKB_PML', 'name' => 'Kandang Pemalang (Konsolidasi)', 'location' => 'Pemalang'],
+            ['code' => 'MJKB', 'name' => 'PT Mekar Jaya Kurnia Bersama (Pusat)', 'location' => 'Pemalang & Kebumen'],
+        ];
+
+        foreach ($kandangEntities as $idx => $ent) {
+            GlobalEntity::updateOrCreate(
+                ['code' => $ent['code']],
+                [
+                    'business_unit_id' => $buKandang->id,
+                    'name' => $ent['name'],
+                    'location' => $ent['location'],
+                    'sort_order' => $idx + 1,
+                    'is_active' => true,
+                ]
+            );
+        }
+
         // 3. Intercompany Eliminations (Automated Rule-Based Sync)
         $eliminationService = new IntercompanyEliminationService;
         $eliminationService->syncAllPeriods();
@@ -282,6 +316,24 @@ class GlobalFinanceSeeder extends Seeder
                     echo 'AQUA Ingested: '.($resAqua['records_inserted'] ?? 0)." records\n";
                 } catch (\Throwable $e) {
                     echo 'AQUA Ingest Warning: '.$e->getMessage()."\n";
+                }
+                break;
+            }
+        }
+
+        $kandangCandidates = [
+            'D:/BKU MJS/PNL NERACA MJKB PEMALANG DAN KEBUMEN.xlsx',
+            storage_path('app/private/imports/PNL NERACA MJKB PEMALANG DAN KEBUMEN.xlsx'),
+            'C:/Users/arisc/.gemini/antigravity/brain/20e1f45c-1a4a-4fec-bccb-85b1fae5ce74/.user_uploaded/media_1795491049016_fc7493cb.xlsx',
+        ];
+        foreach ($kandangCandidates as $path) {
+            if (file_exists($path)) {
+                echo "Ingesting Kandang (PT MJKB) from {$path}...\n";
+                try {
+                    $resKandang = $excelService->ingestKandangFile($path);
+                    echo 'Kandang Ingested: '.($resKandang['records_inserted'] ?? 0)." records\n";
+                } catch (\Throwable $e) {
+                    echo 'Kandang Ingest Warning: '.$e->getMessage()."\n";
                 }
                 break;
             }

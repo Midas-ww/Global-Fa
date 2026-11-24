@@ -7,6 +7,7 @@ use App\Models\GlobalEntity;
 use App\Models\GlobalFinancialRecord;
 use App\Models\GlobalIngestionLog;
 use Carbon\Carbon;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -136,6 +137,22 @@ class ExcelIngestionService
             ];
         }
 
+        // 5. Deteksi Kandang (PT Mekar Jaya Kurnia Bersama - MJKB Pemalang & Kebumen)
+        if (
+            str_contains($upperHeader, 'KURNIA BERSAMA') ||
+            str_contains($upperHeader, 'MJKB') ||
+            str_contains($upperHeader, 'KANDANG') ||
+            in_array('PNL PEMALANG', $upperSheets) ||
+            in_array('PNL KEBUMEN', $upperSheets) ||
+            in_array('BIAYA OPS KANDANG PEMALANG', $upperSheets)
+        ) {
+            return [
+                'type' => 'kandang',
+                'label' => 'Kandang (PT Mekar Jaya Kurnia Bersama)',
+                'sheets' => $sheetNames,
+            ];
+        }
+
         return [
             'type' => 'unknown',
             'label' => 'Format Tidak Dikenal',
@@ -162,6 +179,7 @@ class ExcelIngestionService
             'aqua' => 'AQUA (CV Mekar Jaya Sentosa)',
             'xtrans' => 'Xtrans (PT Mekar Jaya Xtrans Jaya)',
             'ccod' => 'CCOD (12 Cabang)',
+            'kandang' => 'Kandang (PT Mekar Jaya Kurnia Bersama)',
             default => strtoupper($selectedType),
         };
 
@@ -198,6 +216,11 @@ class ExcelIngestionService
             if ($selectedType === 'xtrans' && ! in_array('PL', $upperSheets) && ! in_array('BS DET.', $upperSheets)) {
                 throw new \InvalidArgumentException(
                     "Validasi Format Gagal: File tidak memiliki sheet 'PL' atau 'BS Det.'. Format tidak sesuai dengan laporan resmi PT Mekar Jaya Xtrans Jaya."
+                );
+            }
+            if ($selectedType === 'kandang' && ! in_array('PNL PEMALANG', $upperSheets) && ! in_array('PNL KEBUMEN', $upperSheets) && ! in_array('NERACA', $upperSheets)) {
+                throw new \InvalidArgumentException(
+                    "Validasi Format Gagal: File tidak memiliki sheet 'pnl pemalang', 'pnl kebumen', atau 'neraca'. Format tidak sesuai dengan laporan resmi PT Mekar Jaya Kurnia Bersama."
                 );
             }
         }
@@ -495,6 +518,40 @@ class ExcelIngestionService
                     }
                 }
                 $latestPeriod = ! empty($periods) ? max($periods) : null;
+            }
+            // Kasus 4: Laporan Kandang PT MJKB (pnl pemalang, pnl kebumen, neraca)
+            elseif ($type === 'kandang' || in_array('PNL PEMALANG', $upperSheets)) {
+                $wsPml = $spreadsheet->getSheetByName('pnl pemalang');
+                if ($wsPml) {
+                    $maxCol = Coordinate::columnIndexFromString($wsPml->getHighestColumn());
+                    for ($c = 1; $c <= $maxCol; $c++) {
+                        $pVal = trim((string) $wsPml->getCell([$c, 3])->getFormattedValue());
+                        $pDate = $this->parseKandangPeriod($pVal);
+                        if ($pDate) {
+                            $periods[] = $pDate;
+                        }
+                    }
+                    $uniqueP = array_values(array_unique(array_filter($periods)));
+                    sort($uniqueP);
+                    $latestPeriod = ! empty($uniqueP) ? end($uniqueP) : null;
+
+                    for ($r = 4; $r <= 25; $r++) {
+                        $accName = trim((string) $wsPml->getCell([1, $r])->getFormattedValue());
+                        $val = $this->cleanKandangAmount($wsPml->getCell([2, $r])->getFormattedValue());
+                        if (! empty($accName) && $val != 0.0 && count($sampleRows) < 5) {
+                            $sampleRows[] = [
+                                'code' => 'KD-PML',
+                                'name' => $accName,
+                                'amount' => abs($val),
+                                'formatted_amount' => 'Rp '.number_format(abs($val), 0, ',', '.'),
+                            ];
+                        }
+                        if (stripos($accName, 'pendapatan') !== false && ! stripos($accName, 'afkir')) {
+                            $totalRevenueLatest += abs($val);
+                        }
+                    }
+                    $estimatedRecords = 3700;
+                }
             }
             // Kasus 4: File Lain (General Reader)
             else {
@@ -1673,5 +1730,502 @@ class ExcelIngestionService
         $spreadsheet->setActiveSheetIndex(0);
 
         return $spreadsheet;
+    }
+
+    /**
+     * Ingest file Excel Laporan PT Mekar Jaya Kurnia Bersama (MJKB - Kandang Pemalang & Kebumen, serta Neraca).
+     */
+    public function ingestKandangFile(string $filePath, ?string $filename = null): array
+    {
+        ini_set('memory_limit', '1024M');
+        $filename = $filename ?: basename($filePath);
+        $spreadsheet = IOFactory::load($filePath);
+
+        // 1. Pastikan Unit Usaha Kandang terdaftar
+        $buKandang = GlobalBusinessUnit::firstOrCreate(
+            ['code' => 'kandang'],
+            [
+                'name' => 'Kandang',
+                'description' => 'PT Mekar Jaya Kurnia Bersama - Peternakan ayam pedaging (broiler) kandang Pemalang dan Kebumen.',
+                'icon' => 'egg',
+                'color' => '#D97706',
+                'data_source' => 'excel',
+                'sort_order' => 7,
+                'is_active' => true,
+            ]
+        );
+
+        // 2. Pastikan entitas-entitas Kandang terdaftar
+        $kandangEntities = [
+            ['code' => 'KD_PML_1', 'name' => 'Kandang 1 Pemalang', 'location' => 'Pemalang'],
+            ['code' => 'KD_PML_2', 'name' => 'Kandang 2 Pemalang', 'location' => 'Pemalang'],
+            ['code' => 'KD_KBM', 'name' => 'Kandang Kebumen', 'location' => 'Kebumen'],
+            ['code' => 'MJKB_PML', 'name' => 'Kandang Pemalang (Konsolidasi)', 'location' => 'Pemalang'],
+            ['code' => 'MJKB', 'name' => 'PT Mekar Jaya Kurnia Bersama (Pusat)', 'location' => 'Pemalang & Kebumen'],
+        ];
+
+        foreach ($kandangEntities as $idx => $ent) {
+            GlobalEntity::updateOrCreate(
+                ['code' => $ent['code']],
+                [
+                    'business_unit_id' => $buKandang->id,
+                    'name' => $ent['name'],
+                    'location' => $ent['location'],
+                    'sort_order' => $idx + 1,
+                    'is_active' => true,
+                ]
+            );
+        }
+
+        // 3. Hapus data finansial lama untuk kandang
+        GlobalFinancialRecord::query()
+            ->where('business_unit_code', 'kandang')
+            ->delete();
+
+        $pnlPmlBlocks = [];
+        $pnlKbmBlocks = [];
+        $neracaBlocks = [];
+        $uniquePeriods = [];
+
+        // --- SHEET 1: PNL PEMALANG ---
+        $wsPml = $spreadsheet->getSheetByName('pnl pemalang');
+        if ($wsPml) {
+            $maxColIdx = Coordinate::columnIndexFromString($wsPml->getHighestColumn());
+            for ($c = 1; $c <= $maxColIdx; $c++) {
+                $title = trim((string) $wsPml->getCell([$c, 2])->getFormattedValue());
+                $periodStr = trim((string) $wsPml->getCell([$c, 3])->getFormattedValue());
+                if (empty($title) || empty($periodStr)) {
+                    continue;
+                }
+
+                $pDate = $this->parseKandangPeriod($periodStr);
+                if (! $pDate) {
+                    continue;
+                }
+
+                // Jangan simpan kolom TOTAL untuk mencegah double-counting saat konsolidasi
+                if (str_contains(strtoupper($title), 'TOTAL')) {
+                    continue;
+                }
+
+                $entCode = str_contains(strtoupper($title), 'KANDANG 2') ? 'KD_PML_2' : 'KD_PML_1';
+                $uniquePeriods[$pDate] = true;
+                $colRecords = [];
+
+                for ($r = 4; $r <= 45; $r++) {
+                    $accName = trim((string) $wsPml->getCell([$c, $r])->getFormattedValue());
+                    $val = $wsPml->getCell([$c + 1, $r])->getFormattedValue();
+                    $amt = $this->cleanKandangAmount($val);
+
+                    if (empty($accName) || $amt == 0.0) {
+                        continue;
+                    }
+
+                    $uAcc = strtoupper($accName);
+                    if (in_array($uAcc, ['TOTAL BIAYA', 'LABA OPS', 'LABA', 'LABA SETELAH PENYUSUTAN', 'POPULASI AYAM', 'BIAYA/EKOR'])) {
+                        continue;
+                    }
+
+                    $cat = 'opex';
+                    $subCat = 'operasional_kandang';
+                    $accCode = '6000';
+
+                    if (str_contains($uAcc, 'PENDAPATAN') && ! str_contains($uAcc, 'AFKIR') && ! str_contains($uAcc, 'KARUNG') && ! str_contains($uAcc, 'BUNGA') && ! str_contains($uAcc, 'THR')) {
+                        $cat = 'revenue';
+                        $subCat = 'penjualan_ayam';
+                        $accCode = '4001';
+                    } elseif (str_contains($uAcc, 'AFKIR') || str_contains($uAcc, 'KARUNG') || str_contains($uAcc, 'BUNGA') || str_contains($uAcc, 'LEBARAN') || str_contains($uAcc, 'KELEBIHAN ANGGARAN')) {
+                        $cat = 'other_income';
+                        $subCat = 'pendapatan_lain';
+                        $accCode = '9001';
+                    } elseif (str_contains($uAcc, 'PENYUSUTAN')) {
+                        $cat = 'opex';
+                        $subCat = 'penyusutan';
+                        $accCode = '6800';
+                    } elseif (str_contains($uAcc, 'GAJI') || str_contains($uAcc, 'THR')) {
+                        $subCat = 'gaji_dan_upah';
+                        $accCode = '6100';
+                    } elseif (str_contains($uAcc, 'GAS')) {
+                        $subCat = 'gas_pemanas';
+                        $accCode = '6200';
+                    } elseif (str_contains($uAcc, 'SEKAM')) {
+                        $subCat = 'sekam_alas';
+                        $accCode = '6300';
+                    } elseif (str_contains($uAcc, 'LISTRIK') || str_contains($uAcc, 'GENSET')) {
+                        $subCat = 'listrik_dan_energi';
+                        $accCode = '6400';
+                    } elseif (str_contains($uAcc, 'CATERING')) {
+                        $subCat = 'konsumsi_karyawan';
+                        $accCode = '6500';
+                    } elseif (str_contains($uAcc, 'BM ') || str_contains($uAcc, 'BONGKAR')) {
+                        $subCat = 'bongkar_muat';
+                        $accCode = '6600';
+                    } elseif (str_contains($uAcc, 'INSENTIF')) {
+                        $subCat = 'insentif_panen';
+                        $accCode = '6700';
+                    }
+
+                    $colRecords[] = [
+                        'business_unit_code' => 'kandang',
+                        'entity_code' => $entCode,
+                        'period' => $pDate,
+                        'report_type' => 'pnl',
+                        'category' => $cat,
+                        'sub_category' => $subCat,
+                        'account_code' => $accCode,
+                        'account_name' => $accName,
+                        'amount' => abs($amt),
+                        'status' => 'final',
+                        'source_type' => 'excel_upload',
+                        'notes' => $filename,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+
+                // Kolom terbaru di sisi kanan akan menimpa kolom siklus yang sama sebelumnya
+                $pnlPmlBlocks[$entCode][$pDate] = $colRecords;
+            }
+        }
+
+        // --- SHEET 2: PNL KEBUMEN ---
+        $wsKbm = $spreadsheet->getSheetByName('pnl kebumen');
+        if ($wsKbm) {
+            $maxColKbm = Coordinate::columnIndexFromString($wsKbm->getHighestColumn());
+            for ($c = 1; $c <= $maxColKbm; $c++) {
+                $title = trim((string) $wsKbm->getCell([$c, 2])->getFormattedValue());
+                $periodStr = trim((string) $wsKbm->getCell([$c, 3])->getFormattedValue());
+                if (empty($title) || empty($periodStr)) {
+                    continue;
+                }
+
+                $pDate = $this->parseKandangPeriod($periodStr);
+                if (! $pDate) {
+                    continue;
+                }
+
+                $uniquePeriods[$pDate] = true;
+                $colRecords = [];
+
+                for ($r = 4; $r <= 35; $r++) {
+                    $accName = trim((string) $wsKbm->getCell([$c, $r])->getFormattedValue());
+                    $val = $wsKbm->getCell([$c + 1, $r])->getFormattedValue();
+                    $amt = $this->cleanKandangAmount($val);
+
+                    if (empty($accName) || $amt == 0.0) {
+                        continue;
+                    }
+
+                    $uAcc = strtoupper($accName);
+                    if (in_array($uAcc, ['TOTAL BIAYA', 'LABA OPS', 'LABA'])) {
+                        continue;
+                    }
+
+                    $cat = 'opex';
+                    $subCat = 'operasional_kandang';
+                    $accCode = '6000';
+
+                    if (str_contains($uAcc, 'PENDAPATAN') && ! str_contains($uAcc, 'AFKIR') && ! str_contains($uAcc, 'BUNGA')) {
+                        $cat = 'revenue';
+                        $subCat = 'penjualan_ayam';
+                        $accCode = '4001';
+                    } elseif (str_contains($uAcc, 'AFKIR') || str_contains($uAcc, 'BUNGA')) {
+                        $cat = 'other_income';
+                        $subCat = 'pendapatan_lain';
+                        $accCode = '9001';
+                    }
+
+                    $colRecords[] = [
+                        'business_unit_code' => 'kandang',
+                        'entity_code' => 'KD_KBM',
+                        'period' => $pDate,
+                        'report_type' => 'pnl',
+                        'category' => $cat,
+                        'sub_category' => $subCat,
+                        'account_code' => $accCode,
+                        'account_name' => $accName,
+                        'amount' => abs($amt),
+                        'status' => 'final',
+                        'source_type' => 'excel_upload',
+                        'notes' => $filename,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+
+                $pnlKbmBlocks[$pDate] = $colRecords;
+            }
+        }
+
+        // --- SHEET 3: NERACA ---
+        $wsNeraca = $spreadsheet->getSheetByName('neraca');
+        if ($wsNeraca) {
+            $lastRow = $wsNeraca->getHighestRow();
+
+            for ($r = 1; $r <= $lastRow; $r++) {
+                $v1 = trim((string) $wsNeraca->getCell([1, $r])->getFormattedValue());
+                if (! preg_match('/^PER\s+(.+)$/i', $v1, $m)) {
+                    continue;
+                }
+
+                $rawDate = $m[1];
+                $pDate = $this->parseKandangPeriod($rawDate);
+                if (! $pDate) {
+                    continue;
+                }
+
+                $uniquePeriods[$pDate] = true;
+
+                // Cari baris TOTAL AKTIVA
+                $totalRow = null;
+                for ($sr = $r + 1; $sr <= min($r + 100, $lastRow); $sr++) {
+                    $chk = trim((string) $wsNeraca->getCell([1, $sr])->getFormattedValue());
+                    if (str_contains(strtoupper($chk), 'TOTAL AKTIVA')) {
+                        $totalRow = $sr;
+                        break;
+                    }
+                }
+                if (! $totalRow) {
+                    continue;
+                }
+
+                $blockRecords = [];
+
+                // 1. Baca Aktiva (Kolom A & C)
+                for ($ar = $r + 1; $ar < $totalRow; $ar++) {
+                    $aName = trim((string) $wsNeraca->getCell([1, $ar])->getFormattedValue());
+                    try {
+                        $aVal = $wsNeraca->getCell([3, $ar])->getCalculatedValue();
+                    } catch (\Throwable $e) {
+                        $aVal = $wsNeraca->getCell([3, $ar])->getValue();
+                    }
+                    $aAmt = $this->cleanKandangAmount($aVal);
+
+                    if (empty($aName) || strtoupper($aName) === 'AKTIVA' || $aAmt == 0.0) {
+                        continue;
+                    }
+
+                    $subCat = 'aktiva_lancar';
+                    $accCode = '1000';
+                    $uAName = strtoupper($aName);
+
+                    if (str_contains($uAName, 'KAS')) {
+                        $subCat = 'cash';
+                        $accCode = '1001';
+                    } elseif (str_contains($uAName, 'BANK') || str_contains($uAName, 'BCA') || str_contains($uAName, 'MANDIRI')) {
+                        $subCat = 'cash_and_bank';
+                        $accCode = '1002';
+                    } elseif (str_contains($uAName, 'INVESTASI')) {
+                        $subCat = 'fixed_assets';
+                        $accCode = '1500';
+                    } elseif (str_contains($uAName, 'JAMINAN')) {
+                        $subCat = 'deposits';
+                        $accCode = '1300';
+                    } elseif (str_contains($uAName, 'SISA')) {
+                        $subCat = 'inventory';
+                        $accCode = '1200';
+                    } elseif (str_contains($uAName, 'PENDAPATAN')) {
+                        $subCat = 'accounts_receivable';
+                        $accCode = '1100';
+                    }
+
+                    $blockRecords[] = [
+                        'business_unit_code' => 'kandang',
+                        'entity_code' => 'MJKB',
+                        'period' => $pDate,
+                        'report_type' => 'balance_sheet',
+                        'category' => 'asset',
+                        'sub_category' => $subCat,
+                        'account_code' => $accCode,
+                        'account_name' => $aName,
+                        'amount' => (float) $aAmt,
+                        'status' => 'final',
+                        'source_type' => 'excel_upload',
+                        'notes' => $filename,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+
+                // 2. Baca Pasiva (Kolom E & G)
+                for ($pr = $r + 1; $pr < $totalRow; $pr++) {
+                    $pName = trim((string) $wsNeraca->getCell([5, $pr])->getFormattedValue());
+                    try {
+                        $pVal = $wsNeraca->getCell([7, $pr])->getCalculatedValue();
+                    } catch (\Throwable $e) {
+                        $pVal = $wsNeraca->getCell([7, $pr])->getValue();
+                    }
+                    $pAmt = $this->cleanKandangAmount($pVal);
+
+                    if (empty($pName) || strtoupper($pName) === 'PASIVA' || $pAmt == 0.0) {
+                        continue;
+                    }
+
+                    $uP = strtoupper($pName);
+                    $cat = 'liability';
+                    $subCat = 'accounts_payable';
+                    $accCode = '2000';
+
+                    if (str_contains($uP, 'MODAL') || str_contains($uP, 'RTO') || str_contains($uP, 'LABA PANEN') || str_contains($uP, 'PENYUSUTAN')) {
+                        $cat = 'equity';
+                        $subCat = str_contains($uP, 'MODAL') ? 'capital' : (str_contains($uP, 'RTO') ? 'drawings' : 'retained_earnings');
+                        $accCode = '3000';
+                    }
+
+                    $blockRecords[] = [
+                        'business_unit_code' => 'kandang',
+                        'entity_code' => 'MJKB',
+                        'period' => $pDate,
+                        'report_type' => 'balance_sheet',
+                        'category' => $cat,
+                        'sub_category' => $subCat,
+                        'account_code' => $accCode,
+                        'account_name' => $pName,
+                        'amount' => (float) $pAmt,
+                        'status' => 'final',
+                        'source_type' => 'excel_upload',
+                        'notes' => $filename,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+
+                // Tabel yang muncul belakangan (revisi) akan menimpa tabel sebelumnya untuk periode yang sama
+                $neracaBlocks[$pDate] = $blockRecords;
+            }
+        }
+
+        // Gabungkan semua data dari ketiga sheet
+        $allRecords = [];
+        foreach ($pnlPmlBlocks as $entCode => $periodsData) {
+            foreach ($periodsData as $periodRecords) {
+                foreach ($periodRecords as $rec) {
+                    $allRecords[] = $rec;
+                }
+            }
+        }
+        foreach ($pnlKbmBlocks as $pDate => $periodRecords) {
+            foreach ($periodRecords as $rec) {
+                $allRecords[] = $rec;
+            }
+        }
+        foreach ($neracaBlocks as $pDate => $periodRecords) {
+            foreach ($periodRecords as $rec) {
+                $allRecords[] = $rec;
+            }
+        }
+
+        // Insert in chunks of 500
+        $chunks = array_chunk($allRecords, 500);
+        foreach ($chunks as $chunk) {
+            GlobalFinancialRecord::insert($chunk);
+        }
+
+        return [
+            'success' => true,
+            'business_unit' => 'kandang',
+            'records_inserted' => count($allRecords),
+            'periods_count' => count($uniquePeriods),
+            'periods' => array_keys($uniquePeriods),
+        ];
+    }
+
+    /**
+     * Parse periode siklus kandang atau tanggal neraca ke format YYYY-MM-01.
+     */
+    public function parseKandangPeriod(string $raw): ?string
+    {
+        $raw = trim($raw);
+        if (empty($raw)) {
+            return null;
+        }
+
+        if (is_numeric($raw) && (float) $raw > 40000 && (float) $raw < 50000) {
+            return ExcelDate::excelToDateTimeObject((float) $raw)->format('Y-m-01');
+        }
+
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $raw)) {
+            return substr($raw, 0, 7).'-01';
+        }
+
+        if (preg_match('/^([a-z]+)-(\d{2})$/i', $raw, $m)) {
+            $mName = strtolower($m[1]);
+            $yr = 2000 + (int) $m[2];
+            $monthMap = ['jan' => 1, 'feb' => 2, 'mar' => 3, 'apr' => 4, 'mei' => 5, 'may' => 5, 'jun' => 6, 'jul' => 7, 'agu' => 8, 'agt' => 8, 'aug' => 8, 'sep' => 9, 'okt' => 10, 'oct' => 10, 'nov' => 11, 'des' => 12, 'dec' => 12];
+            $mo = $monthMap[substr($mName, 0, 3)] ?? 1;
+
+            return sprintf('%04d-%02d-01', $yr, $mo);
+        }
+
+        $year = null;
+        if (preg_match_all('/(202\d)/', $raw, $m)) {
+            $year = (int) end($m[1]);
+        } elseif (preg_match('/[\'\s](\d{2})$/', $raw, $m) || preg_match('/(\d{2})$/', $raw, $m)) {
+            $year = 2000 + (int) $m[1];
+        }
+
+        if (! $year) {
+            return null;
+        }
+
+        $monthNames = [
+            'januari' => 1, 'jan' => 1,
+            'februari' => 2, 'feb' => 2,
+            'maret' => 3, 'mar' => 3,
+            'april' => 4, 'apr' => 4,
+            'mei' => 5, 'may' => 5,
+            'juni' => 6, 'jun' => 6,
+            'juli' => 7, 'jul' => 7,
+            'agustus' => 8, 'agust' => 8, 'agt' => 8, 'agu' => 8,
+            'september' => 9, 'sept' => 9, 'sep' => 9,
+            'oktober' => 10, 'okt' => 10, 'oct' => 10,
+            'november' => 11, 'nov' => 11,
+            'desember' => 12, 'des' => 12, 'dec' => 12,
+        ];
+
+        $clean = strtolower($raw);
+        $cleanWithoutYear = preg_replace('/\d+/', '', $clean);
+
+        $lastPos = -1;
+        $foundMonth = null;
+        foreach ($monthNames as $mStr => $mNum) {
+            $pos = strrpos($cleanWithoutYear, $mStr);
+            if ($pos !== false && $pos > $lastPos) {
+                $lastPos = $pos;
+                $foundMonth = $mNum;
+            }
+        }
+
+        if ($foundMonth) {
+            return sprintf('%04d-%02d-01', $year, $foundMonth);
+        }
+
+        return null;
+    }
+
+    /**
+     * Bersihkan nilai nominal dari format rupiah/teks ke float.
+     */
+    public function cleanKandangAmount(mixed $val): float
+    {
+        if (is_numeric($val)) {
+            return (float) $val;
+        }
+        if (empty($val)) {
+            return 0.0;
+        }
+        $str = trim((string) $val);
+        $isNegative = false;
+        if (str_starts_with($str, '(') && str_ends_with($str, ')')) {
+            $isNegative = true;
+            $str = substr($str, 1, -1);
+        } elseif (str_starts_with($str, '-')) {
+            $isNegative = true;
+            $str = substr($str, 1);
+        }
+        $str = str_replace(['Rp', ' ', ','], '', $str);
+        $num = (float) $str;
+
+        return $isNegative ? -$num : $num;
     }
 }
