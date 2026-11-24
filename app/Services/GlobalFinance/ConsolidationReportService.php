@@ -368,7 +368,14 @@ class ConsolidationReportService
         // Breakdown Kontribusi per Entitas / Cabang jika Unit Bisnis dipilih
         $byEntity = [];
         if ($buCode && empty($entityCode)) {
+            $pnlEntityCodes = GlobalFinancialRecord::where('business_unit_code', $buCode)
+                ->where('report_type', 'pnl')
+                ->distinct()
+                ->pluck('entity_code')
+                ->all();
+
             $buEntities = GlobalEntity::whereHas('businessUnit', fn ($q) => $q->where('code', $buCode))
+                ->when(! empty($pnlEntityCodes), fn ($q) => $q->whereIn('code', $pnlEntityCodes))
                 ->orderBy('sort_order')
                 ->get();
 

@@ -223,7 +223,6 @@ class GlobalFinanceSeeder extends Seeder
             ['code' => 'KD_PML_1', 'name' => 'Kandang 1 Pemalang', 'location' => 'Pemalang'],
             ['code' => 'KD_PML_2', 'name' => 'Kandang 2 Pemalang', 'location' => 'Pemalang'],
             ['code' => 'KD_KBM', 'name' => 'Kandang Kebumen', 'location' => 'Kebumen'],
-            ['code' => 'MJKB_PML', 'name' => 'Kandang Pemalang (Konsolidasi)', 'location' => 'Pemalang'],
             ['code' => 'MJKB', 'name' => 'PT Mekar Jaya Kurnia Bersama (Pusat)', 'location' => 'Pemalang & Kebumen'],
         ];
 

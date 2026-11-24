@@ -99,10 +99,12 @@
                         Semua Cabang
                     </a>
                     @foreach($entities as $e)
+                    @if(empty($pnl['by_entity']) || collect($pnl['by_entity'])->contains('code', $e['code']))
                     <a href="{{ route('finance.pnl', ['period' => $selectedPeriod, 'business_unit' => $selectedBu, 'entity' => $e['code']]) }}"
                        class="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all {{ $selectedEntity === $e['code'] ? 'bg-[#ca8a04]/10 text-[#713f12] font-bold border border-[#fde047] shadow-2xs' : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200' }}">
                         {{ $e['name'] }}
                     </a>
+                    @endif
                     @endforeach
                 </div>
                 @if($selectedEntity)
