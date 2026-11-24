@@ -336,12 +336,80 @@ class SpbuSyncService
         }
 
         // --- 3. OPEX ---
+        $sumOpexInserted = 0.0;
         $opexBreakdown = $pnl['operating_expenses']['breakdown'] ?? [];
-        foreach ($opexBreakdown as $opKey => $val) {
-            if ($opKey === 'total' || $opKey === 'subtotal_kas_besar') {
-                continue;
+
+        if (! empty($opexBreakdown)) {
+            foreach ($opexBreakdown as $opKey => $val) {
+                if ($opKey === 'total' || $opKey === 'subtotal_kas_besar') {
+                    continue;
+                }
+                $amtVal = (float) $val;
+                $sumOpexInserted += $amtVal;
+                $readableName = ucwords(str_replace('_', ' ', $opKey));
+                $records[] = [
+                    'business_unit_code' => 'spbu',
+                    'entity_code' => 'SPBU_44',
+                    'period' => $periodDate,
+                    'report_type' => 'pnl',
+                    'category' => 'opex',
+                    'sub_category' => 'operasional_spbu',
+                    'account_code' => '6000-'.substr(md5($opKey), 0, 4),
+                    'account_name' => 'Biaya '.$readableName,
+                    'amount' => $amtVal,
+                    'status' => $status,
+                    'source_type' => 'database_sync',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
             }
-            $readableName = ucwords(str_replace('_', ' ', $opKey));
+        } elseif (! empty($pnl['operating_expenses']['groups'])) {
+            // Fallback: Jika API-SPBU di server belum memiliki key 'breakdown'
+            foreach ($pnl['operating_expenses']['groups'] as $idx => $grp) {
+                $amtVal = (float) ($grp['amount'] ?? 0);
+                $sumOpexInserted += $amtVal;
+                $gName = trim($grp['name'] ?? 'Operasional');
+                $records[] = [
+                    'business_unit_code' => 'spbu',
+                    'entity_code' => 'SPBU_44',
+                    'period' => $periodDate,
+                    'report_type' => 'pnl',
+                    'category' => 'opex',
+                    'sub_category' => 'operasional_spbu',
+                    'account_code' => '60'.str_pad((string) ($idx + 1), 2, '0', STR_PAD_LEFT),
+                    'account_name' => 'Biaya '.$gName,
+                    'amount' => $amtVal,
+                    'status' => $status,
+                    'source_type' => 'database_sync',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+        } elseif (! empty($pnl['operating_expenses']['details'])) {
+            // Fallback: Jika API-SPBU hanya menyediakan 'details'
+            foreach ($pnl['operating_expenses']['details'] as $idx => $det) {
+                $amtVal = (float) ($det['amount'] ?? 0);
+                $sumOpexInserted += $amtVal;
+                $dName = trim($det['type'] ?? $det['description'] ?? 'Operasional');
+                $records[] = [
+                    'business_unit_code' => 'spbu',
+                    'entity_code' => 'SPBU_44',
+                    'period' => $periodDate,
+                    'report_type' => 'pnl',
+                    'category' => 'opex',
+                    'sub_category' => 'operasional_spbu',
+                    'account_code' => '60'.str_pad((string) ($idx + 1), 2, '0', STR_PAD_LEFT),
+                    'account_name' => 'Biaya '.$dName,
+                    'amount' => $amtVal,
+                    'status' => $status,
+                    'source_type' => 'database_sync',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+        } elseif (! empty($pnl['operating_expenses']['total']) || ! empty($pnl['operational_costs'])) {
+            $totOpex = (float) ($pnl['operating_expenses']['total'] ?? $pnl['operational_costs'] ?? 0);
+            $sumOpexInserted += $totOpex;
             $records[] = [
                 'business_unit_code' => 'spbu',
                 'entity_code' => 'SPBU_44',
@@ -349,9 +417,9 @@ class SpbuSyncService
                 'report_type' => 'pnl',
                 'category' => 'opex',
                 'sub_category' => 'operasional_spbu',
-                'account_code' => '6000-'.substr(md5($opKey), 0, 4),
-                'account_name' => 'Biaya '.$readableName,
-                'amount' => (float) $val,
+                'account_code' => '6001',
+                'account_name' => 'Total Beban Operasional SPBU',
+                'amount' => $totOpex,
                 'status' => $status,
                 'source_type' => 'database_sync',
                 'created_at' => now(),
@@ -359,13 +427,37 @@ class SpbuSyncService
             ];
         }
 
+        // Defensive Fallback: Bila ada selisih antara total beban operasional sistem SPBU dan rincian yang diserap
+        $expectedOpex = (float) ($pnl['operating_expenses']['total'] ?? $pnl['operational_costs'] ?? 0);
+        $diffOpex = round($expectedOpex - $sumOpexInserted, 2);
+        if (abs($diffOpex) > 1.0) {
+            $records[] = [
+                'business_unit_code' => 'spbu',
+                'entity_code' => 'SPBU_44',
+                'period' => $periodDate,
+                'report_type' => 'pnl',
+                'category' => 'opex',
+                'sub_category' => 'operasional_spbu',
+                'account_code' => '6090',
+                'account_name' => 'Penyesuaian Biaya Operasional SPBU',
+                'amount' => $diffOpex,
+                'status' => $status,
+                'source_type' => 'database_sync',
+                'notes' => 'Otomatis dibuat untuk menjaga konsistensi total beban operasional dengan sistem SPBU',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+
         // --- 4. PENDAPATAN & BEBAN DILUAR USAHA (OTHER INCOME / EXPENSE) ---
+        $sumOtherNet = 0.0;
         if (! empty($pnl['other_income']['details'])) {
             foreach ($pnl['other_income']['details'] as $idx => $oItem) {
                 $oAmt = (float) ($oItem['amount'] ?? 0);
                 if ($oAmt == 0.0) {
                     continue;
                 }
+                $sumOtherNet += $oAmt;
 
                 $isPositive = $oAmt > 0;
                 $oName = trim($oItem['name'] ?? 'Lain-Lain');
@@ -382,6 +474,29 @@ class SpbuSyncService
                     'amount' => abs($oAmt),
                     'status' => $status,
                     'source_type' => 'database_sync',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+
+            // Defensive Fallback: Bila ada selisih antara total pendapatan lain dan rincian
+            $expectedOther = (float) ($pnl['other_income']['total'] ?? 0);
+            $diffOther = round($expectedOther - $sumOtherNet, 2);
+            if (abs($diffOther) > 1.0) {
+                $isPos = $diffOther > 0;
+                $records[] = [
+                    'business_unit_code' => 'spbu',
+                    'entity_code' => 'SPBU_44',
+                    'period' => $periodDate,
+                    'report_type' => 'pnl',
+                    'category' => $isPos ? 'other_income' : 'other_expense',
+                    'sub_category' => 'pendapatan_beban_lain',
+                    'account_code' => $isPos ? '9090' : '8090',
+                    'account_name' => 'Penyesuaian Pendapatan/Beban Diluar Usaha',
+                    'amount' => abs($diffOther),
+                    'status' => $status,
+                    'source_type' => 'database_sync',
+                    'notes' => 'Otomatis dibuat untuk menjaga konsistensi pos pendapatan/beban lain dengan sistem SPBU',
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
