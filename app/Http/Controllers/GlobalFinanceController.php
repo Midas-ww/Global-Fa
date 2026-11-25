@@ -10,6 +10,7 @@ use App\Services\GlobalFinance\ConsolidationReportService;
 use App\Services\GlobalFinance\ExcelIngestionService;
 use App\Services\GlobalFinance\IntercompanyEliminationService;
 use App\Services\GlobalFinance\IqosSyncService;
+use App\Services\GlobalFinance\OnBoldSyncService;
 use App\Services\GlobalFinance\SpbuSyncService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -214,6 +215,33 @@ class GlobalFinanceController extends Controller
                     'business_unit_code' => 'spbu',
                     'source_type' => 'database_sync',
                     'filename' => 'spbu_error',
+                    'records_count' => 0,
+                    'status' => 'failed',
+                    'details' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        if ($target === 'all' || $target === 'onbold') {
+            try {
+                $onBold = new OnBoldSyncService;
+                $resOnBold = $onBold->sync();
+                $results[] = 'On Bold: '.($resOnBold['count'] ?? 0).' periode disinkronkan ('.($resOnBold['records_count'] ?? 0).' akun tersimpan).';
+
+                GlobalIngestionLog::create([
+                    'business_unit_code' => 'onbold',
+                    'source_type' => 'database_sync',
+                    'filename' => 'dash_onbold_db.cost_pnl_records & balance_sheet_records',
+                    'records_count' => $resOnBold['records_count'] ?? 0,
+                    'status' => 'success',
+                    'details' => json_encode($resOnBold),
+                ]);
+            } catch (\Throwable $e) {
+                $errors[] = 'On Bold: '.$e->getMessage();
+                GlobalIngestionLog::create([
+                    'business_unit_code' => 'onbold',
+                    'source_type' => 'database_sync',
+                    'filename' => 'onbold_error',
                     'records_count' => 0,
                     'status' => 'failed',
                     'details' => $e->getMessage(),

@@ -84,6 +84,7 @@
                 'spbu' => 'Unit SPBU',
                 'iqos' => 'Outlet IQOS',
                 'kandang' => 'Kandang',
+                'onbold' => 'Distributor On Bold',
                 default => 'Cabang / Entitas',
             };
         @endphp
@@ -404,6 +405,7 @@
                                         @elseif(str_contains(strtolower($item['business_unit_code']), 'fmcg')) bg-sky-50 text-sky-700 border border-sky-200
                                         @elseif(str_contains(strtolower($item['business_unit_code']), 'xtrans')) bg-[#fef9c3] text-[#ca8a04] border border-[#edd7ce]
                                         @elseif(str_contains(strtolower($item['business_unit_code']), 'ccod')) bg-indigo-50 text-indigo-700 border border-indigo-200
+                                        @elseif(str_contains(strtolower($item['business_unit_code']), 'onbold')) bg-violet-50 text-violet-700 border border-violet-200
                                         @else bg-slate-100 text-slate-700 border border-slate-200 @endif">
                                         {{ $item['business_unit_code'] }}
                                     </span>

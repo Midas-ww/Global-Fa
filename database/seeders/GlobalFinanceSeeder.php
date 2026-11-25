@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\GlobalFinance\ExcelIngestionService;
 use App\Services\GlobalFinance\IntercompanyEliminationService;
 use App\Services\GlobalFinance\IqosSyncService;
+use App\Services\GlobalFinance\OnBoldSyncService;
 use App\Services\GlobalFinance\SpbuSyncService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -117,6 +118,19 @@ class GlobalFinanceSeeder extends Seeder
                 'color' => '#D97706',
                 'data_source' => 'excel',
                 'sort_order' => 7,
+                'is_active' => true,
+            ]
+        );
+
+        $buOnBold = GlobalBusinessUnit::updateOrCreate(
+            ['code' => 'onbold'],
+            [
+                'name' => 'On Bold',
+                'description' => 'PT Mekar Jaya Multi Indo - Distributor rokok dan produk On Bold (MJM Rokok Tegal).',
+                'icon' => 'package',
+                'color' => '#7C3AED',
+                'data_source' => 'database',
+                'sort_order' => 8,
                 'is_active' => true,
             ]
         );
@@ -238,6 +252,17 @@ class GlobalFinanceSeeder extends Seeder
             );
         }
 
+        GlobalEntity::updateOrCreate(
+            ['code' => 'MJM_ROKOK_TEGAL'],
+            [
+                'business_unit_id' => $buOnBold->id,
+                'name' => 'Mjm Rokok Tegal',
+                'location' => 'Tegal',
+                'sort_order' => 1,
+                'is_active' => true,
+            ]
+        );
+
         // 3. Intercompany Eliminations (Automated Rule-Based Sync)
         $eliminationService = new IntercompanyEliminationService;
         $eliminationService->syncAllPeriods();
@@ -261,6 +286,15 @@ class GlobalFinanceSeeder extends Seeder
             }
         } catch (\Throwable $e) {
             echo 'SPBU Sync Warning: '.$e->getMessage()."\n";
+        }
+
+        echo "Ingesting On Bold from database...\n";
+        try {
+            $onBoldService = new OnBoldSyncService;
+            $resOnBold = $onBoldService->sync();
+            echo 'On Bold Synced: '.json_encode($resOnBold)."\n";
+        } catch (\Throwable $e) {
+            echo 'On Bold Sync Warning: '.$e->getMessage()."\n";
         }
 
         // 5. Ingest FMCG & Xtrans initial files if available

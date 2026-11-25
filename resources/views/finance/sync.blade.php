@@ -48,7 +48,7 @@
                     <span class="w-2.5 h-2.5 rounded-full bg-[#16a34a]"></span>
                     2 Terkoneksi
                 </h4>
-                <p class="text-xs text-slate-400 mt-0.5">SPBU (api_air) & IQOS (Retail) (sir_iqos)</p>
+                <p class="text-xs text-slate-400 mt-0.5">SPBU (api_air), IQOS (sir_iqos) & On Bold (dash_onbold_db)</p>
             </div>
             <div class="w-11 h-11 rounded-xl bg-[#ca8a04]/10 text-[#713f12] border border-[#fde047] flex items-center justify-center">
                 <i data-lucide="network" class="w-5 h-5 text-[#ca8a04]"></i>
@@ -81,7 +81,7 @@
                     </div>
                     <div>
                         <h3 class="font-bold text-slate-900 text-base">Sinkronisasi Database Otomatis</h3>
-                        <p class="text-xs text-slate-400">Tarik data real-time langsung dari database operasional SPBU & IQOS (Retail).</p>
+                        <p class="text-xs text-slate-400">Tarik data real-time langsung dari database operasional SPBU, IQOS (Retail) & On Bold.</p>
                     </div>
                 </div>
                 <form action="{{ route('finance.sync.database') }}" method="POST" onsubmit="return confirm('Mulai sinkronisasi seluruh database terhubung untuk SEMUA PERIODE historis sekaligus?');">
@@ -160,6 +160,40 @@
                     <button type="submit" class="px-4 py-2 rounded-xl bg-[#ca8a04] hover:bg-[#a16207] text-white font-bold text-xs transition flex items-center gap-1.5 shadow-2xs cursor-pointer">
                         <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
                         Sinkron IQOS (Retail)
+                    </button>
+                </form>
+            </div>
+
+            <!-- ON BOLD (DISTRIBUTOR ROKOK) CARD -->
+            <div class="p-4 rounded-xl border border-[#e9e5d6] bg-[#fbfdfa] hover:bg-white hover:border-slate-300 transition duration-150 group">
+                <div class="flex items-start justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-lg bg-violet-50 text-violet-700 font-bold text-xs flex items-center justify-center border border-violet-200">
+                            OBD
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-bold text-slate-900">On Bold (PT Mekar Jaya Multi Indo)</h4>
+                            <div class="flex items-center gap-2 mt-0.5 text-xs text-slate-500">
+                                <span>DB: <code class="text-violet-700 font-mono font-semibold">dash_onbold_db</code></span>
+                                <span>•</span>
+                                <span class="text-emerald-600 font-semibold flex items-center gap-1">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Online
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <span class="px-2 py-0.5 text-[11px] font-bold rounded-md bg-violet-50 text-violet-700 border border-violet-200 font-mono">P&L & Balance Sheet</span>
+                </div>
+                <p class="text-xs text-slate-500 mt-2.5 leading-relaxed">
+                    Distributor rokok dan produk On Bold (MJM Rokok Tegal). Menyerap pos pendapatan reguler, Cakra, HPP, beban operasional, serta neraca aktiva & kewajiban.
+                </p>
+                <form action="{{ route('finance.sync.database') }}" method="POST" class="mt-4 flex items-center justify-between pt-1">
+                    @csrf
+                    <input type="hidden" name="target" value="onbold">
+                    <span class="text-xs text-slate-400">Mencakup periode historis terdata di database operasional.</span>
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-violet-700 hover:bg-violet-800 text-white font-bold text-xs transition flex items-center gap-1.5 shadow-2xs cursor-pointer">
+                        <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                        Sinkron On Bold
                     </button>
                 </form>
             </div>
@@ -525,6 +559,7 @@
                                 @elseif(str_contains(strtolower($log->business_unit_code), 'xtrans')) bg-[#fef9c3] text-[#ca8a04] border border-[#edd7ce]
                                 @elseif(str_contains(strtolower($log->business_unit_code), 'ccod')) bg-indigo-50 text-indigo-700 border border-indigo-200
                                 @elseif(str_contains(strtolower($log->business_unit_code), 'kandang')) bg-amber-50 text-amber-700 border border-amber-200
+                                @elseif(str_contains(strtolower($log->business_unit_code), 'onbold')) bg-violet-50 text-violet-700 border border-violet-200
                                 @else bg-slate-100 text-slate-700 border border-slate-200 @endif">
                                 {{ $log->business_unit_code }}
                             </span>

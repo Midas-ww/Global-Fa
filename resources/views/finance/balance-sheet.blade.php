@@ -105,6 +105,7 @@
                 'spbu' => 'Unit SPBU',
                 'iqos' => 'Outlet IQOS',
                 'kandang' => 'Kandang',
+                'onbold' => 'Distributor On Bold',
                 default => 'Cabang / Entitas',
             };
         @endphp
