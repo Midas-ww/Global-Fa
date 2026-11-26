@@ -3,6 +3,24 @@
 @section('title', 'Neraca Konsolidasi')
 
 @section('content')
+@php
+    $formatUnitEntity = function ($item): string {
+        $bu = strtolower($item->business_unit_code ?? '');
+        $unit = match($bu) {
+            'abc', 'ccod' => 'CCOD x ABC',
+            'fmcg' => 'FMCG',
+            'aqua' => 'AQUA',
+            'spbu' => 'SPBU',
+            'iqos' => 'IQOS',
+            'kandang' => 'KANDANG',
+            'xtrans' => 'XTRANS',
+            'onbold' => 'ON BOLD',
+            default => strtoupper($item->business_unit_code ?? '')
+        };
+        $entity = ($item->entity_code === 'MJSM') ? 'PT MJSM' : ($item->entity_code ?? '-');
+        return "{$unit} &bull; {$entity}";
+    };
+@endphp
 <div class="space-y-6 pb-12">
 
     @if(session('success'))
@@ -22,6 +40,7 @@
         <!-- TOP: Quick Tabs for Business Unit -->
         <div class="flex items-center justify-between flex-wrap gap-3">
             <div class="flex items-center gap-1.5 flex-wrap">
+                @if($isUnrestricted ?? true)
                 <!-- ALL / CONSOLIDATED TAB -->
                 <a href="{{ route('finance.balance-sheet', ['period' => $selectedPeriod]) }}"
                    class="px-3.5 py-1.5 rounded-tl-[1rem] rounded-br-[1rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1rem] hover:rounded-bl-[1rem] hover:rounded-tl-none hover:rounded-br-none text-xs font-bold transition-all duration-300 cursor-pointer {{ empty($selectedBu) ? 'bg-[#ca8a04]/10 text-[#713f12] border border-[#fde047] shadow-2xs' : 'bg-white hover:bg-[#fef9c3] text-slate-700 hover:text-[#713f12] border border-slate-200' }}">
@@ -30,6 +49,7 @@
                         <span>Semua (Konsolidasi Holding)</span>
                     </span>
                 </a>
+                @endif
 
                 @foreach($businessUnits as $bu)
                 <a href="{{ route('finance.balance-sheet', ['period' => $selectedPeriod, 'business_unit' => $bu['code']]) }}"
@@ -90,6 +110,26 @@
                     <span>ADA SELISIH</span>
                 </div>
                 @endif
+
+                @if($bs['has_official_data'])
+                <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold shadow-2xs" title="Data resmi dari berkas Excel / Database Live. Angka dikunci demi kepatuhan audit.">
+                    <i data-lucide="lock" class="w-3.5 h-3.5 text-emerald-600"></i>
+                    <span>Data Resmi Terkunci</span>
+                </div>
+                @elseif($selectedBu)
+                <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#fef9c3] text-[#713f12] border border-[#fde047] text-xs font-bold shadow-2xs" title="Neraca dalam mode draft / pengisian akun manual sementara.">
+                    <i data-lucide="edit-3" class="w-3.5 h-3.5 text-[#ca8a04]"></i>
+                    <span>Draft Manual / Template</span>
+                </div>
+                @endif
+
+                @if($canEdit ?? false)
+                <button type="button" onclick="openAddBsModal('{{ $selectedBu }}', '{{ $selectedEntity }}')"
+                    class="px-3 py-1.5 rounded-xl bg-[#ca8a04] hover:bg-[#a16207] text-white text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer">
+                    <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+                    <span>+ Tambah Akun Neraca</span>
+                </button>
+                @endif
             </div>
         </div>
 
@@ -100,6 +140,7 @@
             $entities = $activeBu['entities'] ?? [];
             $entityLabel = match($selectedBu) {
                 'fmcg' => 'Depo FMCG',
+                'abc' => 'Entitas CCOD x ABC',
                 'ccod' => 'Cabang CCOD',
                 'xtrans' => 'Divisi / Rute',
                 'spbu' => 'Unit SPBU',
@@ -140,6 +181,9 @@
         @endif
     </div>
 
+    <!-- STATUS CLOSING & CATATAN PERIODE -->
+    @include('finance.partials.period-note-banner', ['reportType' => 'balance_sheet'])
+
     <!-- BALANCE SHEET COMPARISON GRID (AKTIVA VS PASIVA) -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
@@ -162,23 +206,63 @@
                                     <th class="pb-2 bg-white">Kode Akun</th>
                                     <th class="pb-2 bg-white">Nama Akun Aktiva</th>
                                     <th class="pb-2 text-right bg-white">Nominal</th>
+                                    @if($canEdit ?? false)
+                                    <th class="pb-2 text-center w-14 bg-white">Aksi</th>
+                                    @endif
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-100 font-medium">
                                 @forelse($bs['assets']['items'] as $item)
-                                <tr class="hover:bg-[#fef9c3]/40">
+                                @php
+                                    $isLocked = in_array($item->source_type ?? '', ['excel_upload', 'database_sync']);
+                                    $isSkeleton = $item->is_skeleton ?? false;
+                                @endphp
+                                <tr class="hover:bg-[#fef9c3]/40 {{ $isSkeleton ? 'opacity-80' : '' }}">
                                     <td class="py-2.5 font-mono text-[11px] text-slate-400">{{ $item->account_code ?? '1000' }}</td>
                                     <td class="py-2.5 text-slate-800">
-                                        <div class="font-semibold">{{ $item->account_name }}</div>
-                                        <div class="text-[10px] text-slate-400 uppercase font-mono">{{ $item->business_unit_code }} &bull; {{ $item->entity_code }}</div>
+                                        <div class="font-semibold flex items-center gap-1.5">
+                                            <span>{{ $item->account_name }}</span>
+                                            @if($isSkeleton)
+                                            <span class="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded bg-slate-100 text-slate-500 border border-slate-200">Template</span>
+                                            @elseif(($item->source_type ?? '') === 'manual')
+                                            <span class="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded bg-[#fef9c3] text-[#713f12] border border-[#fde047]">Manual</span>
+                                            @endif
+                                        </div>
+                                        <div class="text-[10px] text-slate-400 uppercase font-mono">{!! $formatUnitEntity($item) !!}</div>
                                     </td>
-                                    <td class="py-2.5 text-right font-bold font-mono tracking-tight text-slate-900">
+                                    <td class="py-2.5 text-right font-bold font-mono tracking-tight {{ $isSkeleton && $item->amount == 0 ? 'text-slate-400 font-normal' : 'text-slate-900' }}">
                                         Rp {{ number_format($item->amount, 0, ',', '.') }}
                                     </td>
+                                    @if($canEdit ?? false)
+                                    <td class="py-2.5 text-center">
+                                        @if($isLocked)
+                                        <span class="inline-flex items-center text-slate-300 cursor-not-allowed" title="Data resmi terkunci (Excel / DB Sync). Hapus riwayat atau upload ulang file revisi untuk mengubah.">
+                                            <i data-lucide="lock" class="w-3.5 h-3.5"></i>
+                                        </span>
+                                        @else
+                                        <button type="button" 
+                                            onclick="openEditBsModal({{ json_encode([
+                                                'id' => $item->id ?? null,
+                                                'account_name' => $item->account_name,
+                                                'account_code' => $item->account_code ?? '',
+                                                'category' => 'asset',
+                                                'amount' => $item->amount,
+                                                'report_type' => 'balance_sheet',
+                                                'business_unit_code' => $selectedBu,
+                                                'entity_code' => $item->entity_code,
+                                                'notes' => $item->notes ?? '',
+                                            ]) }})"
+                                            class="p-1 rounded-md text-slate-400 hover:text-[#ca8a04] hover:bg-[#fef9c3] transition cursor-pointer"
+                                            title="{{ $isSkeleton ? 'Isi Nominal Akun' : 'Edit Nominal Akun' }}">
+                                            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                                        </button>
+                                        @endif
+                                    </td>
+                                    @endif
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="3" class="py-6 text-center text-slate-400 italic">Belum ada akun aktiva yang dicatat untuk periode ini.</td>
+                                    <td colspan="{{ ($canEdit ?? false) ? 4 : 3 }}" class="py-6 text-center text-slate-400 italic">Belum ada akun aktiva yang dicatat untuk periode ini.</td>
                                 </tr>
                                 @endforelse
                             </tbody>
@@ -217,19 +301,56 @@
                             <table class="w-full text-left border-collapse text-xs">
                                 <tbody class="divide-y divide-slate-100 font-medium">
                                     @forelse($bs['liabilities']['items'] as $item)
-                                    <tr class="hover:bg-[#fbfdfa]">
+                                    @php
+                                        $isLocked = in_array($item->source_type ?? '', ['excel_upload', 'database_sync']);
+                                        $isSkeleton = $item->is_skeleton ?? false;
+                                    @endphp
+                                    <tr class="hover:bg-[#fbfdfa] {{ $isSkeleton ? 'opacity-80' : '' }}">
                                         <td class="py-2 font-mono text-[11px] text-slate-400 w-20">{{ $item->account_code ?? '2000' }}</td>
                                         <td class="py-2 text-slate-800">
-                                            <div class="font-semibold">{{ $item->account_name }}</div>
-                                            <div class="text-[10px] text-slate-400 uppercase">{{ $item->business_unit_code }} &bull; {{ $item->entity_code }}</div>
+                                            <div class="font-semibold flex items-center gap-1.5">
+                                                <span>{{ $item->account_name }}</span>
+                                                @if($isSkeleton)
+                                                <span class="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded bg-slate-100 text-slate-500 border border-slate-200">Template</span>
+                                                @elseif(($item->source_type ?? '') === 'manual')
+                                                <span class="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded bg-[#fef9c3] text-[#713f12] border border-[#fde047]">Manual</span>
+                                                @endif
+                                            </div>
+                                            <div class="text-[10px] text-slate-400 uppercase font-mono">{!! $formatUnitEntity($item) !!}</div>
                                         </td>
-                                        <td class="py-2 text-right font-bold text-slate-900 font-mono">
+                                        <td class="py-2 text-right font-bold font-mono {{ $isSkeleton && $item->amount == 0 ? 'text-slate-400 font-normal' : 'text-slate-900' }}">
                                             Rp {{ number_format($item->amount, 0, ',', '.') }}
                                         </td>
+                                        @if($canEdit ?? false)
+                                        <td class="py-2 text-center w-12">
+                                            @if($isLocked)
+                                            <span class="inline-flex items-center text-slate-300 cursor-not-allowed" title="Data resmi terkunci (Excel / DB Sync)">
+                                                <i data-lucide="lock" class="w-3.5 h-3.5"></i>
+                                            </span>
+                                            @else
+                                            <button type="button" 
+                                                onclick="openEditBsModal({{ json_encode([
+                                                    'id' => $item->id ?? null,
+                                                    'account_name' => $item->account_name,
+                                                    'account_code' => $item->account_code ?? '',
+                                                    'category' => 'liability',
+                                                    'amount' => $item->amount,
+                                                    'report_type' => 'balance_sheet',
+                                                    'business_unit_code' => $selectedBu,
+                                                    'entity_code' => $item->entity_code,
+                                                    'notes' => $item->notes ?? '',
+                                                ]) }})"
+                                                class="p-1 rounded-md text-slate-400 hover:text-[#ca8a04] hover:bg-[#fef9c3] transition cursor-pointer"
+                                                title="{{ $isSkeleton ? 'Isi Nominal Akun' : 'Edit Nominal Akun' }}">
+                                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                                            </button>
+                                            @endif
+                                        </td>
+                                        @endif
                                     </tr>
                                     @empty
                                     <tr>
-                                        <td colspan="3" class="py-2 text-slate-400 italic text-center">Tidak ada kewajiban.</td>
+                                        <td colspan="{{ ($canEdit ?? false) ? 4 : 3 }}" class="py-2 text-slate-400 italic text-center">Tidak ada kewajiban.</td>
                                     </tr>
                                     @endforelse
                                 </tbody>
@@ -247,19 +368,56 @@
                             <table class="w-full text-left border-collapse text-xs">
                                 <tbody class="divide-y divide-slate-100 font-medium">
                                     @forelse($bs['equity']['items'] as $item)
-                                    <tr class="hover:bg-[#fbfdfa]">
+                                    @php
+                                        $isLocked = in_array($item->source_type ?? '', ['excel_upload', 'database_sync']);
+                                        $isSkeleton = $item->is_skeleton ?? false;
+                                    @endphp
+                                    <tr class="hover:bg-[#fbfdfa] {{ $isSkeleton ? 'opacity-80' : '' }}">
                                         <td class="py-2 font-mono text-[11px] text-slate-400 w-20">{{ $item->account_code ?? '3000' }}</td>
                                         <td class="py-2 text-slate-800">
-                                            <div class="font-semibold">{{ $item->account_name }}</div>
-                                            <div class="text-[10px] text-slate-400 uppercase">{{ $item->business_unit_code }} &bull; {{ $item->entity_code }}</div>
+                                            <div class="font-semibold flex items-center gap-1.5">
+                                                <span>{{ $item->account_name }}</span>
+                                                @if($isSkeleton)
+                                                <span class="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded bg-slate-100 text-slate-500 border border-slate-200">Template</span>
+                                                @elseif(($item->source_type ?? '') === 'manual')
+                                                <span class="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded bg-[#fef9c3] text-[#713f12] border border-[#fde047]">Manual</span>
+                                                @endif
+                                            </div>
+                                            <div class="text-[10px] text-slate-400 uppercase font-mono">{!! $formatUnitEntity($item) !!}</div>
                                         </td>
-                                        <td class="py-2 text-right font-bold text-slate-900 font-mono">
+                                        <td class="py-2 text-right font-bold font-mono {{ $isSkeleton && $item->amount == 0 ? 'text-slate-400 font-normal' : 'text-slate-900' }}">
                                             Rp {{ number_format($item->amount, 0, ',', '.') }}
                                         </td>
+                                        @if($canEdit ?? false)
+                                        <td class="py-2 text-center w-12">
+                                            @if($isLocked)
+                                            <span class="inline-flex items-center text-slate-300 cursor-not-allowed" title="Data resmi terkunci (Excel / DB Sync)">
+                                                <i data-lucide="lock" class="w-3.5 h-3.5"></i>
+                                            </span>
+                                            @else
+                                            <button type="button" 
+                                                onclick="openEditBsModal({{ json_encode([
+                                                    'id' => $item->id ?? null,
+                                                    'account_name' => $item->account_name,
+                                                    'account_code' => $item->account_code ?? '',
+                                                    'category' => 'equity',
+                                                    'amount' => $item->amount,
+                                                    'report_type' => 'balance_sheet',
+                                                    'business_unit_code' => $selectedBu,
+                                                    'entity_code' => $item->entity_code,
+                                                    'notes' => $item->notes ?? '',
+                                                ]) }})"
+                                                class="p-1 rounded-md text-slate-400 hover:text-[#ca8a04] hover:bg-[#fef9c3] transition cursor-pointer"
+                                                title="{{ $isSkeleton ? 'Isi Nominal Akun' : 'Edit Nominal Akun' }}">
+                                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                                            </button>
+                                            @endif
+                                        </td>
+                                        @endif
                                     </tr>
                                     @empty
                                     <tr>
-                                        <td colspan="3" class="py-2 text-slate-400 italic text-center">Tidak ada ekuitas.</td>
+                                        <td colspan="{{ ($canEdit ?? false) ? 4 : 3 }}" class="py-2 text-slate-400 italic text-center">Tidak ada ekuitas.</td>
                                     </tr>
                                     @endforelse
                                 </tbody>
@@ -426,6 +584,152 @@
         </div>
     </div>
     @endif
+
+@if($canEdit ?? false)
+<!-- MODAL TAMBAH / EDIT AKUN NERACA -->
+<div id="modalAccountBs" class="fixed inset-0 z-50 hidden bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full border border-[#e9e5d6] shadow-xl overflow-hidden">
+        <div class="p-5 border-b border-[#e9e5d6] flex items-center justify-between bg-[#faf8f0]">
+            <div class="flex items-center gap-2">
+                <i data-lucide="edit-3" class="w-4 h-4 text-[#ca8a04]"></i>
+                <h4 id="modalBsTitle" class="text-sm font-bold text-slate-900 uppercase">Tambah Akun Neraca</h4>
+            </div>
+            <button type="button" onclick="closeBsModal()" class="text-slate-400 hover:text-slate-600 cursor-pointer">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+        <form id="formBsAccount" action="{{ route('finance.records.save') }}" method="POST" class="p-5 space-y-4">
+            @csrf
+            <input type="hidden" name="id" id="bsRecordId" value="">
+            <input type="hidden" name="report_type" value="balance_sheet">
+            <input type="hidden" name="business_unit_code" id="bsBuCode" value="{{ $selectedBu }}">
+            <input type="hidden" name="period" value="{{ $selectedPeriod }}">
+            <input type="hidden" name="entity_code" id="bsEntityCode" value="{{ $selectedEntity }}">
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Kategori Neraca <span class="text-rose-500">*</span></label>
+                <select name="category" id="bsCategory" required class="w-full text-xs font-semibold border border-slate-300 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-[#ca8a04]">
+                    <option value="asset">Aktiva (Assets)</option>
+                    <option value="liability">Kewajiban (Liabilities)</option>
+                    <option value="equity">Ekuitas (Equity)</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3">
+                <div class="col-span-1">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Kode Akun</label>
+                    <input type="text" name="account_code" id="bsAccountCode" placeholder="contoh: 1101" class="w-full text-xs border border-slate-300 rounded-xl px-3 py-2 focus:outline-none focus:border-[#ca8a04]">
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Akun <span class="text-rose-500">*</span></label>
+                    <input list="bsAccountSuggestionsList" type="text" name="account_name" id="bsAccountName" required placeholder="Pilih dari daftar atau ketik akun baru..." class="w-full text-xs border border-slate-300 rounded-xl px-3 py-2 focus:outline-none focus:border-[#ca8a04]">
+                    <datalist id="bsAccountSuggestionsList">
+                        @foreach($bs['account_suggestions'] ?? [] as $suggestion)
+                        <option value="{{ $suggestion }}">
+                        @endforeach
+                    </datalist>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Nominal Saldo (Rp) <span class="text-rose-500">*</span></label>
+                <input type="number" step="0.01" name="amount" id="bsAmount" required placeholder="0" class="w-full text-xs font-mono font-bold border border-slate-300 rounded-xl px-3 py-2 focus:outline-none focus:border-[#ca8a04]">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Catatan / Keterangan (Opsional)</label>
+                <input type="text" name="notes" id="bsNotes" placeholder="Catatan neraca..." class="w-full text-xs border border-slate-300 rounded-xl px-3 py-2 focus:outline-none focus:border-[#ca8a04]">
+            </div>
+
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+                <button type="button" id="btnDeleteBsRecord" onclick="deleteBsRecord()" class="hidden px-3 py-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 border border-rose-200 transition cursor-pointer">
+                    Hapus Akun
+                </button>
+                <div class="flex items-center gap-2 ml-auto">
+                    <button type="button" onclick="closeBsModal()" class="px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition cursor-pointer">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-4 py-2 rounded-xl text-xs font-bold bg-[#ca8a04] hover:bg-[#a16207] text-white transition shadow-2xs cursor-pointer">
+                        Simpan Akun
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openAddBsModal(buCode, entityCode) {
+        document.getElementById('modalBsTitle').innerText = 'Tambah Akun Neraca';
+        document.getElementById('bsRecordId').value = '';
+        document.getElementById('bsBuCode').value = buCode;
+        document.getElementById('bsEntityCode').value = entityCode || '';
+        document.getElementById('bsCategory').value = 'asset';
+        document.getElementById('bsAccountCode').value = '';
+        document.getElementById('bsAccountName').value = '';
+        document.getElementById('bsAmount').value = '';
+        document.getElementById('bsNotes').value = '';
+        const btnDel = document.getElementById('btnDeleteBsRecord');
+        if (btnDel) btnDel.classList.add('hidden');
+        document.getElementById('modalAccountBs').classList.remove('hidden');
+        if (window.lucide) window.lucide.createIcons();
+    }
+
+    function openEditBsModal(data) {
+        document.getElementById('modalBsTitle').innerText = 'Edit Nominal Akun Neraca';
+        document.getElementById('bsRecordId').value = data.id || '';
+        document.getElementById('bsBuCode').value = data.business_unit_code || '{{ $selectedBu }}';
+        document.getElementById('bsEntityCode').value = data.entity_code || '';
+        document.getElementById('bsCategory').value = data.category || 'asset';
+        document.getElementById('bsAccountCode').value = data.account_code || '';
+        document.getElementById('bsAccountName').value = data.account_name || '';
+        document.getElementById('bsAmount').value = data.amount || 0;
+        document.getElementById('bsNotes').value = data.notes || '';
+        
+        const btnDel = document.getElementById('btnDeleteBsRecord');
+        if (btnDel) {
+            if (data.id) {
+                btnDel.classList.remove('hidden');
+            } else {
+                btnDel.classList.add('hidden');
+            }
+        }
+        
+        document.getElementById('modalAccountBs').classList.remove('hidden');
+        if (window.lucide) window.lucide.createIcons();
+    }
+
+    function closeBsModal() {
+        const modal = document.getElementById('modalAccountBs');
+        if (modal) modal.classList.add('hidden');
+    }
+
+    function deleteBsRecord() {
+        const id = document.getElementById('bsRecordId').value;
+        if (!id) return;
+        if (!confirm('Apakah Anda yakin ingin menghapus akun neraca ini?')) return;
+        
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/records/' + id;
+        
+        const csrf = document.createElement('input');
+        csrf.type = 'hidden';
+        csrf.name = '_token';
+        csrf.value = '{{ csrf_token() }}';
+        form.appendChild(csrf);
+        
+        const method = document.createElement('input');
+        method.type = 'hidden';
+        method.name = '_method';
+        method.value = 'DELETE';
+        form.appendChild(method);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+</script>
+@endif
 
 </div>
 @endsection

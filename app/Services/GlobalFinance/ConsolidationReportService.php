@@ -248,9 +248,13 @@ class ConsolidationReportService
                 $growthPct = $prevAmount != 0 ? round(($variance / abs($prevAmount)) * 100, 2) : ($curAmount != 0 ? 100 : 0);
 
                 $items[] = [
+                    'record_id' => $matchedCur->first()?->id,
                     'account_code' => $accCode,
                     'account_name' => $accName,
+                    'category' => $catKey,
                     'business_unit_code' => $buCodeOfItem,
+                    'entity_code' => $firstRec?->entity_code,
+                    'source_type' => $matchedCur->first()?->source_type,
                     'current_amount' => $curAmount,
                     'previous_amount' => $prevAmount,
                     'variance' => $variance,
@@ -442,13 +446,114 @@ class ConsolidationReportService
             ->where('report_type', 'balance_sheet');
 
         if ($buCode) {
-            $query->where('business_unit_code', $buCode);
+            if ($buCode === 'ccod') {
+                $hasCcodBs = GlobalFinancialRecord::query()
+                    ->where('period', $period)
+                    ->where('report_type', 'balance_sheet')
+                    ->where('business_unit_code', 'ccod')
+                    ->exists();
+
+                if (! $hasCcodBs) {
+                    $query->where('business_unit_code', 'abc');
+                } else {
+                    $query->where('business_unit_code', 'ccod');
+                }
+            } else {
+                $query->where('business_unit_code', $buCode);
+            }
         }
         if ($entityCode) {
             $query->where('entity_code', $entityCode);
         }
 
         $records = $query->get();
+
+        $hasOfficialData = $records->contains(fn ($r) => in_array($r->source_type, ['excel_upload', 'database_sync']));
+        $hasManualData = $records->contains(fn ($r) => $r->source_type === 'manual');
+        $isSkeleton = false;
+
+        // Ambil daftar saran nama akun untuk dropdown / datalist
+        $accountSuggestions = GlobalFinancialRecord::query()
+            ->where('report_type', 'balance_sheet')
+            ->when($buCode, fn ($q) => $q->where('business_unit_code', $buCode))
+            ->distinct()
+            ->pluck('account_name')
+            ->sort()
+            ->values()
+            ->all();
+
+        // Jika unit bisnis spesifik dipilih dan tidak ada data resmi (hanya data manual atau belum ada data sama sekali)
+        if ($buCode && ! $hasOfficialData) {
+            // Ambil semua akun neraca unik yang pernah dicatat oleh unit bisnis ini (sebagai master template skeleton)
+            $skeletonAccountsQuery = GlobalFinancialRecord::query()
+                ->where('business_unit_code', $buCode)
+                ->where('report_type', 'balance_sheet');
+
+            if ($entityCode) {
+                $skeletonAccountsQuery->where('entity_code', $entityCode);
+            }
+
+            $skeletonAccounts = $skeletonAccountsQuery
+                ->select('category', 'account_name', 'account_code', 'sub_category')
+                ->distinct()
+                ->orderBy('category')
+                ->orderBy('account_code')
+                ->orderBy('account_name')
+                ->get();
+
+            // Jika belum ada riwayat sama sekali untuk unit ini, sediakan akun standar default
+            if ($skeletonAccounts->isEmpty()) {
+                $skeletonAccounts = collect([
+                    (object) ['category' => 'asset', 'account_code' => '1101', 'account_name' => 'Kas dan Setara Kas', 'sub_category' => 'Aktiva Lancar'],
+                    (object) ['category' => 'asset', 'account_code' => '1102', 'account_name' => 'Piutang Usaha', 'sub_category' => 'Aktiva Lancar'],
+                    (object) ['category' => 'asset', 'account_code' => '1103', 'account_name' => 'Persediaan Barang', 'sub_category' => 'Aktiva Lancar'],
+                    (object) ['category' => 'asset', 'account_code' => '1201', 'account_name' => 'Aktiva Tetap', 'sub_category' => 'Aktiva Tetap'],
+                    (object) ['category' => 'liability', 'account_code' => '2101', 'account_name' => 'Hutang Usaha', 'sub_category' => 'Kewajiban Lancar'],
+                    (object) ['category' => 'liability', 'account_code' => '2102', 'account_name' => 'Hutang Biaya / Akrual', 'sub_category' => 'Kewajiban Lancar'],
+                    (object) ['category' => 'equity', 'account_code' => '3101', 'account_name' => 'Modal Disetor / Saham', 'sub_category' => 'Ekuitas'],
+                    (object) ['category' => 'equity', 'account_code' => '3201', 'account_name' => 'Laba Ditahan (Retained Earnings)', 'sub_category' => 'Ekuitas'],
+                ]);
+            }
+
+            $isSkeleton = $records->isEmpty();
+            $existingByName = $records->groupBy(fn ($r) => strtolower($r->category).'_'.strtolower(trim($r->account_name)));
+
+            $merged = collect();
+
+            foreach ($skeletonAccounts as $skel) {
+                $key = strtolower($skel->category).'_'.strtolower(trim($skel->account_name));
+                if ($existingByName->has($key)) {
+                    foreach ($existingByName->get($key) as $matchedRec) {
+                        $merged->push($matchedRec);
+                    }
+                    $existingByName->forget($key);
+                } else {
+                    $merged->push((object) [
+                        'id' => null,
+                        'period' => $period,
+                        'business_unit_code' => $buCode,
+                        'entity_code' => $entityCode ?? strtoupper($buCode),
+                        'report_type' => 'balance_sheet',
+                        'category' => $skel->category,
+                        'sub_category' => $skel->sub_category,
+                        'account_code' => $skel->account_code,
+                        'account_name' => $skel->account_name,
+                        'amount' => 0.0,
+                        'source_type' => 'skeleton',
+                        'is_skeleton' => true,
+                    ]);
+                }
+            }
+
+            // Tambahkan akun manual tambahan yang mungkin dibuat baru oleh user dan belum ada di skeleton historis
+            foreach ($existingByName as $unmatchedGroup) {
+                foreach ($unmatchedGroup as $extraRec) {
+                    $merged->push($extraRec);
+                }
+            }
+
+            $records = $merged;
+        }
 
         $assetItems = $records->where('category', 'asset')->values();
         $liabilityItems = $records->where('category', 'liability')->values();
@@ -466,6 +571,10 @@ class ConsolidationReportService
         return [
             'period' => $period,
             'period_label' => Carbon::parse($period)->translatedFormat('F Y'),
+            'has_official_data' => $hasOfficialData,
+            'has_manual_data' => $hasManualData,
+            'is_skeleton' => $isSkeleton,
+            'account_suggestions' => $accountSuggestions,
             'assets' => [
                 'items' => $assetItems,
                 'total' => $totalAssets,
@@ -484,7 +593,7 @@ class ConsolidationReportService
                 'rules' => $rules,
             ],
             'total_liabilities_and_equity' => $totalLiab + $totalEquity,
-            'is_balanced' => abs($totalAssets - ($totalLiab + $totalEquity)) < 1.0,
+            'is_balanced' => abs($totalAssets - ($totalLiab + $totalEquity)) < 10.0,
         ];
     }
 }

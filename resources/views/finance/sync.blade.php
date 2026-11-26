@@ -3,6 +3,20 @@
 @section('title', 'Riwayat & Import Data')
 
 @section('content')
+@php
+    $user = auth()->user();
+    $isUnres = $user?->isUnrestrictedFinance() ?? true;
+    $hasSpbuAccess = $isUnres || ($user?->canAccessBusinessUnit('spbu') ?? false);
+    $hasIqosAccess = $isUnres || ($user?->canAccessBusinessUnit('iqos') ?? false);
+    $hasOnboldAccess = $isUnres || ($user?->canAccessBusinessUnit('onbold') ?? false);
+    $hasDbSyncSection = $hasSpbuAccess || $hasIqosAccess || $hasOnboldAccess;
+
+    $hasFmcgAccess = $isUnres || ($user?->canAccessBusinessUnit('fmcg') ?? false);
+    $hasAquaAccess = $isUnres || ($user?->canAccessBusinessUnit('aqua') ?? false);
+    $hasXtransAccess = $isUnres || ($user?->canAccessBusinessUnit('xtrans') ?? false);
+    $hasCcodAccess = $isUnres || ($user?->canAccessBusinessUnit('ccod') ?? false) || ($user?->canAccessBusinessUnit('abc') ?? false);
+    $hasKandangAccess = $isUnres || ($user?->canAccessBusinessUnit('kandang') ?? false);
+@endphp
 <div class="space-y-6 pb-12">
 
     <!-- PAGE HEADER WITH QUICK JUMP -->
@@ -70,8 +84,9 @@
     </div>
 
     <!-- MAIN TWO-COLUMN SECTIONS: 1. DB SYNC, 2. EXCEL INGESTION -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 {{ $hasDbSyncSection ? 'lg:grid-cols-2' : '' }} gap-6">
 
+        @if($hasDbSyncSection)
         <!-- SECTION 1: DATABASE SYNC (SPBU & RETAIL) -->
         <div class="bg-white rounded-2xl border border-[#e9e5d6] shadow-xs p-6 space-y-6">
             <div class="flex items-center justify-between border-b border-[#e9e5d6] pb-4">
@@ -84,6 +99,7 @@
                         <p class="text-xs text-slate-400">Tarik data real-time langsung dari database operasional SPBU, IQOS (Retail) & On Bold.</p>
                     </div>
                 </div>
+                @if($isUnres)
                 <form action="{{ route('finance.sync.database') }}" method="POST" onsubmit="return confirm('Mulai sinkronisasi seluruh database terhubung untuk SEMUA PERIODE historis sekaligus?');">
                     @csrf
                     <input type="hidden" name="target" value="all">
@@ -93,8 +109,10 @@
                         Sinkronkan Semua (All Periods)
                     </button>
                 </form>
+                @endif
             </div>
 
+            @if($hasSpbuAccess)
             <!-- SPBU CARD -->
             <div class="p-4 rounded-xl border border-[#e9e5d6] bg-[#fbfdfa] hover:bg-white hover:border-slate-300 transition duration-150 group">
                 <div class="flex items-start justify-between">
@@ -129,7 +147,9 @@
                     </button>
                 </form>
             </div>
+            @endif
 
+            @if($hasIqosAccess)
             <!-- IQOS (RETAIL) CARD -->
             <div class="p-4 rounded-xl border border-[#e9e5d6] bg-[#fbfdfa] hover:bg-white hover:border-slate-300 transition duration-150 group">
                 <div class="flex items-start justify-between">
@@ -163,7 +183,9 @@
                     </button>
                 </form>
             </div>
+            @endif
 
+            @if($hasOnboldAccess)
             <!-- ON BOLD (DISTRIBUTOR ROKOK) CARD -->
             <div class="p-4 rounded-xl border border-[#e9e5d6] bg-[#fbfdfa] hover:bg-white hover:border-slate-300 transition duration-150 group">
                 <div class="flex items-start justify-between">
@@ -197,7 +219,9 @@
                     </button>
                 </form>
             </div>
+            @endif
         </div>
+        @endif
 
         <!-- SECTION 2: EXCEL INGESTION HUB -->
         <div class="bg-white rounded-2xl border border-[#e9e5d6] shadow-xs p-6 space-y-6">
@@ -222,6 +246,7 @@
                 </div>
             </div>
 
+            @if($hasFmcgAccess)
             <!-- UNILEVER (FMCG) 9 DEPO UPLOAD BOX -->
             <div class="p-4 rounded-xl border border-dashed border-emerald-300 bg-[#fbfdfa] hover:bg-white transition">
                 <div class="flex items-center justify-between mb-2">
@@ -260,7 +285,9 @@
                     </div>
                 </form>
             </div>
+            @endif
 
+            @if($hasAquaAccess)
             <!-- AQUA (DANONE) UPLOAD BOX -->
             <div class="p-4 rounded-xl border border-dashed border-sky-300 bg-[#fbfdfa] hover:bg-white transition">
                 <div class="flex items-center justify-between mb-2">
@@ -299,7 +326,9 @@
                     </div>
                 </form>
             </div>
+            @endif
 
+            @if($hasXtransAccess)
             <!-- XTRANS UPLOAD BOX -->
             <div class="p-4 rounded-xl border border-dashed border-[#fde047] bg-[#fbfdfa] hover:bg-white transition">
                 <div class="flex items-center justify-between mb-2">
@@ -338,29 +367,31 @@
                     </div>
                 </form>
             </div>
+            @endif
 
-            <!-- CCOD UPLOAD BOX -->
+            @if($hasCcodAccess)
+            <!-- CCOD x ABC (PT MEKAR JAYA SENTOSA MULTIKARYA) UPLOAD BOX -->
             <div class="p-4 rounded-xl border border-dashed border-indigo-300 bg-[#fbfdfa] hover:bg-white transition">
                 <div class="flex items-center justify-between mb-2">
                     <div class="flex items-center gap-2">
-                        <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 font-black text-xs flex items-center justify-center">
-                            CCOD
+                        <div class="px-2 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 font-black text-xs flex items-center justify-center whitespace-nowrap">
+                            CCOD x ABC
                         </div>
                         <div>
-                            <h4 class="text-sm font-bold text-slate-900">CCOD - PT Mekar Jaya Sentosa Multikarya</h4>
-                            <p class="text-[11px] text-slate-400">Laporan Laba Rugi 12 Cabang CCOD Heinz ABC (Pati, Semarang, Pekalongan, Tegal, Bandung, Sumedang, Salatiga, Magelang, Cirebon, Jatiwangi, Kuningan, Losarang)</p>
+                            <h4 class="text-sm font-bold text-slate-900">CCOD x ABC - PT Mekar Jaya Sentosa Multikarya</h4>
+                            <p class="text-[11px] text-slate-400">Laporan Laba Rugi Divisi ABC (15 Depo), Laba Rugi Divisi CCOD (11 Cabang), dan Neraca Gabungan PT MJSM. Format: PL & BS MJSM+CCOD Jan-Sept 26.xlsx atau file per divisi.</p>
                         </div>
                     </div>
                 </div>
 
                 <form id="formCcodUpload" action="{{ route('finance.sync.excel') }}" method="POST" enctype="multipart/form-data" class="mt-3 space-y-3" onsubmit="return handleExcelImportSubmit(event, this)">
                     @csrf
-                    <input type="hidden" name="type" value="ccod">
+                    <input type="hidden" name="type" value="abc">
                     <div class="relative flex items-center justify-center border-2 border-dashed border-slate-200 hover:border-indigo-400 rounded-xl p-3 bg-white transition cursor-pointer group">
-                        <input type="file" name="file" accept=".xlsx,.xls,.csv" required class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" onchange="this.nextElementSibling.innerText = this.files[0]?.name || 'Pilih file Excel CCOD...'">
+                        <input type="file" name="file" accept=".xlsx,.xls,.csv" required class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" onchange="this.nextElementSibling.innerText = this.files[0]?.name || 'Pilih file Excel CCOD x ABC...'">
                         <div class="text-center text-xs text-slate-500 flex items-center gap-2 pointer-events-none group-hover:text-indigo-700">
                             <i data-lucide="upload-cloud" class="w-4 h-4 text-indigo-500"></i>
-                            <span class="font-medium text-slate-600">Pilih file Excel CCOD (.xlsx / .xls)</span>
+                            <span class="font-medium text-slate-600">Pilih file Excel CCOD x ABC (.xlsx / .xls)</span>
                         </div>
                     </div>
                     <div class="flex items-center justify-between flex-wrap gap-2 pt-1">
@@ -372,12 +403,14 @@
                         </div>
                         <button type="submit" class="px-4 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer">
                             <i data-lucide="search-check" class="w-3.5 h-3.5 text-indigo-600"></i>
-                            Cek & Import CCOD
+                            Cek & Import CCOD x ABC
                         </button>
                     </div>
                 </form>
             </div>
+            @endif
 
+            @if($hasKandangAccess)
             <!-- KANDANG (PT MEKAR JAYA KURNIA BERSAMA) UPLOAD BOX -->
             <div class="p-4 rounded-xl border border-dashed border-amber-300 bg-[#fbfdfa] hover:bg-white transition">
                 <div class="flex items-center justify-between mb-2">
@@ -416,7 +449,9 @@
                     </div>
                 </form>
             </div>
+            @endif
 
+            @if(!empty($businessUnits))
             <!-- UNIVERSAL TEMPLATE UPLOAD BOX (FOR ANY REGISTERED / NEW BUSINESS UNIT) -->
             <div class="p-4 rounded-xl border border-dashed border-[#fde047] bg-[#faf8f0] hover:bg-white transition">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
@@ -482,6 +517,7 @@
                     </div>
                 </form>
             </div>
+            @endif
         </div>
 
     </div>
@@ -557,11 +593,11 @@
                                 @elseif(str_contains(strtolower($log->business_unit_code), 'iqos') || str_contains(strtolower($log->business_unit_code), 'retail')) bg-teal-50 text-teal-800 border border-teal-200
                                 @elseif(str_contains(strtolower($log->business_unit_code), 'fmcg')) bg-sky-50 text-sky-700 border border-sky-200
                                 @elseif(str_contains(strtolower($log->business_unit_code), 'xtrans')) bg-[#fef9c3] text-[#ca8a04] border border-[#edd7ce]
-                                @elseif(str_contains(strtolower($log->business_unit_code), 'ccod')) bg-indigo-50 text-indigo-700 border border-indigo-200
+                                @elseif(str_contains(strtolower($log->business_unit_code), 'ccod') || str_contains(strtolower($log->business_unit_code), 'abc')) bg-indigo-50 text-indigo-700 border border-indigo-200
                                 @elseif(str_contains(strtolower($log->business_unit_code), 'kandang')) bg-amber-50 text-amber-700 border border-amber-200
                                 @elseif(str_contains(strtolower($log->business_unit_code), 'onbold')) bg-violet-50 text-violet-700 border border-violet-200
                                 @else bg-slate-100 text-slate-700 border border-slate-200 @endif">
-                                {{ $log->business_unit_code }}
+                                {{ in_array(strtolower($log->business_unit_code), ['abc', 'ccod']) ? 'CCOD x ABC' : $log->business_unit_code }}
                             </span>
                         </td>
                         <td class="py-3 px-4">

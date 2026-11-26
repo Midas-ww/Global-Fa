@@ -10,6 +10,7 @@
         <!-- TOP: Quick Tabs for Business Unit -->
         <div class="flex items-center justify-between flex-wrap gap-3">
             <div class="flex items-center gap-1.5 flex-wrap">
+                @if($isUnrestricted ?? true)
                 <!-- ALL / CONSOLIDATED TAB -->
                 <a href="{{ route('finance.pnl', ['period' => $selectedPeriod]) }}"
                    class="px-3.5 py-1.5 rounded-tl-[1rem] rounded-br-[1rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1rem] hover:rounded-bl-[1rem] hover:rounded-tl-none hover:rounded-br-none text-xs font-bold transition-all duration-300 cursor-pointer {{ empty($selectedBu) ? 'bg-[#ca8a04]/10 text-[#713f12] border border-[#fde047] shadow-2xs' : 'bg-white hover:bg-[#fef9c3] text-slate-700 hover:text-[#713f12] border border-slate-200' }}">
@@ -18,6 +19,7 @@
                         <span>Semua (Konsolidasi Holding)</span>
                     </span>
                 </a>
+                @endif
 
                 @foreach($businessUnits as $bu)
                 <a href="{{ route('finance.pnl', ['period' => $selectedPeriod, 'business_unit' => $bu['code']]) }}"
@@ -119,6 +121,9 @@
         @endif
         @endif
     </div>
+
+    <!-- STATUS CLOSING & CATATAN PERIODE -->
+    @include('finance.partials.period-note-banner', ['reportType' => 'pnl'])
 
     <!-- FINANCIAL CHART (IDENTIK DENGAN SIR-IQOS P&L) -->
     <div class="rounded-2xl border border-[#e9e5d6] bg-white p-5 sm:p-6 shadow-xs flex flex-col justify-between">
@@ -350,7 +355,7 @@
     </div>
     @endif
     <div class="bg-white rounded-2xl border border-[#e9e5d6] shadow-xs overflow-hidden">
-        <div class="p-5 border-b border-[#e9e5d6] flex items-center justify-between bg-white">
+        <div class="p-5 border-b border-[#e9e5d6] flex items-center justify-between bg-white flex-wrap gap-3">
             <div>
                 <h3 class="text-base font-extrabold text-slate-900 tracking-tight">
                     @if(empty($selectedBu))
@@ -366,6 +371,16 @@
                 </h3>
                 <p class="text-xs text-slate-400">Periode berakhir per {{ $pnl['period_label'] }} (Mata Uang: IDR Rupiah)</p>
             </div>
+
+            @if($canEdit ?? false)
+            <div class="flex items-center gap-2">
+                <button type="button" onclick="openAddAccountModal('pnl', '{{ $selectedBu }}', '{{ $selectedEntity }}')"
+                    class="px-3 py-1.5 rounded-xl bg-[#ca8a04] hover:bg-[#a16207] text-white text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer">
+                    <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+                    <span>+ Tambah Akun P&L</span>
+                </button>
+            </div>
+            @endif
         </div>
 
         <div class="overflow-x-auto overflow-y-auto max-h-[680px] custom-scrollbar border-t border-slate-100">
@@ -378,6 +393,9 @@
                         <th class="p-3.5 text-right w-44 text-slate-400 bg-white">{{ $pnl['previous_period_label'] }}</th>
                         <th class="p-3.5 text-right w-36 bg-white">Selisih (MoM)</th>
                         <th class="p-3.5 text-center w-24 bg-white">% Growth</th>
+                        @if($canEdit ?? false)
+                        <th class="p-3.5 text-center w-20 bg-white">Aksi</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 font-medium">
@@ -385,7 +403,7 @@
                     @foreach($pnl['sections'] as $secKey => $section)
                         <!-- Section Header -->
                         <tr class="bg-[#faf8f0] font-extrabold text-slate-900">
-                            <td colspan="6" class="p-3 pl-6 tracking-wide text-[11px] uppercase text-slate-900 flex items-center gap-2">
+                            <td colspan="{{ ($canEdit ?? false) ? 7 : 6 }}" class="p-3 pl-6 tracking-wide text-[11px] uppercase text-slate-900 flex items-center gap-2">
                                 <span class="w-2 h-2 rounded-full bg-[#ca8a04]"></span>
                                 {{ $section['title'] }}
                             </td>
@@ -422,10 +440,38 @@
                                     {{ $item['growth_pct'] >= 0 ? '+' : '' }}{{ $item['growth_pct'] }}%
                                 </span>
                             </td>
+                            @if($canEdit ?? false)
+                            <td class="p-2.5 text-center">
+                                @php
+                                    $isItemLocked = in_array($item['source_type'] ?? '', ['excel_upload', 'database_sync']);
+                                @endphp
+                                @if($isItemLocked)
+                                <span class="inline-flex items-center text-slate-300 cursor-not-allowed" title="Data resmi terkunci (Excel / DB Sync)">
+                                    <i data-lucide="lock" class="w-3.5 h-3.5"></i>
+                                </span>
+                                @else
+                                <button type="button"
+                                    onclick="openEditAccountModal({{ json_encode([
+                                        'id' => $item['record_id'] ?? null,
+                                        'account_name' => $item['account_name'],
+                                        'account_code' => $item['account_code'] ?? '',
+                                        'category' => $secKey,
+                                        'amount' => $item['current_amount'],
+                                        'report_type' => 'pnl',
+                                        'business_unit_code' => $selectedBu,
+                                        'entity_code' => $selectedEntity ?? ($item['entity_code'] ?? null),
+                                    ]) }})"
+                                    class="p-1 rounded-md text-slate-400 hover:text-[#ca8a04] hover:bg-[#fef9c3] transition cursor-pointer"
+                                    title="Edit Nominal Akun">
+                                    <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                                </button>
+                                @endif
+                            </td>
+                            @endif
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="6" class="p-3 pl-6 text-slate-400 italic text-center">Tidak ada transaksi akun pada kategori ini.</td>
+                            <td colspan="{{ ($canEdit ?? false) ? 7 : 6 }}" class="p-3 pl-6 text-slate-400 italic text-center">Tidak ada transaksi akun pada kategori ini.</td>
                         </tr>
                         @endforelse
 
@@ -443,6 +489,9 @@
                                     {{ $section['growth_pct'] >= 0 ? '+' : '' }}{{ $section['growth_pct'] }}%
                                 </span>
                             </td>
+                            @if($canEdit ?? false)
+                            <td class="p-3"></td>
+                            @endif
                         </tr>
 
                         <!-- Insert Gross Profit row after COGS (SOLID FLAT - NO GRADIENT) -->
@@ -462,6 +511,9 @@
                                     {{ $gpGrow >= 0 ? '+' : '' }}{{ $gpGrow }}%
                                 </span>
                             </td>
+                            @if($canEdit ?? false)
+                            <td class="p-3.5"></td>
+                            @endif
                         </tr>
                         @endif
 
@@ -482,6 +534,9 @@
                                     {{ $opGrow >= 0 ? '+' : '' }}{{ $opGrow }}%
                                 </span>
                             </td>
+                            @if($canEdit ?? false)
+                            <td class="p-3.5"></td>
+                            @endif
                         </tr>
                         @endif
 
@@ -511,6 +566,9 @@
                                 {{ $netGrow >= 0 ? '+' : '' }}{{ $netGrow }}%
                             </span>
                         </td>
+                        @if($canEdit ?? false)
+                        <td class="p-4"></td>
+                        @endif
                     </tr>
                 </tbody>
             </table>
@@ -759,5 +817,146 @@
             window.lucide.createIcons();
         }
     });
+
+    function openAddAccountModal(reportType, buCode, entityCode) {
+        document.getElementById('modalPnlTitle').innerText = 'Tambah Akun P&L';
+        document.getElementById('pnlRecordId').value = '';
+        document.getElementById('pnlBuCode').value = buCode;
+        document.getElementById('pnlEntityCode').value = entityCode || '';
+        document.getElementById('pnlCategory').value = 'revenue';
+        document.getElementById('pnlAccountCode').value = '';
+        document.getElementById('pnlAccountName').value = '';
+        document.getElementById('pnlAmount').value = '';
+        document.getElementById('pnlNotes').value = '';
+        const btnDel = document.getElementById('btnDeletePnlRecord');
+        if (btnDel) btnDel.classList.add('hidden');
+        document.getElementById('modalAccountPnl').classList.remove('hidden');
+        if (window.lucide) window.lucide.createIcons();
+    }
+
+    function openEditAccountModal(data) {
+        document.getElementById('modalPnlTitle').innerText = 'Edit Nominal Akun P&L';
+        document.getElementById('pnlRecordId').value = data.id || '';
+        document.getElementById('pnlBuCode').value = data.business_unit_code || '{{ $selectedBu }}';
+        document.getElementById('pnlEntityCode').value = data.entity_code || '';
+        document.getElementById('pnlCategory').value = data.category || 'revenue';
+        document.getElementById('pnlAccountCode').value = data.account_code || '';
+        document.getElementById('pnlAccountName').value = data.account_name || '';
+        document.getElementById('pnlAmount').value = data.amount || 0;
+        document.getElementById('pnlNotes').value = data.notes || '';
+        
+        const btnDel = document.getElementById('btnDeletePnlRecord');
+        if (btnDel) {
+            if (data.id) {
+                btnDel.classList.remove('hidden');
+            } else {
+                btnDel.classList.add('hidden');
+            }
+        }
+        
+        document.getElementById('modalAccountPnl').classList.remove('hidden');
+        if (window.lucide) window.lucide.createIcons();
+    }
+
+    function closeAccountModal() {
+        const modal = document.getElementById('modalAccountPnl');
+        if (modal) modal.classList.add('hidden');
+    }
+
+    function deleteAccountRecord() {
+        const id = document.getElementById('pnlRecordId').value;
+        if (!id) return;
+        if (!confirm('Apakah Anda yakin ingin menghapus akun ini?')) return;
+        
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/records/' + id;
+        
+        const csrf = document.createElement('input');
+        csrf.type = 'hidden';
+        csrf.name = '_token';
+        csrf.value = '{{ csrf_token() }}';
+        form.appendChild(csrf);
+        
+        const method = document.createElement('input');
+        method.type = 'hidden';
+        method.name = '_method';
+        method.value = 'DELETE';
+        form.appendChild(method);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
 </script>
+
+@if($canEdit ?? false)
+<!-- MODAL TAMBAH / EDIT AKUN PNL -->
+<div id="modalAccountPnl" class="fixed inset-0 z-50 hidden bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full border border-[#e9e5d6] shadow-xl overflow-hidden">
+        <div class="p-5 border-b border-[#e9e5d6] flex items-center justify-between bg-[#faf8f0]">
+            <div class="flex items-center gap-2">
+                <i data-lucide="edit-3" class="w-4 h-4 text-[#ca8a04]"></i>
+                <h4 id="modalPnlTitle" class="text-sm font-bold text-slate-900 uppercase">Tambah Akun P&L</h4>
+            </div>
+            <button type="button" onclick="closeAccountModal()" class="text-slate-400 hover:text-slate-600 cursor-pointer">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+        <form id="formPnlAccount" action="{{ route('finance.records.save') }}" method="POST" class="p-5 space-y-4">
+            @csrf
+            <input type="hidden" name="id" id="pnlRecordId" value="">
+            <input type="hidden" name="report_type" value="pnl">
+            <input type="hidden" name="business_unit_code" id="pnlBuCode" value="{{ $selectedBu }}">
+            <input type="hidden" name="period" value="{{ $selectedPeriod }}">
+            <input type="hidden" name="entity_code" id="pnlEntityCode" value="{{ $selectedEntity }}">
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Kategori Akun <span class="text-rose-500">*</span></label>
+                <select name="category" id="pnlCategory" required class="w-full text-xs font-semibold border border-slate-300 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-[#ca8a04]">
+                    <option value="revenue">Pendapatan Usaha (Revenue)</option>
+                    <option value="cogs">Harga Pokok Penjualan (COGS)</option>
+                    <option value="opex">Beban Operasional (Opex)</option>
+                    <option value="other_income">Pendapatan Diluar Usaha</option>
+                    <option value="other_expense">Beban Diluar Usaha</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3">
+                <div class="col-span-1">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Kode Akun</label>
+                    <input type="text" name="account_code" id="pnlAccountCode" placeholder="contoh: 4001" class="w-full text-xs border border-slate-300 rounded-xl px-3 py-2 focus:outline-none focus:border-[#ca8a04]">
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Akun / Uraian <span class="text-rose-500">*</span></label>
+                    <input type="text" name="account_name" id="pnlAccountName" required placeholder="Nama Akun" class="w-full text-xs border border-slate-300 rounded-xl px-3 py-2 focus:outline-none focus:border-[#ca8a04]">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Nominal Periode Ini (Rp) <span class="text-rose-500">*</span></label>
+                <input type="number" step="0.01" name="amount" id="pnlAmount" required placeholder="0" class="w-full text-xs font-mono font-bold border border-slate-300 rounded-xl px-3 py-2 focus:outline-none focus:border-[#ca8a04]">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Catatan / Keterangan (Opsional)</label>
+                <input type="text" name="notes" id="pnlNotes" placeholder="Catatan transaksi..." class="w-full text-xs border border-slate-300 rounded-xl px-3 py-2 focus:outline-none focus:border-[#ca8a04]">
+            </div>
+
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+                <button type="button" id="btnDeletePnlRecord" onclick="deleteAccountRecord()" class="hidden px-3 py-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 border border-rose-200 transition cursor-pointer">
+                    Hapus Akun
+                </button>
+                <div class="flex items-center gap-2 ml-auto">
+                    <button type="button" onclick="closeAccountModal()" class="px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition cursor-pointer">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-4 py-2 rounded-xl text-xs font-bold bg-[#ca8a04] hover:bg-[#a16207] text-white transition shadow-2xs cursor-pointer">
+                        Simpan Akun
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+@endif
 @endsection

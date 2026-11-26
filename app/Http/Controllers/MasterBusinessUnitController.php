@@ -8,12 +8,26 @@ use App\Models\GlobalFinancialRecord;
 use App\Services\GlobalFinance\ExcelIngestionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\View\View;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
-class MasterBusinessUnitController extends Controller
+class MasterBusinessUnitController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [
+            function ($request, $next) {
+                if (! $request->user()?->isUnrestrictedFinance()) {
+                    abort(403, 'Akses ditolak: Master data hanya untuk Direktur dan Administrator.');
+                }
+
+                return $next($request);
+            },
+        ];
+    }
+
     /**
      * Tampilkan halaman Master Data Unit Usaha & Entitas Cabang.
      */

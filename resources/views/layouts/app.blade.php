@@ -272,8 +272,11 @@
 
                 <!-- Category 2: OPERASIONAL & SYNC -->
                 <div class="sidebar-group">
-                    <div class="px-3 mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 sidebar-label">OPERASIONAL & SYNC</div>
+                    <div class="px-3 mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 sidebar-label">
+                        {{ auth()->user()?->canAccessSyncMenu() ? 'OPERASIONAL & SYNC' : 'PORTAL & INTEGRASI' }}
+                    </div>
                     <nav class="space-y-1.5">
+                        @if(auth()->user()?->canAccessSyncMenu())
                         <!-- Riwayat & Import Data Link (Persis IQOS) -->
                         <a href="{{ route('finance.sync') }}"
                            title="Riwayat & Import Data"
@@ -286,6 +289,7 @@
                             </svg>
                             <span class="truncate flex-1 sidebar-label">Riwayat & Import Data</span>
                         </a>
+                        @endif
 
                         <!-- Super App Portal Link -->
                         <a href="{{ route('sso.portal') }}" target="_blank"
@@ -307,6 +311,7 @@
                     </nav>
                 </div>
 
+                @if(auth()->user()?->isUnrestrictedFinance())
                 <!-- Category: PENGATURAN & MASTER -->
                 <div class="sidebar-group">
                     <div class="px-3 mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 sidebar-label">PENGATURAN & MASTER</div>
@@ -331,6 +336,7 @@
                         </a>
                     </nav>
                 </div>
+                @endif
 
                 <!-- Category 3: KEPATUHAN & STANDAR -->
                 <div class="sidebar-group">

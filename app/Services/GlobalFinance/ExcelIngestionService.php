@@ -75,6 +75,29 @@ class ExcelIngestionService
             ];
         }
 
+        // 1b. Deteksi File Gabungan MJSM (ABC + CCOD) & Neraca Jan-Sept
+        $hasAbcSheets = false;
+        $hasCcodSheets = false;
+        $hasBsSheets = false;
+        foreach ($upperSheets as $s) {
+            if (str_contains($s, 'ABC')) {
+                $hasAbcSheets = true;
+            }
+            if (str_contains($s, 'CCOD')) {
+                $hasCcodSheets = true;
+            }
+            if (str_contains($s, 'BS')) {
+                $hasBsSheets = true;
+            }
+        }
+        if ($hasAbcSheets && $hasCcodSheets && $hasBsSheets) {
+            return [
+                'type' => 'mjsm_ccod',
+                'label' => 'PL & BS MJSM+CCOD (PT Mekar Jaya Sentosa Multikarya)',
+                'sheets' => $sheetNames,
+            ];
+        }
+
         // 2. Deteksi CCOD (PT Mekar Jaya Sentosa Multikarya - 12 Cabang)
         $isCcodDept = str_contains($upperHeader, 'MULTIKARYA') || str_contains($upperHeader, 'BY DEPARTMENT') || str_contains($upperHeader, 'CCOD');
         if ($isCcodDept) {
@@ -186,6 +209,11 @@ class ExcelIngestionService
             return;
         }
 
+        // File MJSM+CCOD atau CCOD valid untuk unit 'abc' dan 'ccod'
+        if (in_array($detected['type'], ['mjsm_ccod', 'ccod']) && in_array($selectedType, ['abc', 'ccod'])) {
+            return;
+        }
+
         $selectedLabel = match ($selectedType) {
             'fmcg' => 'Unilever (9 Depo Cabang)',
             'aqua' => 'AQUA (CV Mekar Jaya Sentosa)',
@@ -263,7 +291,7 @@ class ExcelIngestionService
         $targetLabel = $unit ? $unit->name : strtoupper($targetType);
 
         // Kesesuaian tipe usaha
-        $isTypeMatch = ($detectedType === 'universal_template' || $detectedType === $targetType);
+        $isTypeMatch = ($detectedType === 'universal_template' || $detectedType === $targetType || ($detectedType === 'mjsm_ccod' && in_array($targetType, ['abc', 'ccod'])));
         $matchError = null;
         if (! $isTypeMatch && $detectedType !== 'unknown') {
             if (($detectedType === 'aqua' || $detectedType === 'mjs_summary') && $targetType === 'fmcg') {
@@ -1167,26 +1195,411 @@ class ExcelIngestionService
             $totalRecords += count($batch);
         }
 
-        GlobalIngestionLog::create([
-            'business_unit_code' => 'ccod',
-            'source_type' => 'excel_upload',
-            'filename' => $filename ?: 'Profit & Loss by Department (PT MJS Multikarya)',
-            'records_count' => $totalRecords,
-            'status' => 'success',
-            'details' => json_encode([
-                'type' => 'department_pnl',
-                'period' => $period,
-                'entities_count' => count($deptCols),
-                'departments' => array_values($deptCols),
-            ]),
-        ]);
-
         return [
             'success' => true,
             'business_unit' => 'ccod',
             'records_inserted' => $totalRecords,
             'departments_count' => count($deptCols),
             'period' => $period,
+        ];
+    }
+
+    /**
+     * Ingest format "PL & BS MJSM+CCOD Jan-Sept 26.xlsx"
+     * PnL ABC dan CCOD tetap terpisah per depo, Neraca digabung tingkat PT MJSM.
+     */
+    public function ingestMjsmCcodFile(string $filePath, ?string $filename = null): array
+    {
+        ini_set('memory_limit', '1024M');
+
+        $buAbc = GlobalBusinessUnit::updateOrCreate(
+            ['code' => 'abc'],
+            [
+                'name' => 'ABC',
+                'description' => 'PT Mekar Jaya Sentosa Multikarya - Jasa dan distribusi Heinz ABC.',
+                'icon' => 'shopping-bag',
+                'color' => '#EA580C',
+                'data_source' => 'excel',
+                'sort_order' => 9,
+                'is_active' => true,
+            ]
+        );
+
+        $buCcod = GlobalBusinessUnit::updateOrCreate(
+            ['code' => 'ccod'],
+            [
+                'name' => 'CCOD',
+                'description' => 'PT Mekar Jaya Sentosa Multikarya - Jasa dan distribusi Cash Collection on Delivery (CCOD) Heinz ABC 12 cabang.',
+                'icon' => 'shopping-bag',
+                'color' => '#6366F1',
+                'data_source' => 'excel',
+                'sort_order' => 3,
+                'is_active' => true,
+            ]
+        );
+
+        $abcEntities = [
+            'SMG' => ['code' => 'ABC_SMG', 'name' => 'Depo Semarang (ABC)', 'location' => 'Semarang'],
+            'TGL' => ['code' => 'ABC_TGL', 'name' => 'Depo Tegal (ABC)', 'location' => 'Tegal'],
+            'PKL' => ['code' => 'ABC_PKL', 'name' => 'Depo Pekalongan (ABC)', 'location' => 'Pekalongan'],
+            'WSB' => ['code' => 'ABC_WSB', 'name' => 'Depo Wonosobo (ABC)', 'location' => 'Wonosobo'],
+            'YOG' => ['code' => 'ABC_YOG', 'name' => 'Depo Yogyakarta (ABC)', 'location' => 'Yogyakarta'],
+            'SKH' => ['code' => 'ABC_SKH', 'name' => 'Depo Sukoharjo (ABC)', 'location' => 'Sukoharjo'],
+            'PWD' => ['code' => 'ABC_PWD', 'name' => 'Depo Purwodadi (ABC)', 'location' => 'Purwodadi'],
+            'SKA' => ['code' => 'ABC_SKA', 'name' => 'Depo Surakarta (ABC)', 'location' => 'Surakarta'],
+            'STG' => ['code' => 'ABC_STG', 'name' => 'Depo Salatiga (ABC)', 'location' => 'Salatiga'],
+            'CLP' => ['code' => 'ABC_CLP', 'name' => 'Depo Cilacap (ABC)', 'location' => 'Cilacap'],
+            'MJG' => ['code' => 'ABC_MJG', 'name' => 'Depo Majenang (ABC)', 'location' => 'Majenang'],
+            'PWT' => ['code' => 'ABC_PWT', 'name' => 'Depo Purwokerto (ABC)', 'location' => 'Purwokerto'],
+            'BJR' => ['code' => 'ABC_BJR', 'name' => 'Depo Banjarnegara (ABC)', 'location' => 'Banjarnegara'],
+            'CRB' => ['code' => 'ABC_CRB', 'name' => 'Depo Cirebon (ABC)', 'location' => 'Cirebon'],
+            'HO' => ['code' => 'ABC_HO',  'name' => 'Head Office (ABC)', 'location' => 'Semarang'],
+        ];
+
+        $sortOrder = 1;
+        foreach ($abcEntities as $key => $info) {
+            GlobalEntity::updateOrCreate(
+                ['code' => $info['code']],
+                [
+                    'business_unit_id' => $buAbc->id,
+                    'name' => $info['name'],
+                    'location' => $info['location'],
+                    'sort_order' => $sortOrder++,
+                    'is_active' => true,
+                ]
+            );
+        }
+
+        GlobalEntity::updateOrCreate(
+            ['code' => 'MJSM'],
+            [
+                'business_unit_id' => $buAbc->id,
+                'name' => 'PT Mekar Jaya Sentosa Multikarya',
+                'location' => 'Semarang',
+                'sort_order' => 99,
+                'is_active' => true,
+            ]
+        );
+
+        $ccodEntities = [
+            'CCOD PTI' => ['code' => 'CCOD_PATI', 'name' => 'CCOD Pati', 'location' => 'Pati'],
+            'CCOD SMG' => ['code' => 'CCOD_SMG',  'name' => 'CCOD Semarang', 'location' => 'Semarang'],
+            'CCOD PKL' => ['code' => 'CCOD_PKL',  'name' => 'CCOD Pekalongan', 'location' => 'Pekalongan'],
+            'CCOD TGL' => ['code' => 'CCOD_TGL',  'name' => 'CCOD Tegal', 'location' => 'Tegal'],
+            'CCOD BDG' => ['code' => 'CCOD_BDG',  'name' => 'CCOD Bandung', 'location' => 'Bandung'],
+            'CCOD SMD' => ['code' => 'CCOD_SMD',  'name' => 'CCOD Sumedang', 'location' => 'Sumedang'],
+            'CCOD MGL' => ['code' => 'CCOD_MGL',  'name' => 'CCOD Magelang', 'location' => 'Magelang'],
+            'CCOD STG' => ['code' => 'CCOD_SLT',  'name' => 'CCOD Salatiga', 'location' => 'Salatiga'],
+            'CCOD CRB' => ['code' => 'CCOD_CRB',  'name' => 'CCOD Cirebon', 'location' => 'Cirebon'],
+            'CCOD LSG' => ['code' => 'CCOD_LSR',  'name' => 'CCOD Losarang', 'location' => 'Losarang'],
+            'HO' => ['code' => 'CCOD_HO',   'name' => 'Head Office (CCOD)', 'location' => 'Semarang'],
+        ];
+
+        foreach ($ccodEntities as $key => $info) {
+            GlobalEntity::updateOrCreate(
+                ['code' => $info['code']],
+                [
+                    'business_unit_id' => $buCcod->id,
+                    'name' => $info['name'],
+                    'location' => $info['location'],
+                    'sort_order' => $sortOrder++,
+                    'is_active' => true,
+                ]
+            );
+        }
+
+        $reader = IOFactory::createReaderForFile($filePath);
+        $reader->setReadDataOnly(true);
+        $spreadsheet = $reader->load($filePath);
+
+        $monthMap = [
+            'Jan 26' => ['period' => '2026-01-01', 'abc' => 'PL Depo Jan 26 ABC',  'ccod' => 'PL Depo Jan 26 CCOD',  'bs' => 'BS Jan 26'],
+            'Feb 26' => ['period' => '2026-02-01', 'abc' => 'PL Depo Feb 26 ABC',  'ccod' => 'PL Depo Feb 26 CCOD',  'bs' => 'BS Feb 26'],
+            'Mar 26' => ['period' => '2026-03-01', 'abc' => 'PL Depo Mar 26 ABC',  'ccod' => 'PL Depo Mar 26 CCOD',  'bs' => 'BS Mar 26'],
+            'Apr 26' => ['period' => '2026-04-01', 'abc' => 'PL Depo Apr 26 ABC',  'ccod' => 'PL Depo Apr 26 CCOD',  'bs' => 'BS Apr 26'],
+            'May 26' => ['period' => '2026-05-01', 'abc' => 'PL Depo May 26 ABC',  'ccod' => 'PL Depo May 26 CCOD',  'bs' => 'BS May 26'],
+            'June 26' => ['period' => '2026-06-01', 'abc' => 'PL Depo June 26 ABC', 'ccod' => 'PL Depo June 26 CCOD', 'bs' => 'BS June 26'],
+            'July 26' => ['period' => '2026-07-01', 'abc' => 'PL Depo July 26 ABC', 'ccod' => 'PL Depo July 26 CCOD', 'bs' => 'BS July 26'],
+            'Agst 26' => ['period' => '2026-08-01', 'abc' => 'PL Depo Agst 26 ABC', 'ccod' => 'PL Depo Agst 26 CCOD', 'bs' => 'BS Agst 26'],
+            'Sept 26' => ['period' => '2026-09-01', 'abc' => 'PL Depo Sept 26 ABC', 'ccod' => 'PL Depo Sept 26 CCOD', 'bs' => 'BS Sept 26'],
+        ];
+
+        $bsAccountConfig = [
+            'kas kecil' => ['cat' => 'asset', 'sub' => 'Aktiva Lancar', 'code' => '1101'],
+            'kas di bank' => ['cat' => 'asset', 'sub' => 'Aktiva Lancar', 'code' => '1102'],
+            'piutang outlet' => ['cat' => 'asset', 'sub' => 'Aktiva Lancar', 'code' => '1103'],
+            'piutang claim kpd hai' => ['cat' => 'asset', 'sub' => 'Aktiva Lancar', 'code' => '1104'],
+            'piutang ccod' => ['cat' => 'asset', 'sub' => 'Aktiva Lancar', 'code' => '1105'],
+            'persediaan barang dagang good' => ['cat' => 'asset', 'sub' => 'Aktiva Lancar', 'code' => '1106'],
+            'persedaain barang dagang bs & alokasi retur' => ['cat' => 'asset', 'sub' => 'Aktiva Lancar', 'code' => '1107'],
+            'persediaan barang dagang bs & alokasi retur' => ['cat' => 'asset', 'sub' => 'Aktiva Lancar', 'code' => '1107'],
+            'biaya-biaya dibayar dimuka' => ['cat' => 'asset', 'sub' => 'Aktiva Lancar', 'code' => '1108'],
+            'pendapatan yang masih harus diterima' => ['cat' => 'asset', 'sub' => 'Aktiva Lancar', 'code' => '1109'],
+            'harta tetap (nett)' => ['cat' => 'asset', 'sub' => 'Aktiva Tetap',  'code' => '1201'],
+            'hutang dagang' => ['cat' => 'liability', 'sub' => 'Kewajiban Lancar',        'code' => '2101'],
+            'hutang pajak' => ['cat' => 'liability', 'sub' => 'Kewajiban Lancar',        'code' => '2102'],
+            'hutang lancar lainnya' => ['cat' => 'liability', 'sub' => 'Kewajiban Lancar',        'code' => '2103'],
+            'hutang jangka panjang' => ['cat' => 'liability', 'sub' => 'Kewajiban Jangka Panjang', 'code' => '2201'],
+            'modal' => ['cat' => 'equity',    'sub' => 'Ekuitas',                 'code' => '3101'],
+            'laba ditahan + adj' => ['cat' => 'equity',    'sub' => 'Ekuitas',                 'code' => '3201'],
+            'laba tahun berjalan' => ['cat' => 'equity',    'sub' => 'Ekuitas',                 'code' => '3202'],
+        ];
+
+        $totalRecordsInserted = 0;
+        $sourceFilename = $filename ?: basename($filePath);
+
+        foreach ($monthMap as $mKey => $cfg) {
+            $period = $cfg['period'];
+
+            // 1. PL ABC
+            $sheetABC = $spreadsheet->getSheetByName($cfg['abc']);
+            if ($sheetABC) {
+                $colDepoABC = [];
+                $highestColABC = Coordinate::columnIndexFromString($sheetABC->getHighestColumn());
+                for ($c = 1; $c <= $highestColABC; $c++) {
+                    $colLetter = Coordinate::stringFromColumnIndex($c);
+                    $header = trim((string) $sheetABC->getCell("{$colLetter}6")->getValue());
+                    if (isset($abcEntities[$header])) {
+                        $colDepoABC[$colLetter] = $abcEntities[$header]['code'];
+                    }
+                }
+
+                GlobalFinancialRecord::where('business_unit_code', 'abc')
+                    ->where('period', $period)
+                    ->where('report_type', 'pnl')
+                    ->delete();
+
+                $batchABC = [];
+                for ($r = 7; $r <= 112; $r++) {
+                    $accCode = trim((string) $sheetABC->getCell("A{$r}")->getValue());
+                    if ($accCode === '' || stripos($accCode, 'Total') !== false || stripos($accCode, 'GROSS') !== false || stripos($accCode, 'INCOME') !== false || stripos($accCode, 'NET') !== false) {
+                        continue;
+                    }
+
+                    $desc = '';
+                    foreach (['E', 'D', 'C', 'B'] as $cDesc) {
+                        $v = trim((string) $sheetABC->getCell("{$cDesc}{$r}")->getValue());
+                        if ($v !== '') {
+                            $desc = $v;
+                            break;
+                        }
+                    }
+                    if ($desc === '') {
+                        continue;
+                    }
+
+                    $cat = 'opex';
+                    if (str_starts_with($accCode, '4000')) {
+                        $cat = 'revenue';
+                    } elseif (str_starts_with($accCode, '5000') || str_starts_with($accCode, '5001')) {
+                        $cat = 'cogs';
+                    } elseif (str_starts_with($accCode, '6000') || str_starts_with($accCode, '7000')) {
+                        $cat = 'opex';
+                    } elseif (str_starts_with($accCode, '8000')) {
+                        $cat = 'other_expense';
+                    } elseif (str_starts_with($accCode, '9000')) {
+                        $cat = 'other_income';
+                    }
+
+                    foreach ($colDepoABC as $col => $entCode) {
+                        $val = (float) $sheetABC->getCell("{$col}{$r}")->getValue();
+                        if ($val == 0) {
+                            continue;
+                        }
+
+                        $batchABC[] = [
+                            'business_unit_code' => 'abc',
+                            'entity_code' => $entCode,
+                            'period' => $period,
+                            'report_type' => 'pnl',
+                            'category' => $cat,
+                            'sub_category' => null,
+                            'account_code' => $accCode,
+                            'account_name' => $desc,
+                            'amount' => $val,
+                            'status' => 'final',
+                            'source_type' => 'excel_upload',
+                            'notes' => "PL Depo ABC {$mKey} - {$cfg['abc']}",
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ];
+
+                        if (count($batchABC) >= 500) {
+                            GlobalFinancialRecord::insert($batchABC);
+                            $totalRecordsInserted += count($batchABC);
+                            $batchABC = [];
+                        }
+                    }
+                }
+                if (! empty($batchABC)) {
+                    GlobalFinancialRecord::insert($batchABC);
+                    $totalRecordsInserted += count($batchABC);
+                }
+            }
+
+            // 2. PL CCOD
+            $sheetCCOD = $spreadsheet->getSheetByName($cfg['ccod']);
+            if ($sheetCCOD) {
+                $colDepoCCOD = [];
+                $highestColCCOD = Coordinate::columnIndexFromString($sheetCCOD->getHighestColumn());
+                for ($c = 1; $c <= $highestColCCOD; $c++) {
+                    $colLetter = Coordinate::stringFromColumnIndex($c);
+                    $header = trim((string) $sheetCCOD->getCell("{$colLetter}6")->getValue());
+                    if (isset($ccodEntities[$header])) {
+                        $colDepoCCOD[$colLetter] = $ccodEntities[$header]['code'];
+                    }
+                }
+
+                GlobalFinancialRecord::where('business_unit_code', 'ccod')
+                    ->where('period', $period)
+                    ->where('report_type', 'pnl')
+                    ->delete();
+
+                $batchCCOD = [];
+                for ($r = 7; $r <= 112; $r++) {
+                    $accCode = trim((string) $sheetCCOD->getCell("A{$r}")->getValue());
+                    if ($accCode === '' || stripos($accCode, 'Total') !== false || stripos($accCode, 'GROSS') !== false || stripos($accCode, 'INCOME') !== false || stripos($accCode, 'NET') !== false) {
+                        continue;
+                    }
+
+                    $desc = '';
+                    foreach (['E', 'D', 'C', 'B'] as $cDesc) {
+                        $v = trim((string) $sheetCCOD->getCell("{$cDesc}{$r}")->getValue());
+                        if ($v !== '') {
+                            $desc = $v;
+                            break;
+                        }
+                    }
+                    if ($desc === '') {
+                        continue;
+                    }
+
+                    $cat = 'opex';
+                    if (str_starts_with($accCode, '4000')) {
+                        $cat = 'revenue';
+                    } elseif (str_starts_with($accCode, '5000') || str_starts_with($accCode, '5001')) {
+                        $cat = 'cogs';
+                    } elseif (str_starts_with($accCode, '6000') || str_starts_with($accCode, '7000')) {
+                        $cat = 'opex';
+                    } elseif (str_starts_with($accCode, '8000')) {
+                        $cat = 'other_expense';
+                    } elseif (str_starts_with($accCode, '9000')) {
+                        $cat = 'other_income';
+                    }
+
+                    foreach ($colDepoCCOD as $col => $entCode) {
+                        $val = (float) $sheetCCOD->getCell("{$col}{$r}")->getValue();
+                        if ($val == 0) {
+                            continue;
+                        }
+
+                        $batchCCOD[] = [
+                            'business_unit_code' => 'ccod',
+                            'entity_code' => $entCode,
+                            'period' => $period,
+                            'report_type' => 'pnl',
+                            'category' => $cat,
+                            'sub_category' => null,
+                            'account_code' => $accCode,
+                            'account_name' => $desc,
+                            'amount' => $val,
+                            'status' => 'final',
+                            'source_type' => 'excel_upload',
+                            'notes' => "PL Depo CCOD {$mKey} - {$cfg['ccod']}",
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ];
+
+                        if (count($batchCCOD) >= 500) {
+                            GlobalFinancialRecord::insert($batchCCOD);
+                            $totalRecordsInserted += count($batchCCOD);
+                            $batchCCOD = [];
+                        }
+                    }
+                }
+                if (! empty($batchCCOD)) {
+                    GlobalFinancialRecord::insert($batchCCOD);
+                    $totalRecordsInserted += count($batchCCOD);
+                }
+            }
+
+            // 3. BS Gabungan PT MJSM
+            $sheetBS = $spreadsheet->getSheetByName($cfg['bs']);
+            if ($sheetBS) {
+                GlobalFinancialRecord::where('entity_code', 'MJSM')
+                    ->where('period', $period)
+                    ->where('report_type', 'balance_sheet')
+                    ->delete();
+                GlobalFinancialRecord::where('business_unit_code', 'abc')
+                    ->where('period', $period)
+                    ->where('report_type', 'balance_sheet')
+                    ->delete();
+
+                $batchBS = [];
+                for ($r = 6; $r <= 16; $r++) {
+                    // Aktiva
+                    $descA = trim((string) $sheetBS->getCell("C{$r}")->getValue());
+                    $valA = $sheetBS->getCell("D{$r}")->getCalculatedValue();
+                    $keyA = strtolower($descA);
+
+                    if ($descA !== '' && isset($bsAccountConfig[$keyA]) && is_numeric($valA) && (float) $valA != 0) {
+                        $conf = $bsAccountConfig[$keyA];
+                        $batchBS[] = [
+                            'business_unit_code' => 'abc',
+                            'entity_code' => 'MJSM',
+                            'period' => $period,
+                            'report_type' => 'balance_sheet',
+                            'category' => $conf['cat'],
+                            'sub_category' => $conf['sub'],
+                            'account_code' => $conf['code'],
+                            'account_name' => $descA,
+                            'amount' => (float) $valA,
+                            'status' => 'final',
+                            'source_type' => 'excel_upload',
+                            'notes' => "Neraca Gabungan PT MJSM {$mKey} - {$cfg['bs']}",
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ];
+                    }
+
+                    // Passiva
+                    $descP = trim((string) $sheetBS->getCell("H{$r}")->getValue());
+                    $valP = $sheetBS->getCell("I{$r}")->getCalculatedValue();
+                    $keyP = strtolower($descP);
+
+                    if ($descP !== '' && isset($bsAccountConfig[$keyP]) && is_numeric($valP) && (float) $valP != 0) {
+                        $conf = $bsAccountConfig[$keyP];
+                        $batchBS[] = [
+                            'business_unit_code' => 'abc',
+                            'entity_code' => 'MJSM',
+                            'period' => $period,
+                            'report_type' => 'balance_sheet',
+                            'category' => $conf['cat'],
+                            'sub_category' => $conf['sub'],
+                            'account_code' => $conf['code'],
+                            'account_name' => $descP,
+                            'amount' => (float) $valP,
+                            'status' => 'final',
+                            'source_type' => 'excel_upload',
+                            'notes' => "Neraca Gabungan PT MJSM {$mKey} - {$cfg['bs']}",
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ];
+                    }
+                }
+
+                if (! empty($batchBS)) {
+                    GlobalFinancialRecord::insert($batchBS);
+                    $totalRecordsInserted += count($batchBS);
+                }
+            }
+        }
+
+        return [
+            'success' => true,
+            'business_unit' => 'abc',
+            'records_inserted' => $totalRecordsInserted,
+            'periods_count' => count($monthMap),
         ];
     }
 

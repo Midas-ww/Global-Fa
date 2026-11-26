@@ -6,12 +6,14 @@ use App\Models\GlobalBusinessUnit;
 use App\Models\GlobalEntity;
 use App\Models\GlobalFinancialRecord;
 use App\Models\GlobalIngestionLog;
+use App\Models\GlobalPeriodNote;
 use App\Services\GlobalFinance\ConsolidationReportService;
 use App\Services\GlobalFinance\ExcelIngestionService;
 use App\Services\GlobalFinance\IntercompanyEliminationService;
 use App\Services\GlobalFinance\IqosSyncService;
 use App\Services\GlobalFinance\OnBoldSyncService;
 use App\Services\GlobalFinance\SpbuSyncService;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -29,8 +31,18 @@ class GlobalFinanceController extends Controller
     /**
      * Dashboard Konsolidasi Finansial Holding.
      */
-    public function dashboard(Request $request): View
+    public function dashboard(Request $request): View|RedirectResponse
     {
+        $user = $request->user();
+        $allowedCodes = $user?->accessibleBusinessUnitCodes();
+
+        // Jika user memiliki akses terbatas ke unit tertentu, arahkan langsung ke halaman P&L unit utamanya
+        if ($allowedCodes !== null) {
+            $defaultBu = $allowedCodes[0] ?? null;
+
+            return redirect()->route('finance.pnl', array_filter(['business_unit' => $defaultBu]));
+        }
+
         $availablePeriods = $this->reportService->getAvailablePeriods();
         $selectedPeriod = $request->query('period');
 
@@ -54,6 +66,10 @@ class GlobalFinanceController extends Controller
      */
     public function pnl(Request $request): View
     {
+        $user = $request->user();
+        $allowedCodes = $user?->accessibleBusinessUnitCodes();
+        $isUnrestricted = $user?->isUnrestrictedFinance() ?? true;
+
         $availablePeriods = $this->reportService->getAvailablePeriods();
         $selectedPeriod = $request->query('period');
 
@@ -64,8 +80,26 @@ class GlobalFinanceController extends Controller
         $selectedBu = $request->query('business_unit');
         $selectedEntity = $request->query('entity');
 
-        $pnlData = $this->reportService->getConsolidatedPnl($selectedPeriod, $selectedBu, $selectedEntity);
+        // Scoping unit usaha sesuai hak akses user
         $businessUnits = $this->reportService->getBusinessUnitsWithEntities();
+        if ($allowedCodes !== null) {
+            $businessUnits = array_values(array_filter($businessUnits, fn ($b) => in_array($b['code'], $allowedCodes)));
+            if (empty($selectedBu) || ! in_array($selectedBu, $allowedCodes)) {
+                $selectedBu = $allowedCodes[0] ?? null;
+            }
+        }
+
+        $canEdit = $selectedBu ? ($user?->canEditBusinessUnit($selectedBu) ?? false) : false;
+
+        $pnlData = $this->reportService->getConsolidatedPnl($selectedPeriod, $selectedBu, $selectedEntity);
+
+        $buCode = $selectedBu ?: 'all';
+        $periodDate = Carbon::parse($selectedPeriod)->format('Y-m-d');
+        $periodNote = GlobalPeriodNote::whereDate('period', $periodDate)
+            ->where('business_unit_code', $buCode)
+            ->whereIn('report_type', ['pnl', 'all'])
+            ->orderByRaw("CASE WHEN report_type = 'pnl' THEN 1 ELSE 2 END")
+            ->first();
 
         return view('finance.pnl', [
             'pnl' => $pnlData,
@@ -74,6 +108,10 @@ class GlobalFinanceController extends Controller
             'selectedEntity' => $selectedEntity,
             'availablePeriods' => $availablePeriods,
             'businessUnits' => $businessUnits,
+            'canEdit' => $canEdit,
+            'isUnrestricted' => $isUnrestricted,
+            'periodNote' => $periodNote,
+            'canEditNote' => $user?->canEditPeriodNotes() ?? false,
         ]);
     }
 
@@ -82,6 +120,10 @@ class GlobalFinanceController extends Controller
      */
     public function balanceSheet(Request $request): View
     {
+        $user = $request->user();
+        $allowedCodes = $user?->accessibleBusinessUnitCodes();
+        $isUnrestricted = $user?->isUnrestrictedFinance() ?? true;
+
         $availablePeriods = $this->reportService->getAvailablePeriods();
         $selectedPeriod = $request->query('period');
 
@@ -92,8 +134,37 @@ class GlobalFinanceController extends Controller
         $selectedBu = $request->query('business_unit');
         $selectedEntity = $request->query('entity');
 
+        // Jika user memilih ccod pada halaman neraca, arahkan ke abc (CCOD x ABC)
+        if ($selectedBu === 'ccod') {
+            $selectedBu = 'abc';
+        }
+
+        // Scoping unit usaha sesuai hak akses user
+        $rawBusinessUnits = $this->reportService->getBusinessUnitsWithEntities();
+        if ($allowedCodes !== null) {
+            $rawBusinessUnits = array_values(array_filter($rawBusinessUnits, fn ($b) => in_array($b['code'], $allowedCodes)));
+            if (empty($selectedBu) || ! in_array($selectedBu, $allowedCodes)) {
+                $selectedBu = $allowedCodes[0] ?? null;
+            }
+        }
+
+        // Khusus Neraca: CCOD dihapus (digabung) dan ABC diganti nama menjadi CCOD x ABC
+        $businessUnits = [];
+        foreach ($rawBusinessUnits as $bu) {
+            if ($bu['code'] === 'ccod') {
+                continue; // Hapus CCOD dari tab Neraca
+            }
+            if ($bu['code'] === 'abc') {
+                $bu['name'] = 'CCOD x ABC';
+                $bu['description'] = 'PT Mekar Jaya Sentosa Multikarya - Neraca Gabungan CCOD x ABC';
+                $bu['entities'] = []; // Neraca digabung satu kesatuan tingkat PT, tidak dipecah per cabang
+            }
+            $businessUnits[] = $bu;
+        }
+
+        $canEdit = $selectedBu ? ($user?->canEditBusinessUnit($selectedBu) ?? false) : false;
+
         $balanceSheetData = $this->reportService->getConsolidatedBalanceSheet($selectedPeriod, $selectedBu, $selectedEntity);
-        $businessUnits = $this->reportService->getBusinessUnitsWithEntities();
 
         $hasEntitySpecificBs = false;
         if ($selectedBu && ! empty($businessUnits)) {
@@ -105,6 +176,14 @@ class GlobalFinanceController extends Controller
                 ->exists();
         }
 
+        $buCode = $selectedBu ?: 'all';
+        $periodDate = Carbon::parse($selectedPeriod)->format('Y-m-d');
+        $periodNote = GlobalPeriodNote::whereDate('period', $periodDate)
+            ->where('business_unit_code', $buCode)
+            ->whereIn('report_type', ['balance_sheet', 'all'])
+            ->orderByRaw("CASE WHEN report_type = 'balance_sheet' THEN 1 ELSE 2 END")
+            ->first();
+
         return view('finance.balance-sheet', [
             'bs' => $balanceSheetData,
             'selectedPeriod' => $selectedPeriod,
@@ -113,23 +192,45 @@ class GlobalFinanceController extends Controller
             'availablePeriods' => $availablePeriods,
             'businessUnits' => $businessUnits,
             'hasEntitySpecificBs' => $hasEntitySpecificBs,
+            'canEdit' => $canEdit,
+            'isUnrestricted' => $isUnrestricted,
+            'periodNote' => $periodNote,
+            'canEditNote' => $user?->canEditPeriodNotes() ?? false,
         ]);
     }
 
     /**
      * Halaman Hub Sinkronisasi Database & Import Excel.
      */
-    public function syncView(): View
+    public function syncView(Request $request): View
     {
+        $user = $request->user();
+
+        if (! ($user?->canAccessSyncMenu() ?? true)) {
+            abort(403, 'Akses Ditolak: Menu Riwayat & Import Data tidak diperuntukkan bagi Direksi / Management.');
+        }
+
+        $allowedCodes = $user?->accessibleBusinessUnitCodes();
+        $isUnrestricted = $user?->isUnrestrictedFinance() ?? true;
+
         $availablePeriods = $this->reportService->getAvailablePeriods();
         $businessUnits = $this->reportService->getBusinessUnitsWithEntities();
-        $logs = GlobalIngestionLog::query()->orderBy('created_at', 'desc')->limit(50)->get();
+
+        if ($allowedCodes !== null) {
+            $businessUnits = array_values(array_filter($businessUnits, fn ($b) => in_array($b['code'], $allowedCodes)));
+        }
+
+        $logsQuery = GlobalIngestionLog::query()->orderBy('created_at', 'desc');
+        if ($allowedCodes !== null) {
+            $logsQuery->whereIn('business_unit_code', $allowedCodes);
+        }
+        $logs = $logsQuery->limit(50)->get();
 
         $stats = [
-            'total_records' => GlobalFinancialRecord::count(),
+            'total_records' => $allowedCodes !== null ? GlobalFinancialRecord::whereIn('business_unit_code', $allowedCodes)->count() : GlobalFinancialRecord::count(),
             'total_entities' => GlobalEntity::count(),
-            'total_business_units' => GlobalBusinessUnit::count(),
-            'last_sync' => GlobalFinancialRecord::max('updated_at'),
+            'total_business_units' => count($businessUnits),
+            'last_sync' => $allowedCodes !== null ? GlobalFinancialRecord::whereIn('business_unit_code', $allowedCodes)->max('updated_at') : GlobalFinancialRecord::max('updated_at'),
         ];
 
         return view('finance.sync', [
@@ -137,6 +238,7 @@ class GlobalFinanceController extends Controller
             'businessUnits' => $businessUnits,
             'logs' => $logs,
             'stats' => $stats,
+            'isUnrestricted' => $isUnrestricted,
         ]);
     }
 
@@ -145,9 +247,22 @@ class GlobalFinanceController extends Controller
      */
     public function triggerDbSync(Request $request): RedirectResponse
     {
+        $user = $request->user();
+
+        if (! ($user?->canAccessSyncMenu() ?? true)) {
+            abort(403, 'Akses Ditolak: Fitur sinkronisasi tidak diperuntukkan bagi Direksi / Management.');
+        }
+
         $target = $request->input('target', 'all');
         $period = $request->input('period', '2026-07');
-        $results = [];
+
+        if ($target === 'all') {
+            if (! $user?->isUnrestrictedFinance()) {
+                return back()->with('warning', 'Hanya administrator atau direksi yang dapat menjalankan sinkronisasi seluruh database unit holding.');
+            }
+        } elseif (! ($user?->canAccessBusinessUnit($target) ?? false)) {
+            return back()->with('warning', 'Anda tidak memiliki hak akses untuk sinkronisasi database unit '.$target);
+        }
 
         $results = [];
         $errors = [];
@@ -271,6 +386,13 @@ class GlobalFinanceController extends Controller
      */
     public function previewExcel(Request $request): JsonResponse
     {
+        if (! ($request->user()?->canAccessSyncMenu() ?? true)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akses ditolak: Fitur import data tidak diperuntukkan bagi Direksi / Management.',
+            ], 403);
+        }
+
         $request->validate([
             'file' => 'required|file|mimes:xlsx,xls,csv|max:51200',
             'type' => 'required|string|exists:global_business_units,code',
@@ -278,6 +400,21 @@ class GlobalFinanceController extends Controller
 
         $file = $request->file('file');
         $type = $request->input('type');
+
+        if ($type === 'abc' || $type === 'ccod') {
+            $hasAccess = ($request->user()?->canAccessBusinessUnit('abc') ?? false) || ($request->user()?->canAccessBusinessUnit('ccod') ?? false);
+            if (! $hasAccess) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki hak akses untuk unit bisnis ini.',
+                ], 403);
+            }
+        } elseif (! ($request->user()?->canAccessBusinessUnit($type) ?? false)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak memiliki hak akses untuk unit bisnis ini.',
+            ], 403);
+        }
 
         try {
             $service = new ExcelIngestionService;
@@ -297,6 +434,10 @@ class GlobalFinanceController extends Controller
      */
     public function uploadExcel(Request $request): RedirectResponse
     {
+        if (! ($request->user()?->canAccessSyncMenu() ?? true)) {
+            abort(403, 'Akses Ditolak: Fitur import data tidak diperuntukkan bagi Direksi / Management.');
+        }
+
         $request->validate([
             'file' => 'required|file|mimes:xlsx,xls,csv|max:51200', // max 50MB
             'type' => 'required|string|exists:global_business_units,code',
@@ -305,6 +446,16 @@ class GlobalFinanceController extends Controller
 
         $file = $request->file('file');
         $type = $request->input('type');
+
+        if ($type === 'abc' || $type === 'ccod') {
+            $hasAccess = ($request->user()?->canEditBusinessUnit('abc') ?? false) || ($request->user()?->canEditBusinessUnit('ccod') ?? false);
+            if (! $hasAccess) {
+                return back()->with('error', 'Akses ditolak: Anda tidak memiliki izin edit untuk unit CCOD x ABC.');
+            }
+        } elseif (! ($request->user()?->canEditBusinessUnit($type) ?? false)) {
+            return back()->with('error', 'Akses ditolak: Unit usaha ini bersumber dari database otomatis atau Anda tidak memiliki izin edit.');
+        }
+
         $filename = $file->getClientOriginalName();
         $overwrite = $request->boolean('overwrite');
         $fileHash = hash_file('sha256', $file->getRealPath());
@@ -355,9 +506,17 @@ class GlobalFinanceController extends Controller
             } elseif ($type === 'aqua') {
                 $res = $service->ingestAquaFile($fullPath, $filename);
                 $msg = "AQUA: Berhasil mengimpor {$res['records_inserted']} data transaksi P&L dan Neraca Danone AQUA.";
-            } elseif ($type === 'ccod') {
-                $res = $service->ingestFmcgDepartmentFile($fullPath, $filename);
-                $msg = "CCOD: Berhasil mengimpor {$res['records_inserted']} data transaksi dari ".($res['departments_count'] ?? 12).' cabang.';
+            } elseif ($type === 'ccod' || $type === 'abc') {
+                if (($detected['type'] ?? '') === 'mjsm_ccod' || str_contains(strtoupper($filename), 'MJSM')) {
+                    $res = $service->ingestMjsmCcodFile($fullPath, $filename);
+                    $msg = "MJSM (ABC & CCOD): Berhasil mengimpor {$res['records_inserted']} data P&L terpisah dan Neraca Gabungan PT MJSM ({$res['periods_count']} periode).";
+                } elseif (($detected['type'] ?? '') === 'ccod' || $type === 'ccod') {
+                    $res = $service->ingestFmcgDepartmentFile($fullPath, $filename);
+                    $msg = "CCOD: Berhasil mengimpor {$res['records_inserted']} data transaksi dari ".($res['departments_count'] ?? 12).' cabang.';
+                } else {
+                    $res = $service->ingestUniversalTemplate($fullPath, $type, $filename);
+                    $msg = "ABC: Berhasil mengimpor {$res['records_inserted']} data transaksi.";
+                }
             } elseif ($type === 'xtrans') {
                 $res = $service->ingestXtransFile($fullPath, $filename);
                 $msg = "Xtrans: Berhasil mengimpor {$res['records_inserted']} data P&L dan Neraca armada Xtrans.";
@@ -381,6 +540,27 @@ class GlobalFinanceController extends Controller
                     'overwrite' => $overwrite,
                 ])),
             ]);
+
+            // Otomatis bersihkan data manual draft sebelumnya untuk unit dan periode yang tercover di file ini
+            $insertedPeriods = $res['periods'] ?? [];
+            if (empty($insertedPeriods) && ! empty($res['period'])) {
+                $insertedPeriods = [$res['period']];
+            }
+
+            $affectedPeriods = ! empty($insertedPeriods) ? $insertedPeriods : GlobalFinancialRecord::query()
+                ->where('business_unit_code', $type)
+                ->where('notes', $filename)
+                ->distinct()
+                ->pluck('period')
+                ->all();
+
+            if (! empty($affectedPeriods)) {
+                GlobalFinancialRecord::query()
+                    ->where('business_unit_code', $type)
+                    ->whereIn('period', $affectedPeriods)
+                    ->where('source_type', 'manual')
+                    ->delete();
+            }
 
             // Otomatis sinkronkan eliminasi intercompany setelah import baru
             $this->eliminationService->syncAllPeriods();
@@ -409,6 +589,10 @@ class GlobalFinanceController extends Controller
      */
     public function bulkDeleteIngestionLogs(Request $request): RedirectResponse
     {
+        if (! ($request->user()?->canAccessSyncMenu() ?? true)) {
+            abort(403, 'Akses Ditolak.');
+        }
+
         $validated = $request->validate([
             'ids' => 'required|array|min:1',
             'ids.*' => 'integer|exists:global_ingestion_logs,id',
@@ -421,21 +605,45 @@ class GlobalFinanceController extends Controller
             return back()->with('error', 'Tidak ada riwayat yang dipilih untuk dihapus.');
         }
 
+        foreach ($logs as $log) {
+            if (! ($request->user()?->canAccessBusinessUnit($log->business_unit_code) ?? false)) {
+                abort(403, 'Akses Ditolak: Anda tidak memiliki wewenang untuk menghapus riwayat unit '.$log->business_unit_code);
+            }
+        }
+
         $totalDeletedRecords = 0;
         $deletedLogsCount = $logs->count();
 
-        DB::transaction(function () use ($logs, &$totalDeletedRecords) {
+        $deletedIds = $logs->pluck('id')->all();
+        DB::transaction(function () use ($logs, $deletedIds, &$totalDeletedRecords) {
             foreach ($logs as $log) {
-                if ($log->source_type === 'excel_upload') {
-                    $deleted = GlobalFinancialRecord::query()
-                        ->where('business_unit_code', $log->business_unit_code)
-                        ->where('source_type', 'excel_upload')
-                        ->where(function ($q) use ($log) {
-                            $q->where('notes', $log->filename)
-                                ->orWhereNull('notes');
-                        })
-                        ->delete();
-                    $totalDeletedRecords += $deleted;
+                $hasOtherActiveLog = GlobalIngestionLog::whereNotIn('id', $deletedIds)
+                    ->where('business_unit_code', $log->business_unit_code)
+                    ->where('filename', $log->filename)
+                    ->where('status', 'success')
+                    ->exists();
+
+                if (! $hasOtherActiveLog && $log->source_type === 'excel_upload') {
+                    $query = GlobalFinancialRecord::query()
+                        ->where('source_type', 'excel_upload');
+
+                    if ($log->business_unit_code === 'abc') {
+                        $query->whereIn('business_unit_code', ['abc', 'ccod'])
+                            ->where(function ($q) use ($log) {
+                                $q->where('notes', $log->filename)
+                                    ->orWhere('notes', 'like', '%PL Depo ABC%')
+                                    ->orWhere('notes', 'like', '%PL Depo CCOD%')
+                                    ->orWhere('notes', 'like', '%Neraca Gabungan PT MJSM%');
+                            });
+                    } else {
+                        $query->where('business_unit_code', $log->business_unit_code)
+                            ->where(function ($q) use ($log) {
+                                $q->where('notes', $log->filename)
+                                    ->orWhereNull('notes');
+                            });
+                    }
+
+                    $totalDeletedRecords += $query->delete();
                 }
                 $log->delete();
             }
@@ -447,23 +655,50 @@ class GlobalFinanceController extends Controller
     /**
      * Hapus riwayat import / sinkronisasi beserta data finansial terkait.
      */
-    public function deleteIngestionLog(int $id): RedirectResponse
+    public function deleteIngestionLog(Request $request, int $id): RedirectResponse
     {
+        if (! ($request->user()?->canAccessSyncMenu() ?? true)) {
+            abort(403, 'Akses Ditolak.');
+        }
+
         $log = GlobalIngestionLog::findOrFail($id);
+
+        if (! ($request->user()?->canAccessBusinessUnit($log->business_unit_code) ?? false)) {
+            abort(403, 'Akses Ditolak: Anda tidak memiliki wewenang untuk menghapus log unit ini.');
+        }
+
         $businessUnit = strtoupper($log->business_unit_code);
         $filename = $log->filename;
         $deletedRecordsCount = 0;
 
         DB::transaction(function () use ($log, &$deletedRecordsCount) {
-            if ($log->source_type === 'excel_upload') {
-                $deletedRecordsCount = GlobalFinancialRecord::query()
-                    ->where('business_unit_code', $log->business_unit_code)
-                    ->where('source_type', 'excel_upload')
-                    ->where(function ($q) use ($log) {
-                        $q->where('notes', $log->filename)
-                            ->orWhereNull('notes');
-                    })
-                    ->delete();
+            $hasOtherActiveLog = GlobalIngestionLog::where('id', '!=', $log->id)
+                ->where('business_unit_code', $log->business_unit_code)
+                ->where('filename', $log->filename)
+                ->where('status', 'success')
+                ->exists();
+
+            if (! $hasOtherActiveLog && $log->source_type === 'excel_upload') {
+                $query = GlobalFinancialRecord::query()
+                    ->where('source_type', 'excel_upload');
+
+                if ($log->business_unit_code === 'abc') {
+                    $query->whereIn('business_unit_code', ['abc', 'ccod'])
+                        ->where(function ($q) use ($log) {
+                            $q->where('notes', $log->filename)
+                                ->orWhere('notes', 'like', '%PL Depo ABC%')
+                                ->orWhere('notes', 'like', '%PL Depo CCOD%')
+                                ->orWhere('notes', 'like', '%Neraca Gabungan PT MJSM%');
+                        });
+                } else {
+                    $query->where('business_unit_code', $log->business_unit_code)
+                        ->where(function ($q) use ($log) {
+                            $q->where('notes', $log->filename)
+                                ->orWhereNull('notes');
+                        });
+                }
+
+                $deletedRecordsCount = $query->delete();
             }
 
             $log->delete();
@@ -495,5 +730,239 @@ class GlobalFinanceController extends Controller
         $statusText = $isActive ? 'diaktifkan' : 'dinonaktifkan';
 
         return back()->with('success', "Aturan eliminasi intercompany berhasil {$statusText} dan seluruh periode telah disinkronkan ulang.");
+    }
+
+    /**
+     * Simpan / Tambah / Update data akun finansial manual (Hanya unit bersumber Excel).
+     */
+    public function saveFinancialRecord(Request $request): JsonResponse|RedirectResponse
+    {
+        $validated = $request->validate([
+            'id' => 'nullable|integer|exists:global_financial_records,id',
+            'business_unit_code' => 'required|string|exists:global_business_units,code',
+            'period' => 'required|date',
+            'report_type' => 'required|string|in:pnl,balance_sheet',
+            'category' => 'required|string|max:50',
+            'account_name' => 'required|string|max:255',
+            'account_code' => 'nullable|string|max:50',
+            'amount' => 'required|numeric',
+            'entity_code' => 'nullable|string|max:50',
+            'sub_category' => 'nullable|string|max:100',
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        $buCode = $validated['business_unit_code'];
+        if (! ($request->user()?->canEditBusinessUnit($buCode) ?? false)) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Akses ditolak: Unit usaha ini bersumber dari database otomatis atau Anda tidak memiliki izin edit.',
+                ], 403);
+            }
+
+            return back()->with('error', 'Akses ditolak: Unit usaha ini bersumber dari database otomatis atau Anda tidak memiliki izin edit.');
+        }
+
+        $formattedPeriod = Carbon::parse($validated['period'])->startOfMonth()->format('Y-m-d');
+
+        if (! empty($validated['id'])) {
+            $record = GlobalFinancialRecord::findOrFail($validated['id']);
+            if (! ($request->user()?->canEditBusinessUnit($record->business_unit_code) ?? false)) {
+                abort(403, 'Akses ditolak.');
+            }
+
+            if ($record->source_type !== 'manual') {
+                $msg = 'Akun ini berasal dari data resmi (upload Excel atau database sync) dan terkunci. Tidak dapat diedit secara manual.';
+                if ($request->expectsJson()) {
+                    return response()->json(['success' => false, 'message' => $msg], 403);
+                }
+
+                return back()->with('error', $msg);
+            }
+
+            $record->update([
+                'amount' => $validated['amount'],
+                'account_name' => trim($validated['account_name']),
+                'account_code' => $validated['account_code'] ?? $record->account_code,
+                'category' => $validated['category'] ?? $record->category,
+                'sub_category' => $validated['sub_category'] ?? $record->sub_category,
+                'notes' => $validated['notes'] ?? $record->notes,
+                'status' => 'active',
+            ]);
+        } else {
+            $entityCode = $validated['entity_code'] ?? null;
+            if (! $entityCode) {
+                $bu = GlobalBusinessUnit::with('entities')->where('code', $buCode)->first();
+                $entityCode = $bu?->entities->first()?->code ?? strtoupper($buCode);
+            }
+
+            $record = GlobalFinancialRecord::updateOrCreate(
+                [
+                    'business_unit_code' => $buCode,
+                    'entity_code' => $entityCode,
+                    'period' => $formattedPeriod,
+                    'report_type' => $validated['report_type'],
+                    'category' => $validated['category'],
+                    'account_name' => trim($validated['account_name']),
+                ],
+                [
+                    'account_code' => $validated['account_code'] ?? null,
+                    'amount' => $validated['amount'],
+                    'sub_category' => $validated['sub_category'] ?? null,
+                    'source_type' => 'manual',
+                    'status' => 'active',
+                    'notes' => $validated['notes'] ?? 'Input manual staff FA',
+                ]
+            );
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Akun finansial berhasil disimpan.',
+                'record' => $record,
+            ]);
+        }
+
+        return back()->with('success', "Akun '{$record->account_name}' berhasil disimpan.");
+    }
+
+    /**
+     * Hapus baris data akun finansial manual.
+     */
+    public function deleteFinancialRecord(Request $request, int $id): JsonResponse|RedirectResponse
+    {
+        $record = GlobalFinancialRecord::findOrFail($id);
+
+        if (! ($request->user()?->canEditBusinessUnit($record->business_unit_code) ?? false)) {
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Akses ditolak.'], 403);
+            }
+
+            return back()->with('error', 'Akses ditolak.');
+        }
+
+        if ($record->source_type !== 'manual') {
+            $msg = 'Akun ini berasal dari data resmi (upload Excel atau database sync) dan terkunci. Tidak dapat dihapus per baris.';
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => $msg], 403);
+            }
+
+            return back()->with('error', $msg);
+        }
+
+        $accName = $record->account_name;
+        $record->delete();
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Akun '{$accName}' berhasil dihapus.",
+            ]);
+        }
+
+        return back()->with('success', "Akun '{$accName}' berhasil dihapus.");
+    }
+
+    /**
+     * Simpan / Perbarui status penutupan buku (closing) dan catatan periode.
+     */
+    public function savePeriodNote(Request $request): JsonResponse|RedirectResponse
+    {
+        $user = $request->user();
+        if (! ($user?->canEditPeriodNotes() ?? false)) {
+            $msg = 'Akses ditolak: Akun Anda hanya memiliki hak akses untuk melihat catatan.';
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => $msg], 403);
+            }
+
+            return back()->with('error', $msg);
+        }
+
+        $validated = $request->validate([
+            'period' => 'required|date',
+            'business_unit_code' => 'nullable|string',
+            'report_type' => 'required|in:all,pnl,balance_sheet',
+            'closing_status' => 'required|in:unclosed,closed,draft',
+            'notes' => 'nullable|string|max:5000',
+        ]);
+
+        $buCode = $validated['business_unit_code'] ?: 'all';
+        if ($buCode !== 'all' && ! ($user?->canEditBusinessUnit($buCode) ?? true)) {
+            $msg = 'Akses ditolak: Anda tidak memiliki wewenang untuk mengubah catatan unit ini.';
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => $msg], 403);
+            }
+
+            return back()->with('error', $msg);
+        }
+
+        $periodDate = Carbon::parse($validated['period'])->format('Y-m-d');
+        $note = GlobalPeriodNote::whereDate('period', $periodDate)
+            ->where('business_unit_code', $buCode)
+            ->where('report_type', $validated['report_type'])
+            ->first();
+
+        if (! $note) {
+            $note = new GlobalPeriodNote;
+            $note->period = $periodDate;
+            $note->business_unit_code = $buCode;
+            $note->report_type = $validated['report_type'];
+        }
+
+        $note->closing_status = $validated['closing_status'];
+        $note->notes = $validated['notes'];
+        $note->user_id = $user?->id;
+        $note->user_name = $user?->name ?? 'Pengguna';
+        $note->save();
+
+        $statusLabel = $note->closing_status_label;
+        $msg = "Catatan & status closing periode ({$statusLabel}) berhasil disimpan.";
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $msg,
+                'note' => $note,
+            ]);
+        }
+
+        return back()->with('success', $msg);
+    }
+
+    /**
+     * Hapus catatan closing periode dan kembalikan ke default strip (-).
+     */
+    public function deletePeriodNote(Request $request, int $id): JsonResponse|RedirectResponse
+    {
+        $user = $request->user();
+        if (! ($user?->canEditPeriodNotes() ?? false)) {
+            $msg = 'Akses ditolak: Akun Anda hanya memiliki hak akses untuk melihat catatan.';
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => $msg], 403);
+            }
+
+            return back()->with('error', $msg);
+        }
+
+        $note = GlobalPeriodNote::findOrFail($id);
+
+        if ($note->business_unit_code !== 'all' && ! ($user?->canEditBusinessUnit($note->business_unit_code) ?? true)) {
+            $msg = 'Akses ditolak: Anda tidak memiliki wewenang untuk menghapus catatan unit ini.';
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => $msg], 403);
+            }
+
+            return back()->with('error', $msg);
+        }
+
+        $note->delete();
+        $msg = 'Catatan periode berhasil dihapus dan dikembalikan ke default (-).';
+
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true, 'message' => $msg]);
+        }
+
+        return back()->with('success', $msg);
     }
 }

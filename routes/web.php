@@ -25,6 +25,10 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/sync/logs/bulk-delete', [GlobalFinanceController::class, 'bulkDeleteIngestionLogs'])->name('finance.sync.bulk-delete');
     Route::delete('/sync/log/{id}', [GlobalFinanceController::class, 'deleteIngestionLog'])->name('finance.sync.delete-log');
 
+    // Input & Edit Manual Transaksi Finansial (Hanya Unit Excel yang Diizinkan)
+    Route::post('/records/save', [GlobalFinanceController::class, 'saveFinancialRecord'])->name('finance.records.save');
+    Route::delete('/records/{id}', [GlobalFinanceController::class, 'deleteFinancialRecord'])->name('finance.records.delete');
+
     // Intercompany Elimination Routes
     Route::post('/eliminations/sync', [GlobalFinanceController::class, 'syncEliminations'])->name('finance.eliminations.sync');
     Route::post('/eliminations/rules/{id}/toggle', [GlobalFinanceController::class, 'toggleEliminationRule'])->name('finance.eliminations.rules.toggle');
@@ -37,4 +41,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/master/units/{unitId}/entities', [MasterBusinessUnitController::class, 'storeEntity'])->name('finance.master.entities.store');
     Route::delete('/master/entities/{id}', [MasterBusinessUnitController::class, 'destroyEntity'])->name('finance.master.entities.destroy');
     Route::get('/master/units/{code}/template', [MasterBusinessUnitController::class, 'downloadTemplate'])->name('finance.master.units.template');
+
+    // Catatan Status Closing Periode (PnL & Neraca)
+    Route::post('/period-note/save', [GlobalFinanceController::class, 'savePeriodNote'])->name('finance.period-note.save');
+    Route::delete('/period-note/{id}', [GlobalFinanceController::class, 'deletePeriodNote'])->name('finance.period-note.delete');
 });

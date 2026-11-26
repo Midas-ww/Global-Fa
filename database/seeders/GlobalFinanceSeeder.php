@@ -135,6 +135,58 @@ class GlobalFinanceSeeder extends Seeder
             ]
         );
 
+        $buAbc = GlobalBusinessUnit::updateOrCreate(
+            ['code' => 'abc'],
+            [
+                'name' => 'ABC',
+                'description' => 'PT Mekar Jaya Sentosa Multikarya - Jasa dan distribusi Heinz ABC.',
+                'icon' => 'shopping-bag',
+                'color' => '#EA580C',
+                'data_source' => 'excel',
+                'sort_order' => 9,
+                'is_active' => true,
+            ]
+        );
+
+        $buCocaCola = GlobalBusinessUnit::updateOrCreate(
+            ['code' => 'cocacola'],
+            [
+                'name' => 'Coca-Cola',
+                'description' => 'Distribusi dan operasional produk Coca-Cola.',
+                'icon' => 'cup-soda',
+                'color' => '#DC2626',
+                'data_source' => 'excel',
+                'sort_order' => 10,
+                'is_active' => true,
+            ]
+        );
+
+        $buSangria = GlobalBusinessUnit::updateOrCreate(
+            ['code' => 'sangria'],
+            [
+                'name' => 'Sangria',
+                'description' => 'Unit Bisnis Sangria.',
+                'icon' => 'coffee',
+                'color' => '#9333EA',
+                'data_source' => 'excel',
+                'sort_order' => 11,
+                'is_active' => true,
+            ]
+        );
+
+        $buMohala = GlobalBusinessUnit::updateOrCreate(
+            ['code' => 'mohala'],
+            [
+                'name' => 'Mohala',
+                'description' => 'Unit Bisnis Mohala.',
+                'icon' => 'sun',
+                'color' => '#F59E0B',
+                'data_source' => 'excel',
+                'sort_order' => 12,
+                'is_active' => true,
+            ]
+        );
+
         // 2. Entities
         $fmcgEntities = [
             ['code' => 'BMG', 'name' => 'Depo Banyumas (BMG)', 'location' => 'Banyumas'],
@@ -383,6 +435,24 @@ class GlobalFinanceSeeder extends Seeder
                     echo 'Kandang Ingested: '.($resKandang['records_inserted'] ?? 0)." records\n";
                 } catch (\Throwable $e) {
                     echo 'Kandang Ingest Warning: '.$e->getMessage()."\n";
+                }
+                break;
+            }
+        }
+
+        $mjsmCcodCandidates = [
+            'D:/Excel Global Fa/PL & BS MJSM+CCOD Jan-Sept 26.xlsx',
+            'D:/BKU MJS/PL & BS MJSM+CCOD Jan-Sept 26.xlsx',
+            storage_path('app/private/imports/PL & BS MJSM+CCOD Jan-Sept 26.xlsx'),
+        ];
+        foreach ($mjsmCcodCandidates as $path) {
+            if (file_exists($path)) {
+                echo "Ingesting MJSM (ABC + CCOD) & Neraca from {$path}...\n";
+                try {
+                    $resMjsm = $excelService->ingestMjsmCcodFile($path);
+                    echo 'MJSM Ingested: '.($resMjsm['records_inserted'] ?? 0)." records\n";
+                } catch (\Throwable $e) {
+                    echo 'MJSM Ingest Warning: '.$e->getMessage()."\n";
                 }
                 break;
             }
