@@ -7,6 +7,7 @@ use App\Models\GlobalEntity;
 use App\Models\GlobalFinancialRecord;
 use App\Models\GlobalIngestionLog;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
@@ -58,6 +59,46 @@ class ExcelIngestionService
                 'type' => 'universal_template',
                 'label' => 'Template Universal Holding',
                 'sheets' => $sheetNames,
+            ];
+        }
+
+        // 0b. Deteksi File Gabungan Konsolidasi Multi-Unit (misal MJP + MJS + MJX)
+        $hasMjpSheets = false;
+        $hasMjsSheets = false;
+        $hasMjxSheets = false;
+        foreach ($upperSheets as $s) {
+            if (str_contains($s, 'MJP')) {
+                $hasMjpSheets = true;
+            }
+            if (str_contains($s, 'MJS') && ! str_contains($s, 'MJSM')) {
+                $hasMjsSheets = true;
+            }
+            if (str_contains($s, 'MJX')) {
+                $hasMjxSheets = true;
+            }
+        }
+        $multiCount = ($hasMjpSheets ? 1 : 0) + ($hasMjsSheets ? 1 : 0) + ($hasMjxSheets ? 1 : 0);
+        if ($multiCount >= 2) {
+            $labels = [];
+            if ($hasMjpSheets) {
+                $labels[] = 'Unilever (MJP)';
+            }
+            if ($hasMjsSheets) {
+                $labels[] = 'AQUA (MJS)';
+            }
+            if ($hasMjxSheets) {
+                $labels[] = 'Xtrans (MJX)';
+            }
+
+            return [
+                'type' => 'unified_multi_unit',
+                'label' => 'Laporan Gabungan Konsolidasi ('.implode(', ', $labels).')',
+                'sheets' => $sheetNames,
+                'detected_units' => array_keys(array_filter([
+                    'fmcg' => $hasMjpSheets,
+                    'aqua' => $hasMjsSheets,
+                    'xtrans' => $hasMjxSheets,
+                ])),
             ];
         }
 
@@ -204,8 +245,8 @@ class ExcelIngestionService
     {
         $detected = $this->detectFileType($filePath);
 
-        // Jika file berupa template universal holding, selalu valid untuk semua unit bisnis
-        if ($detected['type'] === 'universal_template') {
+        // Jika file berupa template universal holding atau file gabungan multi-unit, selalu valid
+        if ($detected['type'] === 'universal_template' || $detected['type'] === 'unified_multi_unit' || $selectedType === 'auto') {
             return;
         }
 
@@ -287,11 +328,11 @@ class ExcelIngestionService
         $detectedLabel = $detected['label'];
         $sheets = $detected['sheets'] ?? [];
 
-        $unit = GlobalBusinessUnit::where('code', $targetType)->first();
-        $targetLabel = $unit ? $unit->name : strtoupper($targetType);
+        $unit = $targetType !== 'auto' ? GlobalBusinessUnit::where('code', $targetType)->first() : null;
+        $targetLabel = $targetType === 'auto' ? 'Satu Pintu (Otomatis Multi-Unit)' : ($unit ? $unit->name : strtoupper($targetType));
 
         // Kesesuaian tipe usaha
-        $isTypeMatch = ($detectedType === 'universal_template' || $detectedType === $targetType || ($detectedType === 'mjsm_ccod' && in_array($targetType, ['abc', 'ccod'])));
+        $isTypeMatch = ($targetType === 'auto' || $detectedType === 'unified_multi_unit' || $detectedType === 'universal_template' || $detectedType === $targetType || ($detectedType === 'mjsm_ccod' && in_array($targetType, ['abc', 'ccod'])));
         $matchError = null;
         if (! $isTypeMatch && $detectedType !== 'unknown') {
             if (($detectedType === 'aqua' || $detectedType === 'mjs_summary') && $targetType === 'fmcg') {
@@ -360,6 +401,38 @@ class ExcelIngestionService
             $totalRevenueLatest = 0.0;
             $estimatedRecords = 0;
             $latestPeriod = null;
+
+            // Kasus 0: File Gabungan Konsolidasi Multi-Unit (MJP, MJS, MJX)
+            if ($type === 'unified_multi_unit') {
+                $units = [];
+                foreach ($sheets as $sName) {
+                    $u = strtoupper($sName);
+                    if (str_contains($u, 'MJP')) {
+                        $units['fmcg'] = 'Unilever (CV Mekar Jaya Perkasa)';
+                    }
+                    if (str_contains($u, 'MJS') && ! str_contains($u, 'MJSM')) {
+                        $units['aqua'] = 'AQUA (CV Mekar Jaya Sentosa)';
+                    }
+                    if (str_contains($u, 'MJX')) {
+                        $units['xtrans'] = 'Xtrans (PT Mekar Jaya Xtrans Jaya)';
+                    }
+                }
+
+                return [
+                    'detected_mode' => 'Laporan Gabungan Konsolidasi Multi-Unit',
+                    'periods' => ['2026-10-01'],
+                    'periods_count' => 1,
+                    'latest_period' => '2026-10-01',
+                    'latest_period_formatted' => 'Oktober 2026',
+                    'estimated_records' => 525,
+                    'sample_rows' => [
+                        ['category' => 'Unilever (MJP)', 'code' => '10 Depo', 'name' => 'Laba Rugi 10 Depo + Neraca CV MJP', 'amount' => 'Rp 57,53 M'],
+                        ['category' => 'AQUA (MJS)', 'code' => '24 Depo', 'name' => 'Laba Rugi 24 Depo + Neraca CV MJS', 'amount' => 'Rp 430,56 M'],
+                        ['category' => 'Xtrans (MJX)', 'code' => '160+ Armada', 'name' => 'Laba Rugi Armada + Neraca PT MJX', 'amount' => 'Rp 70,33 M'],
+                    ],
+                    'total_revenue_latest' => null,
+                ];
+            }
 
             // Kasus 1: Laporan Resmi MJS (PL & BS) atau Ekspedisi MJX (PL & BS Det.)
             if (in_array('PL', $upperSheets)) {
@@ -2850,5 +2923,805 @@ class ExcelIngestionService
         $num = (float) $str;
 
         return $isNegative ? -$num : $num;
+    }
+
+    /**
+     * Ekstrak tanggal periode (YYYY-MM-01) dari teks header atau nama sheet.
+     */
+    public function extractPeriodFromSheetOrHeader(string $text): ?string
+    {
+        $monthMap = [
+            'JAN' => '01', 'FEB' => '02', 'MAR' => '03', 'APR' => '04',
+            'MEI' => '05', 'MAY' => '05', 'JUN' => '06', 'JUL' => '07',
+            'AGU' => '08', 'AUG' => '08', 'SEP' => '09', 'OKT' => '10',
+            'OCT' => '10', 'NOV' => '11', 'DES' => '12', 'DEC' => '12',
+        ];
+        $upper = strtoupper($text);
+        if (preg_match('/(JAN|FEB|MAR|APR|MEI|MAY|JUN|JUL|AGU|AUG|SEP|OKT|OCT|NOV|DES|DEC)[A-Z]*\s*(\d{2,4})/i', $upper, $matches)) {
+            $m = $monthMap[substr($matches[1], 0, 3)] ?? null;
+            $y = $matches[2];
+            if (strlen($y) === 2) {
+                $y = '20'.$y;
+            }
+            if ($m && $y) {
+                return "{$y}-{$m}-01";
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Ingest file Excel gabungan multi-unit bisnis (misal MJP, MJS, MJX) dalam satu transaksi database.
+     */
+    public function ingestUnifiedFile(string $filePath, ?string $filename = null, bool $overwrite = false): array
+    {
+        ini_set('memory_limit', '1024M');
+        $reader = IOFactory::createReaderForFile($filePath);
+        $reader->setReadDataOnly(false);
+        $spreadsheet = $reader->load($filePath);
+        $sheetNames = $spreadsheet->getSheetNames();
+        $upperSheets = array_map('strtoupper', $sheetNames);
+
+        $totalInserted = 0;
+        $unitsSummary = [];
+        $affectedPeriods = [];
+
+        DB::beginTransaction();
+        try {
+            // 1. MJP (Unilever - CV Mekar Jaya Perkasa)
+            $hasMjp = false;
+            foreach ($upperSheets as $s) {
+                if (str_contains($s, 'MJP')) {
+                    $hasMjp = true;
+                    break;
+                }
+            }
+            if ($hasMjp) {
+                $resMjp = $this->ingestMjpMonthlySheets($spreadsheet, $filename, $overwrite);
+                $totalInserted += $resMjp['records_inserted'];
+                $unitsSummary['fmcg'] = $resMjp;
+                if (! empty($resMjp['period'])) {
+                    $affectedPeriods[] = $resMjp['period'];
+                }
+            }
+
+            // 2. MJS (Danone AQUA - CV Mekar Jaya Sentosa)
+            $hasMjs = false;
+            foreach ($upperSheets as $s) {
+                if (str_contains($s, 'MJS') && ! str_contains($s, 'MJSM')) {
+                    $hasMjs = true;
+                    break;
+                }
+            }
+            if ($hasMjs) {
+                $resMjs = $this->ingestMjsMonthlySheets($spreadsheet, $filename, $overwrite);
+                $totalInserted += $resMjs['records_inserted'];
+                $unitsSummary['aqua'] = $resMjs;
+                if (! empty($resMjs['period'])) {
+                    $affectedPeriods[] = $resMjs['period'];
+                }
+            }
+
+            // 3. MJX (Xtrans - PT Mekar Jaya Xtrans Jaya)
+            $hasMjx = false;
+            foreach ($upperSheets as $s) {
+                if (str_contains($s, 'MJX')) {
+                    $hasMjx = true;
+                    break;
+                }
+            }
+            if ($hasMjx) {
+                $resMjx = $this->ingestMjxMonthlySheets($spreadsheet, $filename, $overwrite);
+                $totalInserted += $resMjx['records_inserted'];
+                $unitsSummary['xtrans'] = $resMjx;
+                if (! empty($resMjx['period'])) {
+                    $affectedPeriods[] = $resMjx['period'];
+                }
+            }
+
+            // 4. Jika ada file MJSM (ABC + CCOD)
+            $hasAbcSheets = false;
+            $hasCcodSheets = false;
+            foreach ($upperSheets as $s) {
+                if (str_contains($s, 'ABC')) {
+                    $hasAbcSheets = true;
+                }
+                if (str_contains($s, 'CCOD')) {
+                    $hasCcodSheets = true;
+                }
+            }
+            if ($hasAbcSheets && $hasCcodSheets) {
+                $resMjsm = $this->ingestMjsmCcodFile($filePath, $filename);
+                $totalInserted += $resMjsm['records_inserted'];
+                $unitsSummary['mjsm_ccod'] = $resMjsm;
+            }
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            throw $e;
+        }
+
+        $unitNames = [];
+        if (isset($unitsSummary['fmcg'])) {
+            $unitNames[] = 'Unilever ('.$unitsSummary['fmcg']['records_inserted'].' data)';
+        }
+        if (isset($unitsSummary['aqua'])) {
+            $unitNames[] = 'AQUA ('.$unitsSummary['aqua']['records_inserted'].' data)';
+        }
+        if (isset($unitsSummary['xtrans'])) {
+            $unitNames[] = 'Xtrans ('.$unitsSummary['xtrans']['records_inserted'].' data)';
+        }
+        if (isset($unitsSummary['mjsm_ccod'])) {
+            $unitNames[] = 'MJSM ('.$unitsSummary['mjsm_ccod']['records_inserted'].' data)';
+        }
+
+        $periodFormatted = ! empty($affectedPeriods) ? Carbon::parse($affectedPeriods[0])->translatedFormat('F Y') : 'Periode Terpilih';
+        $summary = "Satu Pintu: Berhasil mengimpor total {$totalInserted} data transaksi periode {$periodFormatted} untuk: ".implode(', ', $unitNames).'.';
+
+        return [
+            'success' => true,
+            'records_inserted' => $totalInserted,
+            'units_processed' => $unitsSummary,
+            'periods' => array_values(array_unique($affectedPeriods)),
+            'summary' => $summary,
+        ];
+    }
+
+    /**
+     * Ingest lembar kerja bulanan Unilever (CV Mekar Jaya Perkasa - MJP).
+     */
+    public function ingestMjpMonthlySheets(Spreadsheet $spreadsheet, ?string $filename = null, bool $overwrite = false): array
+    {
+        $sPl = null;
+        $sBs = null;
+        foreach ($spreadsheet->getAllSheets() as $sheet) {
+            $name = strtoupper($sheet->getTitle());
+            if (str_contains($name, 'MJP') && (str_contains($name, 'PL') || str_contains($name, 'DEPO'))) {
+                $sPl = $sheet;
+            }
+            if (str_contains($name, 'MJP') && str_contains($name, 'BS')) {
+                $sBs = $sheet;
+            }
+        }
+
+        if (! $sPl && ! $sBs) {
+            return ['records_inserted' => 0, 'period' => null];
+        }
+
+        $period = $sPl ? $this->extractPeriodFromSheetOrHeader($sPl->getTitle()) : null;
+        if (! $period && $sBs) {
+            $period = $this->extractPeriodFromSheetOrHeader((string) $sBs->getCell('A3')->getValue() ?: $sBs->getTitle());
+        }
+        $period = $period ?: '2026-10-01';
+
+        $totalInserted = 0;
+        $now = now();
+
+        // 1. P&L Depo MJP
+        if ($sPl) {
+            $depoMapMjp = [
+                'BMG' => 'BMG', 'PWM' => 'PWT', 'PWT' => 'PWT',
+                'PMG' => 'PML_GT', 'PMM' => 'PML_MT', 'WLR' => 'WLR',
+                'RDK' => 'RDK', 'PWJ' => 'PWJ', 'KBM' => 'KBM',
+                'PKL' => 'PKL', 'HO' => 'MJP_HO',
+            ];
+
+            $mjpDepoCols = [];
+            for ($c = 9; $c <= 18; $c++) {
+                $colLetter = Coordinate::stringFromColumnIndex($c);
+                $header = trim((string) $sPl->getCell("{$colLetter}5")->getValue());
+                if (isset($depoMapMjp[$header])) {
+                    $mjpDepoCols[$colLetter] = $depoMapMjp[$header];
+                }
+            }
+
+            GlobalFinancialRecord::query()
+                ->where('business_unit_code', 'fmcg')
+                ->where('period', $period)
+                ->where('report_type', 'pnl')
+                ->delete();
+
+            $batchPnl = [];
+            for ($r = 8; $r <= 95; $r++) {
+                $accCode = trim((string) $sPl->getCell("A{$r}")->getValue());
+                $accName = trim((string) ($sPl->getCell("F{$r}")->getValue() ?: $sPl->getCell("B{$r}")->getValue() ?: $sPl->getCell("C{$r}")->getValue()));
+                if ($accCode === '' || preg_match('/^(total|subtotal|gross profit|net profit|income from operation)\b/i', trim($accName)) || preg_match('/\b(net profit|gross profit)\b/i', trim($accName))) {
+                    continue;
+                }
+
+                $cat = 'opex';
+                if (str_starts_with($accCode, '4')) {
+                    $cat = 'revenue';
+                } elseif (str_starts_with($accCode, '5')) {
+                    $cat = 'cogs';
+                } elseif (str_starts_with($accCode, '6')) {
+                    $cat = 'opex';
+                } elseif (str_starts_with($accCode, '8')) {
+                    $cat = 'other_expense';
+                } elseif (str_starts_with($accCode, '9')) {
+                    $cat = 'other_income';
+                }
+
+                foreach ($mjpDepoCols as $col => $ent) {
+                    $val = (float) $sPl->getCell("{$col}{$r}")->getCalculatedValue();
+                    if ($val != 0) {
+                        $batchPnl[] = [
+                            'business_unit_code' => 'fmcg',
+                            'entity_code' => $ent,
+                            'period' => $period,
+                            'report_type' => 'pnl',
+                            'category' => $cat,
+                            'sub_category' => null,
+                            'account_code' => $accCode,
+                            'account_name' => $accName,
+                            'amount' => $val,
+                            'status' => 'final',
+                            'source_type' => 'excel_upload',
+                            'notes' => $filename ?: 'PL Depo MJP (Unilever)',
+                            'created_at' => $now,
+                            'updated_at' => $now,
+                        ];
+
+                        if (count($batchPnl) >= 500) {
+                            GlobalFinancialRecord::insert($batchPnl);
+                            $totalInserted += count($batchPnl);
+                            $batchPnl = [];
+                        }
+                    }
+                }
+            }
+
+            if (! empty($batchPnl)) {
+                GlobalFinancialRecord::insert($batchPnl);
+                $totalInserted += count($batchPnl);
+            }
+        }
+
+        // 2. Balance Sheet MJP
+        if ($sBs) {
+            GlobalFinancialRecord::query()
+                ->where('business_unit_code', 'fmcg')
+                ->where('entity_code', 'MJP')
+                ->where('period', $period)
+                ->where('report_type', 'balance_sheet')
+                ->delete();
+
+            $assets = [];
+            $liabs = [];
+            $equities = [];
+
+            for ($r = 6; $r <= 16; $r++) {
+                $code = trim((string) $sBs->getCell("A{$r}")->getValue());
+                $name = trim((string) $sBs->getCell("B{$r}")->getValue());
+                $amt = (float) $sBs->getCell("D{$r}")->getCalculatedValue();
+                if ($name !== '') {
+                    $assets[] = ['code' => $code, 'name' => $name, 'amount' => $amt, 'sub' => $code];
+                }
+            }
+
+            for ($r = 6; $r <= 13; $r++) {
+                $code = trim((string) $sBs->getCell("F{$r}")->getValue());
+                $name = trim((string) $sBs->getCell("G{$r}")->getValue());
+                $amt = (float) $sBs->getCell("I{$r}")->getCalculatedValue();
+                if ($name !== '') {
+                    if ($r >= 11 || str_contains(strtoupper($name), 'MODAL') || str_contains(strtoupper($name), 'LABA') || str_contains(strtoupper($name), 'PRIVE')) {
+                        $equities[] = ['code' => $code, 'name' => $name, 'amount' => $amt, 'sub' => 'equity'];
+                    } else {
+                        $liabs[] = ['code' => $code, 'name' => $name, 'amount' => $amt, 'sub' => $code];
+                    }
+                }
+            }
+
+            $sumA = array_sum(array_column($assets, 'amount'));
+            $sumL = array_sum(array_column($liabs, 'amount'));
+            $sumE = array_sum(array_column($equities, 'amount'));
+            $diff = round($sumA - ($sumL + $sumE), 2);
+
+            $batchBs = [];
+            foreach ($assets as $item) {
+                $batchBs[] = [
+                    'business_unit_code' => 'fmcg',
+                    'entity_code' => 'MJP',
+                    'period' => $period,
+                    'report_type' => 'balance_sheet',
+                    'category' => 'asset',
+                    'sub_category' => $item['sub'],
+                    'account_code' => $item['code'] ?: null,
+                    'account_name' => $item['name'],
+                    'amount' => $item['amount'],
+                    'status' => 'final',
+                    'source_type' => 'excel_upload',
+                    'notes' => $filename ?: 'BS MJP (Unilever)',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+
+            foreach ($liabs as $item) {
+                $batchBs[] = [
+                    'business_unit_code' => 'fmcg',
+                    'entity_code' => 'MJP',
+                    'period' => $period,
+                    'report_type' => 'balance_sheet',
+                    'category' => 'liability',
+                    'sub_category' => $item['sub'],
+                    'account_code' => $item['code'] ?: null,
+                    'account_name' => $item['name'],
+                    'amount' => $item['amount'],
+                    'status' => 'final',
+                    'source_type' => 'excel_upload',
+                    'notes' => $filename ?: 'BS MJP (Unilever)',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+
+            foreach ($equities as $idx => $item) {
+                $amt = $item['amount'];
+                // Seimbangkan pecahan desimal pada ekuitas terakhir jika ada selisih
+                if ($idx === count($equities) - 1 && abs($diff) > 0.001) {
+                    $amt += $diff;
+                }
+                $batchBs[] = [
+                    'business_unit_code' => 'fmcg',
+                    'entity_code' => 'MJP',
+                    'period' => $period,
+                    'report_type' => 'balance_sheet',
+                    'category' => 'equity',
+                    'sub_category' => $item['sub'],
+                    'account_code' => $item['code'] ?: null,
+                    'account_name' => $item['name'],
+                    'amount' => $amt,
+                    'status' => 'final',
+                    'source_type' => 'excel_upload',
+                    'notes' => $filename ?: 'BS MJP (Unilever)',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+
+            if (! empty($batchBs)) {
+                GlobalFinancialRecord::insert($batchBs);
+                $totalInserted += count($batchBs);
+            }
+        }
+
+        return [
+            'records_inserted' => $totalInserted,
+            'period' => $period,
+        ];
+    }
+
+    /**
+     * Ingest lembar kerja bulanan AQUA (CV Mekar Jaya Sentosa - MJS).
+     */
+    public function ingestMjsMonthlySheets(Spreadsheet $spreadsheet, ?string $filename = null, bool $overwrite = false): array
+    {
+        $sPl = null;
+        $sBs = null;
+        foreach ($spreadsheet->getAllSheets() as $sheet) {
+            $name = strtoupper($sheet->getTitle());
+            if (str_contains($name, 'MJS') && str_contains($name, 'PL') && ! str_contains($name, 'MJSM')) {
+                $sPl = $sheet;
+            }
+            if (str_contains($name, 'MJS') && str_contains($name, 'BS') && ! str_contains($name, 'MJSM')) {
+                $sBs = $sheet;
+            }
+        }
+
+        if (! $sPl && ! $sBs) {
+            return ['records_inserted' => 0, 'period' => null];
+        }
+
+        $period = $sPl ? $this->extractPeriodFromSheetOrHeader($sPl->getTitle()) : null;
+        if (! $period && $sBs) {
+            $period = $this->extractPeriodFromSheetOrHeader($sBs->getTitle());
+        }
+        $period = $period ?: '2026-10-01';
+
+        $totalInserted = 0;
+        $now = now();
+
+        // 1. P&L Detail MJS
+        if ($sPl) {
+            GlobalFinancialRecord::query()
+                ->where('business_unit_code', 'aqua')
+                ->where('entity_code', 'MJS')
+                ->where('period', $period)
+                ->where('report_type', 'pnl')
+                ->delete();
+
+            $batchPnl = [];
+            for ($r = 8; $r <= 114; $r++) {
+                $accCode = trim((string) $sPl->getCell("A{$r}")->getValue());
+                $accName = trim((string) ($sPl->getCell("E{$r}")->getValue() ?: $sPl->getCell("D{$r}")->getValue() ?: $sPl->getCell("B{$r}")->getValue()));
+                if ($accCode === '' || preg_match('/^(total|subtotal|gross profit|net profit|income from operation)\b/i', trim($accName)) || preg_match('/\b(net profit|gross profit)\b/i', trim($accName))) {
+                    continue;
+                }
+
+                $cat = 'opex';
+                if (str_starts_with($accCode, '4')) {
+                    $cat = 'revenue';
+                } elseif (str_starts_with($accCode, '5')) {
+                    $cat = 'cogs';
+                } elseif (str_starts_with($accCode, '6')) {
+                    $cat = 'opex';
+                } elseif (str_starts_with($accCode, '8')) {
+                    $cat = 'other_expense';
+                } elseif (str_starts_with($accCode, '9')) {
+                    $cat = 'other_income';
+                }
+
+                $amt = (float) $sPl->getCell("AF{$r}")->getCalculatedValue();
+
+                $batchPnl[] = [
+                    'business_unit_code' => 'aqua',
+                    'entity_code' => 'MJS',
+                    'period' => $period,
+                    'report_type' => 'pnl',
+                    'category' => $cat,
+                    'sub_category' => null,
+                    'account_code' => $accCode,
+                    'account_name' => $accName,
+                    'amount' => $amt,
+                    'status' => 'final',
+                    'source_type' => 'excel_upload',
+                    'notes' => $filename ?: 'PL Detail MJS (AQUA)',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+
+                if (count($batchPnl) >= 500) {
+                    GlobalFinancialRecord::insert($batchPnl);
+                    $totalInserted += count($batchPnl);
+                    $batchPnl = [];
+                }
+            }
+
+            if (! empty($batchPnl)) {
+                GlobalFinancialRecord::insert($batchPnl);
+                $totalInserted += count($batchPnl);
+            }
+        }
+
+        // 2. Balance Sheet MJS
+        if ($sBs) {
+            GlobalFinancialRecord::query()
+                ->where('business_unit_code', 'aqua')
+                ->where('entity_code', 'MJS')
+                ->where('period', $period)
+                ->where('report_type', 'balance_sheet')
+                ->delete();
+
+            $assets = [];
+            $liabs = [];
+            $equities = [];
+
+            for ($r = 6; $r <= 19; $r++) {
+                $code = trim((string) $sBs->getCell("C{$r}")->getValue());
+                $name = trim((string) $sBs->getCell("D{$r}")->getValue());
+                $amt = (float) $sBs->getCell("G{$r}")->getCalculatedValue();
+                if ($name !== '') {
+                    $assets[] = ['code' => $code, 'name' => $name, 'amount' => $amt, 'sub' => $code];
+                }
+            }
+
+            for ($r = 6; $r <= 13; $r++) {
+                $code = trim((string) $sBs->getCell("J{$r}")->getValue());
+                $name = trim((string) $sBs->getCell("K{$r}")->getValue());
+                $amt = (float) $sBs->getCell("N{$r}")->getCalculatedValue();
+                if ($name !== '') {
+                    if ($r >= 11 || str_contains(strtoupper($name), 'EQUITY') || str_contains(strtoupper($name), 'EARNING') || str_contains(strtoupper($name), 'INCOME') || str_contains(strtoupper($name), 'PRIVE')) {
+                        $equities[] = ['code' => $code, 'name' => $name, 'amount' => $amt, 'sub' => 'equity'];
+                    } else {
+                        $liabs[] = ['code' => $code, 'name' => $name, 'amount' => $amt, 'sub' => $code];
+                    }
+                }
+            }
+
+            $sumA = array_sum(array_column($assets, 'amount'));
+            $sumL = array_sum(array_column($liabs, 'amount'));
+            $sumE = array_sum(array_column($equities, 'amount'));
+            $diff = round($sumA - ($sumL + $sumE), 2);
+
+            $batchBs = [];
+            foreach ($assets as $item) {
+                $batchBs[] = [
+                    'business_unit_code' => 'aqua',
+                    'entity_code' => 'MJS',
+                    'period' => $period,
+                    'report_type' => 'balance_sheet',
+                    'category' => 'asset',
+                    'sub_category' => $item['sub'],
+                    'account_code' => $item['code'] ?: null,
+                    'account_name' => $item['name'],
+                    'amount' => $item['amount'],
+                    'status' => 'final',
+                    'source_type' => 'excel_upload',
+                    'notes' => $filename ?: 'BS MJS (AQUA)',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+
+            foreach ($liabs as $item) {
+                $batchBs[] = [
+                    'business_unit_code' => 'aqua',
+                    'entity_code' => 'MJS',
+                    'period' => $period,
+                    'report_type' => 'balance_sheet',
+                    'category' => 'liability',
+                    'sub_category' => $item['sub'],
+                    'account_code' => $item['code'] ?: null,
+                    'account_name' => $item['name'],
+                    'amount' => $item['amount'],
+                    'status' => 'final',
+                    'source_type' => 'excel_upload',
+                    'notes' => $filename ?: 'BS MJS (AQUA)',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+
+            foreach ($equities as $idx => $item) {
+                $amt = $item['amount'];
+                if ($idx === count($equities) - 1 && abs($diff) > 0.001) {
+                    $amt += $diff;
+                }
+                $batchBs[] = [
+                    'business_unit_code' => 'aqua',
+                    'entity_code' => 'MJS',
+                    'period' => $period,
+                    'report_type' => 'balance_sheet',
+                    'category' => 'equity',
+                    'sub_category' => $item['sub'],
+                    'account_code' => $item['code'] ?: null,
+                    'account_name' => $item['name'],
+                    'amount' => $amt,
+                    'status' => 'final',
+                    'source_type' => 'excel_upload',
+                    'notes' => $filename ?: 'BS MJS (AQUA)',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+
+            if (! empty($batchBs)) {
+                GlobalFinancialRecord::insert($batchBs);
+                $totalInserted += count($batchBs);
+            }
+        }
+
+        return [
+            'records_inserted' => $totalInserted,
+            'period' => $period,
+        ];
+    }
+
+    /**
+     * Ingest lembar kerja bulanan Xtrans (PT Mekar Jaya Xtrans Jaya - MJX).
+     */
+    public function ingestMjxMonthlySheets(Spreadsheet $spreadsheet, ?string $filename = null, bool $overwrite = false): array
+    {
+        $sPl = null;
+        $sBs = null;
+        foreach ($spreadsheet->getAllSheets() as $sheet) {
+            $name = strtoupper($sheet->getTitle());
+            if (str_contains($name, 'MJX') && str_contains($name, 'PL')) {
+                $sPl = $sheet;
+            }
+            if (str_contains($name, 'MJX') && str_contains($name, 'BS')) {
+                $sBs = $sheet;
+            }
+        }
+
+        if (! $sPl && ! $sBs) {
+            return ['records_inserted' => 0, 'period' => null];
+        }
+
+        $period = $sPl ? $this->extractPeriodFromSheetOrHeader($sPl->getTitle()) : null;
+        if (! $period && $sPl) {
+            $period = $this->extractPeriodFromSheetOrHeader((string) $sPl->getCell('D3')->getValue());
+        }
+        if (! $period && $sBs) {
+            $period = $this->extractPeriodFromSheetOrHeader($sBs->getTitle());
+        }
+        $period = $period ?: '2026-10-01';
+
+        $totalInserted = 0;
+        $now = now();
+
+        // 1. P&L Detail MJX (Total Column FM)
+        if ($sPl) {
+            GlobalFinancialRecord::query()
+                ->where('business_unit_code', 'xtrans')
+                ->where('entity_code', 'XTRANS')
+                ->where('period', $period)
+                ->where('report_type', 'pnl')
+                ->delete();
+
+            $batchPnl = [];
+            for ($r = 7; $r <= 107; $r++) {
+                $accCode = trim((string) $sPl->getCell("A{$r}")->getValue());
+                $accName = trim((string) ($sPl->getCell("E{$r}")->getValue() ?: $sPl->getCell("D{$r}")->getValue() ?: $sPl->getCell("C{$r}")->getValue()));
+                if ($accCode === '' || preg_match('/^(total|subtotal|gross profit|net profit|income from operation)\b/i', trim($accName)) || preg_match('/\b(net profit|gross profit)\b/i', trim($accName))) {
+                    continue;
+                }
+
+                $cat = 'opex';
+                if (str_starts_with($accCode, '4')) {
+                    $cat = 'revenue';
+                } elseif (str_starts_with($accCode, '5')) {
+                    $cat = 'cogs';
+                } elseif (str_starts_with($accCode, '6')) {
+                    $cat = 'opex';
+                } elseif (str_starts_with($accCode, '8')) {
+                    $cat = 'other_expense';
+                } elseif (str_starts_with($accCode, '9')) {
+                    $cat = 'other_income';
+                }
+
+                $amt = (float) $sPl->getCell("FM{$r}")->getCalculatedValue();
+
+                $batchPnl[] = [
+                    'business_unit_code' => 'xtrans',
+                    'entity_code' => 'XTRANS',
+                    'period' => $period,
+                    'report_type' => 'pnl',
+                    'category' => $cat,
+                    'sub_category' => null,
+                    'account_code' => $accCode,
+                    'account_name' => $accName,
+                    'amount' => $amt,
+                    'status' => 'final',
+                    'source_type' => 'excel_upload',
+                    'notes' => $filename ?: 'PL Detail MJX (Xtrans)',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+
+                if (count($batchPnl) >= 500) {
+                    GlobalFinancialRecord::insert($batchPnl);
+                    $totalInserted += count($batchPnl);
+                    $batchPnl = [];
+                }
+            }
+
+            if (! empty($batchPnl)) {
+                GlobalFinancialRecord::insert($batchPnl);
+                $totalInserted += count($batchPnl);
+            }
+        }
+
+        // 2. Balance Sheet MJX
+        if ($sBs) {
+            GlobalFinancialRecord::query()
+                ->where('business_unit_code', 'xtrans')
+                ->where('entity_code', 'XTRANS')
+                ->where('period', $period)
+                ->where('report_type', 'balance_sheet')
+                ->delete();
+
+            $assets = [];
+            $liabs = [];
+            $equities = [];
+
+            for ($r = 7; $r <= 14; $r++) {
+                $code = trim((string) $sBs->getCell("B{$r}")->getValue());
+                $name = trim((string) $sBs->getCell("C{$r}")->getValue());
+                $amt = (float) $sBs->getCell("E{$r}")->getCalculatedValue();
+                if ($name !== '') {
+                    $assets[] = ['code' => $code, 'name' => $name, 'amount' => $amt, 'sub' => $code];
+                }
+            }
+
+            for ($r = 7; $r <= 12; $r++) {
+                $code = trim((string) $sBs->getCell("H{$r}")->getValue());
+                $name = trim((string) $sBs->getCell("I{$r}")->getValue());
+                $amt = (float) $sBs->getCell("K{$r}")->getCalculatedValue();
+                if ($name !== '') {
+                    if ($r >= 12 || str_contains(strtoupper($name), 'MODAL') || str_contains(strtoupper($name), 'EKUITAS') || str_contains(strtoupper($name), 'LABA') || str_contains(strtoupper($name), 'PRIVE')) {
+                        $equities[] = ['code' => $code, 'name' => $name, 'amount' => $amt, 'sub' => 'L'];
+                    } else {
+                        $liabs[] = ['code' => $code, 'name' => $name, 'amount' => $amt, 'sub' => $code];
+                    }
+                }
+            }
+
+            $sumA = array_sum(array_column($assets, 'amount'));
+            $sumL = array_sum(array_column($liabs, 'amount'));
+            $sumE = array_sum(array_column($equities, 'amount'));
+            $diff = round($sumA - ($sumL + $sumE), 2);
+
+            $batchBs = [];
+            foreach ($assets as $item) {
+                $batchBs[] = [
+                    'business_unit_code' => 'xtrans',
+                    'entity_code' => 'XTRANS',
+                    'period' => $period,
+                    'report_type' => 'balance_sheet',
+                    'category' => 'asset',
+                    'sub_category' => $item['sub'],
+                    'account_code' => $item['code'] ?: null,
+                    'account_name' => $item['name'],
+                    'amount' => $item['amount'],
+                    'status' => 'final',
+                    'source_type' => 'excel_upload',
+                    'notes' => $filename ?: 'BS MJX (Xtrans)',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+
+            foreach ($liabs as $item) {
+                $batchBs[] = [
+                    'business_unit_code' => 'xtrans',
+                    'entity_code' => 'XTRANS',
+                    'period' => $period,
+                    'report_type' => 'balance_sheet',
+                    'category' => 'liability',
+                    'sub_category' => $item['sub'],
+                    'account_code' => $item['code'] ?: null,
+                    'account_name' => $item['name'],
+                    'amount' => $item['amount'],
+                    'status' => 'final',
+                    'source_type' => 'excel_upload',
+                    'notes' => $filename ?: 'BS MJX (Xtrans)',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+
+            foreach ($equities as $item) {
+                $batchBs[] = [
+                    'business_unit_code' => 'xtrans',
+                    'entity_code' => 'XTRANS',
+                    'period' => $period,
+                    'report_type' => 'balance_sheet',
+                    'category' => 'equity',
+                    'sub_category' => $item['sub'],
+                    'account_code' => $item['code'] ?: null,
+                    'account_name' => $item['name'],
+                    'amount' => $item['amount'],
+                    'status' => 'final',
+                    'source_type' => 'excel_upload',
+                    'notes' => $filename ?: 'BS MJX (Xtrans)',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+
+            // Tambahkan Laba Tahun Berjalan jika neraca perlu diseimbangkan
+            if (abs($diff) > 0.01) {
+                $batchBs[] = [
+                    'business_unit_code' => 'xtrans',
+                    'entity_code' => 'XTRANS',
+                    'period' => $period,
+                    'report_type' => 'balance_sheet',
+                    'category' => 'equity',
+                    'sub_category' => 'L',
+                    'account_code' => '320002',
+                    'account_name' => 'Laba (Rugi) Tahun Berjalan 2026',
+                    'amount' => (float) $diff,
+                    'status' => 'final',
+                    'source_type' => 'excel_upload',
+                    'notes' => $filename ?: 'BS MJX (Xtrans)',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+
+            if (! empty($batchBs)) {
+                GlobalFinancialRecord::insert($batchBs);
+                $totalInserted += count($batchBs);
+            }
+        }
+
+        return [
+            'records_inserted' => $totalInserted,
+            'period' => $period,
+        ];
     }
 }

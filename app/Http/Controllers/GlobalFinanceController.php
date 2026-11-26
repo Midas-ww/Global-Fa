@@ -395,13 +395,20 @@ class GlobalFinanceController extends Controller
 
         $request->validate([
             'file' => 'required|file|mimes:xlsx,xls,csv|max:51200',
-            'type' => 'required|string|exists:global_business_units,code',
+            'type' => 'required|string',
         ]);
 
         $file = $request->file('file');
         $type = $request->input('type');
 
-        if ($type === 'abc' || $type === 'ccod') {
+        if ($type === 'auto') {
+            if (! ($request->user()?->canAccessSyncMenu() ?? true)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Akses ditolak: Anda tidak memiliki hak akses untuk fitur import data.',
+                ], 403);
+            }
+        } elseif ($type === 'abc' || $type === 'ccod') {
             $hasAccess = ($request->user()?->canAccessBusinessUnit('abc') ?? false) || ($request->user()?->canAccessBusinessUnit('ccod') ?? false);
             if (! $hasAccess) {
                 return response()->json([
@@ -440,14 +447,18 @@ class GlobalFinanceController extends Controller
 
         $request->validate([
             'file' => 'required|file|mimes:xlsx,xls,csv|max:51200', // max 50MB
-            'type' => 'required|string|exists:global_business_units,code',
+            'type' => 'required|string',
             'overwrite' => 'nullable|boolean',
         ]);
 
         $file = $request->file('file');
         $type = $request->input('type');
 
-        if ($type === 'abc' || $type === 'ccod') {
+        if ($type === 'auto') {
+            if (! ($request->user()?->canAccessSyncMenu() ?? true)) {
+                return back()->with('error', 'Akses ditolak: Anda tidak memiliki izin untuk fitur import data.');
+            }
+        } elseif ($type === 'abc' || $type === 'ccod') {
             $hasAccess = ($request->user()?->canEditBusinessUnit('abc') ?? false) || ($request->user()?->canEditBusinessUnit('ccod') ?? false);
             if (! $hasAccess) {
                 return back()->with('error', 'Akses ditolak: Anda tidak memiliki izin edit untuk unit CCOD x ABC.');
@@ -491,7 +502,10 @@ class GlobalFinanceController extends Controller
 
             // 3. Proses Ingest Data
             $detected = $service->detectFileType($fullPath);
-            if ($detected['type'] === 'universal_template') {
+            if (($detected['type'] ?? '') === 'unified_multi_unit' || $type === 'auto') {
+                $res = $service->ingestUnifiedFile($fullPath, $filename, $overwrite);
+                $msg = $res['summary'] ?? "Satu Pintu: Berhasil mengimpor {$res['records_inserted']} data transaksi dari berkas gabungan multi-unit.";
+            } elseif ($detected['type'] === 'universal_template') {
                 $res = $service->ingestUniversalTemplate($fullPath, $type, $filename);
                 $unitName = GlobalBusinessUnit::where('code', $type)->value('name') ?? strtoupper($type);
                 $msg = "{$unitName}: Berhasil mengimpor {$res['records_inserted']} data transaksi via Template Universal Holding.";
@@ -529,17 +543,23 @@ class GlobalFinanceController extends Controller
                 $msg = "{$unitName}: Berhasil mengimpor {$res['records_inserted']} data transaksi finansial.";
             }
 
-            GlobalIngestionLog::create([
-                'business_unit_code' => $type,
-                'source_type' => 'excel_upload',
-                'filename' => $filename,
-                'records_count' => $res['records_inserted'] ?? 0,
-                'status' => 'success',
-                'details' => json_encode(array_merge($res, [
-                    'file_hash' => $fileHash,
-                    'overwrite' => $overwrite,
-                ])),
-            ]);
+            $loggedUnits = ! empty($res['units_processed']) && is_array($res['units_processed'])
+                ? array_keys($res['units_processed'])
+                : [$type];
+
+            foreach ($loggedUnits as $lu) {
+                GlobalIngestionLog::create([
+                    'business_unit_code' => $lu,
+                    'source_type' => 'excel_upload',
+                    'filename' => $filename,
+                    'records_count' => $res['units_processed'][$lu]['records_inserted'] ?? ($res['records_inserted'] ?? 0),
+                    'status' => 'success',
+                    'details' => json_encode(array_merge($res, [
+                        'file_hash' => $fileHash,
+                        'overwrite' => $overwrite,
+                    ])),
+                ]);
+            }
 
             // Otomatis bersihkan data manual draft sebelumnya untuk unit dan periode yang tercover di file ini
             $insertedPeriods = $res['periods'] ?? [];
@@ -547,19 +567,14 @@ class GlobalFinanceController extends Controller
                 $insertedPeriods = [$res['period']];
             }
 
-            $affectedPeriods = ! empty($insertedPeriods) ? $insertedPeriods : GlobalFinancialRecord::query()
-                ->where('business_unit_code', $type)
-                ->where('notes', $filename)
-                ->distinct()
-                ->pluck('period')
-                ->all();
-
-            if (! empty($affectedPeriods)) {
-                GlobalFinancialRecord::query()
-                    ->where('business_unit_code', $type)
-                    ->whereIn('period', $affectedPeriods)
-                    ->where('source_type', 'manual')
-                    ->delete();
+            if (! empty($insertedPeriods)) {
+                foreach ($loggedUnits as $lu) {
+                    GlobalFinancialRecord::query()
+                        ->where('business_unit_code', $lu)
+                        ->whereIn('period', $insertedPeriods)
+                        ->where('source_type', 'manual')
+                        ->delete();
+                }
             }
 
             // Otomatis sinkronkan eliminasi intercompany setelah import baru

@@ -246,6 +246,81 @@
                 </div>
             </div>
 
+            <!-- SMART UNIFIED UPLOADER (PORTAL SATU PINTU) -->
+            <div class="p-5 rounded-2xl border-2 border-dashed border-[#ca8a04]/60 bg-linear-to-br from-[#fefce8]/60 via-white to-amber-50/40 hover:border-[#ca8a04] transition shadow-xs group">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-[#ca8a04] text-white flex items-center justify-center shadow-xs">
+                            <i data-lucide="sparkles" class="w-5 h-5 text-amber-100"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <h4 class="text-sm font-black text-slate-900">Portal Satu Pintu (Smart Multi-Unit Uploader)</h4>
+                                <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    Auto-Detect Semua Format Unit
+                                </span>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-0.5">
+                                Cukup pilih / drop berkas Excel laporan keuangan di sini. Sistem otomatis mendeteksi apakah berkas berisi 1 unit, 3 unit (MJP + MJS + MJX), CCOD x ABC, atau seluruh holding sekaligus.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="formUnifiedUpload" action="{{ route('finance.sync.excel') }}" method="POST" enctype="multipart/form-data" class="space-y-3" onsubmit="return handleExcelImportSubmit(event, this)">
+                    @csrf
+                    <input type="hidden" name="type" value="auto">
+                    <div class="relative flex items-center justify-center border-2 border-dashed border-amber-300 hover:border-[#ca8a04] rounded-xl p-4 bg-white/90 hover:bg-white transition cursor-pointer group/drop">
+                        <input type="file" name="file" accept=".xlsx,.xls,.csv" required class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" onchange="this.nextElementSibling.querySelector('.file-label').innerText = this.files[0]?.name || 'Pilih berkas Excel apa saja...'">
+                        <div class="text-center text-xs text-slate-600 flex flex-col sm:flex-row items-center gap-2 pointer-events-none group-hover/drop:text-[#713f12]">
+                            <i data-lucide="upload-cloud" class="w-5 h-5 text-[#ca8a04]"></i>
+                            <span class="font-bold file-label text-slate-800">Pilih atau Drag & Drop Berkas Excel ke Sini (.xlsx / .xls / .csv)</span>
+                            <span class="text-slate-400 hidden sm:inline">•</span>
+                            <span class="text-[11px] text-slate-400">Otomatis dipilah ke unit masing-masing</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between flex-wrap gap-2 pt-1">
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-2">
+                                <input type="checkbox" name="overwrite" id="overwriteAuto" value="1" class="w-4 h-4 rounded border-slate-300 text-[#ca8a04] focus:ring-[#ca8a04] cursor-pointer">
+                                <label for="overwriteAuto" class="text-xs text-slate-600 font-medium cursor-pointer select-none">
+                                    Timpa data jika file sudah ada (<span class="font-mono text-slate-400">Overwrite</span>)
+                                </label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="px-4 py-2 rounded-xl bg-[#ca8a04] hover:bg-[#a16207] text-white text-xs font-bold transition flex items-center gap-2 shadow-xs cursor-pointer">
+                            <i data-lucide="zap" class="w-4 h-4 text-amber-200"></i>
+                            Cek & Import Otomatis (Satu Pintu)
+                        </button>
+                    </div>
+
+                    <div class="flex items-center gap-1.5 flex-wrap pt-2 text-[11px] text-slate-400 border-t border-amber-100/60">
+                        <span class="font-semibold text-slate-500">Mendukung otomatis:</span>
+                        <span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-medium border border-emerald-200">Unilever (10 Depo)</span>
+                        <span class="px-2 py-0.5 rounded-md bg-sky-50 text-sky-700 font-medium border border-sky-200">Danone AQUA (24 Depo)</span>
+                        <span class="px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 font-medium border border-amber-200">Xtrans (160+ Armada)</span>
+                        <span class="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-medium border border-indigo-200">CCOD x ABC (PT MJSM)</span>
+                        <span class="px-2 py-0.5 rounded-md bg-orange-50 text-orange-700 font-medium border border-orange-200">Kandang (PT MJKB)</span>
+                        <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 font-medium border border-slate-200">Template Universal</span>
+                    </div>
+                </form>
+            </div>
+
+            <!-- PEMISAH OPSI UPLOAD SATUAN -->
+            <div class="relative py-1">
+                <div class="absolute inset-0 flex items-center" aria-hidden="true">
+                    <div class="w-full border-t border-slate-200"></div>
+                </div>
+                <div class="relative flex justify-center text-xs">
+                    <span class="bg-white px-3 text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
+                        Atau Pilih Kotak Upload Per Unit Tertentu (Opsional)
+                    </span>
+                </div>
+            </div>
+
             @if($hasFmcgAccess)
             <!-- UNILEVER (FMCG) 9 DEPO UPLOAD BOX -->
             <div class="p-4 rounded-xl border border-dashed border-emerald-300 bg-[#fbfdfa] hover:bg-white transition">
