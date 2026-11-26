@@ -347,7 +347,7 @@ class UserUnitScopingTest extends TestCase
         $response->assertSee('Kas Operasional Holding FMCG');
     }
 
-    public function test_official_uploaded_records_are_locked_and_cannot_be_edited_or_deleted_manually(): void
+    public function test_authorized_user_can_edit_or_delete_uploaded_records(): void
     {
         $officialRecord = GlobalFinancialRecord::create([
             'business_unit_code' => 'fmcg',
@@ -361,7 +361,7 @@ class UserUnitScopingTest extends TestCase
             'source_type' => 'excel_upload',
         ]);
 
-        // Coba edit nominal akun resmi -> Ditolak / Forbidden
+        // Coba edit nominal akun resmi oleh asmara (yang punya akses edit fmcg) -> Berhasil
         $responseEdit = $this->actingAs($this->asmara)->post(route('finance.records.save'), [
             'id' => $officialRecord->id,
             'business_unit_code' => 'fmcg',
@@ -372,18 +372,17 @@ class UserUnitScopingTest extends TestCase
             'amount' => 99999999,
         ]);
 
-        $this->assertTrue(in_array($responseEdit->getStatusCode(), [302, 403]));
+        $responseEdit->assertSessionHas('success');
         $this->assertDatabaseHas('global_financial_records', [
             'id' => $officialRecord->id,
-            'amount' => 100000000,
-            'account_name' => 'Kas Resmi Upload Excel',
-            'source_type' => 'excel_upload',
+            'amount' => 99999999,
+            'account_name' => 'Kas Resmi Diubah Manual',
         ]);
 
-        // Coba hapus akun resmi -> Ditolak / Forbidden
+        // Coba hapus akun resmi -> Berhasil
         $responseDelete = $this->actingAs($this->asmara)->delete(route('finance.records.delete', ['id' => $officialRecord->id]));
-        $this->assertTrue(in_array($responseDelete->getStatusCode(), [302, 403]));
-        $this->assertDatabaseHas('global_financial_records', ['id' => $officialRecord->id]);
+        $responseDelete->assertSessionHas('success');
+        $this->assertDatabaseMissing('global_financial_records', ['id' => $officialRecord->id]);
     }
 
     public function test_ferdinand_can_access_and_operate_assigned_five_units_and_previous_users_revoked(): void

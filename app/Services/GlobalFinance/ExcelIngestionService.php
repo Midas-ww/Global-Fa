@@ -1152,7 +1152,7 @@ class ExcelIngestionService
                 'icon' => 'shopping-bag',
                 'color' => '#f59e0b',
                 'data_source' => 'excel',
-                'sort_order' => 5,
+                'sort_order' => 11,
                 'is_active' => true,
             ]
         );
@@ -1293,7 +1293,7 @@ class ExcelIngestionService
                 'icon' => 'shopping-bag',
                 'color' => '#EA580C',
                 'data_source' => 'excel',
-                'sort_order' => 9,
+                'sort_order' => 12,
                 'is_active' => true,
             ]
         );
@@ -1306,7 +1306,7 @@ class ExcelIngestionService
                 'icon' => 'shopping-bag',
                 'color' => '#6366F1',
                 'data_source' => 'excel',
-                'sort_order' => 3,
+                'sort_order' => 11,
                 'is_active' => true,
             ]
         );
@@ -1923,7 +1923,7 @@ class ExcelIngestionService
                 'icon' => 'droplet',
                 'color' => '#0284C7',
                 'data_source' => 'excel',
-                'sort_order' => 2,
+                'sort_order' => 1,
                 'is_active' => true,
             ]
         );

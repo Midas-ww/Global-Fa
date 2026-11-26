@@ -235,11 +235,6 @@
                                     </td>
                                     @if($canEdit ?? false)
                                     <td class="py-2.5 text-center">
-                                        @if($isLocked)
-                                        <span class="inline-flex items-center text-slate-300 cursor-not-allowed" title="Data resmi terkunci (Excel / DB Sync). Hapus riwayat atau upload ulang file revisi untuk mengubah.">
-                                            <i data-lucide="lock" class="w-3.5 h-3.5"></i>
-                                        </span>
-                                        @else
                                         <button type="button" 
                                             onclick="openEditBsModal({{ json_encode([
                                                 'id' => $item->id ?? null,
@@ -256,7 +251,6 @@
                                             title="{{ $isSkeleton ? 'Isi Nominal Akun' : 'Edit Nominal Akun' }}">
                                             <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                                         </button>
-                                        @endif
                                     </td>
                                     @endif
                                 </tr>
@@ -323,11 +317,6 @@
                                         </td>
                                         @if($canEdit ?? false)
                                         <td class="py-2 text-center w-12">
-                                            @if($isLocked)
-                                            <span class="inline-flex items-center text-slate-300 cursor-not-allowed" title="Data resmi terkunci (Excel / DB Sync)">
-                                                <i data-lucide="lock" class="w-3.5 h-3.5"></i>
-                                            </span>
-                                            @else
                                             <button type="button" 
                                                 onclick="openEditBsModal({{ json_encode([
                                                     'id' => $item->id ?? null,
@@ -344,7 +333,6 @@
                                                 title="{{ $isSkeleton ? 'Isi Nominal Akun' : 'Edit Nominal Akun' }}">
                                                 <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                                             </button>
-                                            @endif
                                         </td>
                                         @endif
                                     </tr>
@@ -390,11 +378,6 @@
                                         </td>
                                         @if($canEdit ?? false)
                                         <td class="py-2 text-center w-12">
-                                            @if($isLocked)
-                                            <span class="inline-flex items-center text-slate-300 cursor-not-allowed" title="Data resmi terkunci (Excel / DB Sync)">
-                                                <i data-lucide="lock" class="w-3.5 h-3.5"></i>
-                                            </span>
-                                            @else
                                             <button type="button" 
                                                 onclick="openEditBsModal({{ json_encode([
                                                     'id' => $item->id ?? null,
@@ -411,7 +394,6 @@
                                                 title="{{ $isSkeleton ? 'Isi Nominal Akun' : 'Edit Nominal Akun' }}">
                                                 <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                                             </button>
-                                            @endif
                                         </td>
                                         @endif
                                     </tr>

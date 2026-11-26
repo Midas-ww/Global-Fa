@@ -31,19 +31,6 @@ class GlobalFinanceSeeder extends Seeder
         );
 
         // 1. Business Units (Format Bersih & Jelas ala SPBU & IQOS)
-        $buFmcg = GlobalBusinessUnit::updateOrCreate(
-            ['code' => 'fmcg'],
-            [
-                'name' => 'Unilever',
-                'description' => 'CV Mekar Jaya Perkasa - Jaringan distribusi barang konsumen Unilever 9 depo di Jawa Tengah.',
-                'icon' => 'box',
-                'color' => '#059669',
-                'data_source' => 'excel',
-                'sort_order' => 1,
-                'is_active' => true,
-            ]
-        );
-
         $buAqua = GlobalBusinessUnit::updateOrCreate(
             ['code' => 'aqua'],
             [
@@ -52,20 +39,20 @@ class GlobalFinanceSeeder extends Seeder
                 'icon' => 'droplet',
                 'color' => '#0284C7',
                 'data_source' => 'excel',
-                'sort_order' => 2,
+                'sort_order' => 1,
                 'is_active' => true,
             ]
         );
 
-        $buCcod = GlobalBusinessUnit::updateOrCreate(
-            ['code' => 'ccod'],
+        $buFmcg = GlobalBusinessUnit::updateOrCreate(
+            ['code' => 'fmcg'],
             [
-                'name' => 'CCOD',
-                'description' => 'PT Mekar Jaya Sentosa Multikarya - Jasa dan distribusi Cash Collection on Delivery (CCOD) Heinz ABC 12 cabang.',
-                'icon' => 'shopping-bag',
-                'color' => '#6366F1',
+                'name' => 'Unilever',
+                'description' => 'CV Mekar Jaya Perkasa - Jaringan distribusi barang konsumen Unilever 9 depo di Jawa Tengah.',
+                'icon' => 'box',
+                'color' => '#059669',
                 'data_source' => 'excel',
-                'sort_order' => 3,
+                'sort_order' => 2,
                 'is_active' => true,
             ]
         );
@@ -78,7 +65,7 @@ class GlobalFinanceSeeder extends Seeder
                 'icon' => 'truck',
                 'color' => '#2563EB',
                 'data_source' => 'excel',
-                'sort_order' => 4,
+                'sort_order' => 3,
                 'is_active' => true,
             ]
         );
@@ -91,7 +78,7 @@ class GlobalFinanceSeeder extends Seeder
                 'icon' => 'fuel',
                 'color' => '#E11D48',
                 'data_source' => 'database',
-                'sort_order' => 5,
+                'sort_order' => 4,
                 'is_active' => true,
             ]
         );
@@ -104,7 +91,7 @@ class GlobalFinanceSeeder extends Seeder
                 'icon' => 'store',
                 'color' => '#0D9488',
                 'data_source' => 'database',
-                'sort_order' => 6,
+                'sort_order' => 5,
                 'is_active' => true,
             ]
         );
@@ -117,7 +104,7 @@ class GlobalFinanceSeeder extends Seeder
                 'icon' => 'egg',
                 'color' => '#D97706',
                 'data_source' => 'excel',
-                'sort_order' => 7,
+                'sort_order' => 6,
                 'is_active' => true,
             ]
         );
@@ -130,20 +117,7 @@ class GlobalFinanceSeeder extends Seeder
                 'icon' => 'package',
                 'color' => '#7C3AED',
                 'data_source' => 'database',
-                'sort_order' => 8,
-                'is_active' => true,
-            ]
-        );
-
-        $buAbc = GlobalBusinessUnit::updateOrCreate(
-            ['code' => 'abc'],
-            [
-                'name' => 'ABC',
-                'description' => 'PT Mekar Jaya Sentosa Multikarya - Jasa dan distribusi Heinz ABC.',
-                'icon' => 'shopping-bag',
-                'color' => '#EA580C',
-                'data_source' => 'excel',
-                'sort_order' => 9,
+                'sort_order' => 7,
                 'is_active' => true,
             ]
         );
@@ -156,7 +130,7 @@ class GlobalFinanceSeeder extends Seeder
                 'icon' => 'cup-soda',
                 'color' => '#DC2626',
                 'data_source' => 'excel',
-                'sort_order' => 10,
+                'sort_order' => 8,
                 'is_active' => true,
             ]
         );
@@ -169,7 +143,7 @@ class GlobalFinanceSeeder extends Seeder
                 'icon' => 'coffee',
                 'color' => '#9333EA',
                 'data_source' => 'excel',
-                'sort_order' => 11,
+                'sort_order' => 9,
                 'is_active' => true,
             ]
         );
@@ -181,6 +155,32 @@ class GlobalFinanceSeeder extends Seeder
                 'description' => 'Unit Bisnis Mohala.',
                 'icon' => 'sun',
                 'color' => '#F59E0B',
+                'data_source' => 'excel',
+                'sort_order' => 10,
+                'is_active' => true,
+            ]
+        );
+
+        $buCcod = GlobalBusinessUnit::updateOrCreate(
+            ['code' => 'ccod'],
+            [
+                'name' => 'CCOD',
+                'description' => 'PT Mekar Jaya Sentosa Multikarya - Jasa dan distribusi Cash Collection on Delivery (CCOD) Heinz ABC 12 cabang.',
+                'icon' => 'shopping-bag',
+                'color' => '#6366F1',
+                'data_source' => 'excel',
+                'sort_order' => 11,
+                'is_active' => true,
+            ]
+        );
+
+        $buAbc = GlobalBusinessUnit::updateOrCreate(
+            ['code' => 'abc'],
+            [
+                'name' => 'ABC',
+                'description' => 'PT Mekar Jaya Sentosa Multikarya - Jasa dan distribusi Heinz ABC.',
+                'icon' => 'shopping-bag',
+                'color' => '#EA580C',
                 'data_source' => 'excel',
                 'sort_order' => 12,
                 'is_active' => true,

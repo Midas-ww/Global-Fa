@@ -786,15 +786,6 @@ class GlobalFinanceController extends Controller
                 abort(403, 'Akses ditolak.');
             }
 
-            if ($record->source_type !== 'manual') {
-                $msg = 'Akun ini berasal dari data resmi (upload Excel atau database sync) dan terkunci. Tidak dapat diedit secara manual.';
-                if ($request->expectsJson()) {
-                    return response()->json(['success' => false, 'message' => $msg], 403);
-                }
-
-                return back()->with('error', $msg);
-            }
-
             $record->update([
                 'amount' => $validated['amount'],
                 'account_name' => trim($validated['account_name']),
@@ -855,15 +846,6 @@ class GlobalFinanceController extends Controller
             }
 
             return back()->with('error', 'Akses ditolak.');
-        }
-
-        if ($record->source_type !== 'manual') {
-            $msg = 'Akun ini berasal dari data resmi (upload Excel atau database sync) dan terkunci. Tidak dapat dihapus per baris.';
-            if ($request->expectsJson()) {
-                return response()->json(['success' => false, 'message' => $msg], 403);
-            }
-
-            return back()->with('error', $msg);
         }
 
         $accName = $record->account_name;

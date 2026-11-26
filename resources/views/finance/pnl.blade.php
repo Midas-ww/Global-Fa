@@ -442,14 +442,6 @@
                             </td>
                             @if($canEdit ?? false)
                             <td class="p-2.5 text-center">
-                                @php
-                                    $isItemLocked = in_array($item['source_type'] ?? '', ['excel_upload', 'database_sync']);
-                                @endphp
-                                @if($isItemLocked)
-                                <span class="inline-flex items-center text-slate-300 cursor-not-allowed" title="Data resmi terkunci (Excel / DB Sync)">
-                                    <i data-lucide="lock" class="w-3.5 h-3.5"></i>
-                                </span>
-                                @else
                                 <button type="button"
                                     onclick="openEditAccountModal({{ json_encode([
                                         'id' => $item['record_id'] ?? null,
@@ -465,7 +457,6 @@
                                     title="Edit Nominal Akun">
                                     <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                                 </button>
-                                @endif
                             </td>
                             @endif
                         </tr>
