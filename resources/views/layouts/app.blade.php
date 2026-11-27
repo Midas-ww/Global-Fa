@@ -292,7 +292,7 @@
                         @endif
 
                         <!-- Super App Portal Link -->
-                        <a href="{{ route('sso.portal') }}" target="_blank"
+                        <a href="{{ route('sso.portal') }}"
                            title="Portal Mekar Jaya Super App"
                            class="sidebar-item flex items-center text-xs transition-all duration-300 ease-in-out group relative cursor-pointer rounded-tl-[1.2rem] rounded-br-[1.2rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1.2rem] hover:rounded-bl-[1.2rem] hover:rounded-tl-none hover:rounded-br-none text-slate-600 hover:bg-[#fef9c3] hover:text-[#713f12] font-semibold w-full px-3.5 py-2.5 justify-start gap-3">
                             <svg class="w-5 h-5 shrink-0 text-slate-500 group-hover:text-[#ca8a04]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -493,7 +493,6 @@
                         <!-- Portal Link -->
                         <a
                             href="{{ route('sso.portal') }}"
-                            target="_blank"
                             title="Buka Portal Mekar Jaya Super App"
                             class="flex items-center justify-between gap-2.5 px-3.5 py-2.5 text-xs font-semibold text-slate-700 hover:bg-[#fef9c3] hover:text-[#ca8a04] active:bg-[#fef08a] rounded-xl transition-all cursor-pointer group"
                         >
