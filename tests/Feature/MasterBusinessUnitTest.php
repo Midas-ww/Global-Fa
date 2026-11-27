@@ -24,7 +24,7 @@ class MasterBusinessUnitTest extends TestCase
 
     public function test_authenticated_user_can_view_master_units(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['email' => 'superadmin@mjg.com', 'name' => 'Super Admin']);
         GlobalBusinessUnit::create([
             'code' => 'fmcg',
             'name' => 'Distribusi FMCG',
@@ -39,7 +39,7 @@ class MasterBusinessUnitTest extends TestCase
 
     public function test_authenticated_user_can_create_new_business_unit_with_entities(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['email' => 'superadmin@mjg.com', 'name' => 'Super Admin']);
 
         $response = $this->actingAs($user)->post(route('finance.master.units.store'), [
             'code' => 'hotel',
@@ -69,7 +69,7 @@ class MasterBusinessUnitTest extends TestCase
 
     public function test_authenticated_user_can_add_entity_to_unit(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['email' => 'superadmin@mjg.com', 'name' => 'Super Admin']);
         $unit = GlobalBusinessUnit::create([
             'code' => 'fmcg',
             'name' => 'Distribusi FMCG',
@@ -92,7 +92,7 @@ class MasterBusinessUnitTest extends TestCase
 
     public function test_download_template_streams_xlsx(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['email' => 'superadmin@mjg.com', 'name' => 'Super Admin']);
         $unit = GlobalBusinessUnit::create([
             'code' => 'fmcg',
             'name' => 'Distribusi FMCG',
@@ -109,7 +109,7 @@ class MasterBusinessUnitTest extends TestCase
 
     public function test_universal_template_ingestion_for_new_business_unit(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['email' => 'superadmin@mjg.com', 'name' => 'Super Admin']);
         $unit = GlobalBusinessUnit::create([
             'code' => 'cafe',
             'name' => 'PT Mekar Cafe Jaya',

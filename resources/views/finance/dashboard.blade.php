@@ -29,11 +29,13 @@
                 </div>
             </form>
 
+            @if(auth()->user()?->canAccessSyncMenu())
             <a href="{{ route('finance.sync') }}"
                class="px-3.5 py-2 bg-white hover:bg-[#fef9c3]/60 text-slate-700 border border-[#e9e5d6] rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer">
                 <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-slate-500"></i>
                 <span>Data Ingestion</span>
             </a>
+            @endif
             <a href="{{ route('finance.pnl', ['period' => $selectedPeriod]) }}"
                class="px-3.5 py-2 bg-[#ca8a04] hover:bg-[#a16207] text-white font-semibold border border-[#ca8a04] rounded-xl text-xs transition-all flex items-center gap-1.5 shadow-xs cursor-pointer">
                 <i data-lucide="file-text" class="w-3.5 h-3.5 text-white"></i>
@@ -84,9 +86,11 @@
                     </div>
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-500">HPP & Beban Usaha</span>
                 </div>
+                @if(auth()->user()?->canAccessSyncMenu())
                 <a href="{{ route('finance.sync') }}" class="text-slate-400 hover:text-[#ca8a04] p-1 rounded-lg hover:bg-[#fef9c3] transition-colors">
                     <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
                 </a>
+                @endif
             </div>
 
             <div class="mt-4 flex items-baseline justify-between flex-wrap gap-2">

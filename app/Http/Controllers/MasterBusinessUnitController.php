@@ -19,8 +19,8 @@ class MasterBusinessUnitController extends Controller implements HasMiddleware
     {
         return [
             function ($request, $next) {
-                if (! $request->user()?->isUnrestrictedFinance()) {
-                    abort(403, 'Akses ditolak: Master data hanya untuk Direktur dan Administrator.');
+                if (! $request->user()?->canManageMasterUnits()) {
+                    abort(403, 'Akses ditolak: Master data hanya untuk Super Admin.');
                 }
 
                 return $next($request);

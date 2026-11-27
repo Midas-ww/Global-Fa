@@ -270,13 +270,13 @@
                     </nav>
                 </div>
 
+                @if(auth()->user()?->canAccessSyncMenu())
                 <!-- Category 2: OPERASIONAL & SYNC -->
                 <div class="sidebar-group">
                     <div class="px-3 mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 sidebar-label">
-                        {{ auth()->user()?->canAccessSyncMenu() ? 'OPERASIONAL & SYNC' : 'PORTAL & INTEGRASI' }}
+                        OPERASIONAL & SYNC
                     </div>
                     <nav class="space-y-1.5">
-                        @if(auth()->user()?->canAccessSyncMenu())
                         <!-- Riwayat & Import Data Link (Persis IQOS) -->
                         <a href="{{ route('finance.sync') }}"
                            title="Riwayat & Import Data"
@@ -289,29 +289,11 @@
                             </svg>
                             <span class="truncate flex-1 sidebar-label">Riwayat & Import Data</span>
                         </a>
-                        @endif
-
-                        <!-- Super App Portal Link -->
-                        <a href="{{ route('sso.portal') }}"
-                           title="Portal Mekar Jaya Super App"
-                           class="sidebar-item flex items-center text-xs transition-all duration-300 ease-in-out group relative cursor-pointer rounded-tl-[1.2rem] rounded-br-[1.2rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1.2rem] hover:rounded-bl-[1.2rem] hover:rounded-tl-none hover:rounded-br-none text-slate-600 hover:bg-[#fef9c3] hover:text-[#713f12] font-semibold w-full px-3.5 py-2.5 justify-start gap-3">
-                            <svg class="w-5 h-5 shrink-0 text-slate-500 group-hover:text-[#ca8a04]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect width="7" height="7" x="3" y="3" rx="1"></rect>
-                                <rect width="7" height="7" x="14" y="3" rx="1"></rect>
-                                <rect width="7" height="7" x="14" y="14" rx="1"></rect>
-                                <rect width="7" height="7" x="3" y="14" rx="1"></rect>
-                            </svg>
-                            <span class="truncate flex-1 sidebar-label">Portal Super App</span>
-                            <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-[#ca8a04] shrink-0 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                                <polyline points="15 3 21 3 21 9"></polyline>
-                                <line x1="21" y1="3" x2="14" y2="10"></line>
-                            </svg>
-                        </a>
                     </nav>
                 </div>
+                @endif
 
-                @if(auth()->user()?->isUnrestrictedFinance())
+                @if(auth()->user()?->canManageMasterUnits())
                 <!-- Category: PENGATURAN & MASTER -->
                 <div class="sidebar-group">
                     <div class="px-3 mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 sidebar-label">PENGATURAN & MASTER</div>
@@ -338,6 +320,7 @@
                 </div>
                 @endif
 
+                @if(auth()->user()?->isSuperAdmin())
                 <!-- Category 3: KEPATUHAN & STANDAR -->
                 <div class="sidebar-group">
                     <div class="px-3 mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 sidebar-label">KEPATUHAN & RISIKO</div>
@@ -351,6 +334,7 @@
                         </div>
                     </nav>
                 </div>
+                @endif
 
                 <!-- Empty state saat menu tidak ditemukan (Persis SPBU & IQOS) -->
                 <div id="sidebarEmptyState" class="py-8 px-3 text-center hidden">

@@ -84,7 +84,7 @@
                     </div>
                 </form>
 
-                @if($selectedBu === 'spbu')
+                @if($selectedBu === 'spbu' && (auth()->user()?->canAccessSyncMenu() ?? false))
                 <form action="{{ route('finance.sync.database') }}" method="POST" class="inline">
                     @csrf
                     <input type="hidden" name="target" value="spbu">
@@ -435,6 +435,7 @@
             </div>
             
             <div class="flex items-center gap-2.5 flex-wrap">
+                @if(auth()->user()?->canManageEliminations())
                 <button type="button" onclick="document.getElementById('modalEliminationRules').classList.remove('hidden')"
                     class="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer">
                     <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5 text-slate-500"></i>
@@ -450,8 +451,9 @@
                         Sinkronkan Ulang
                     </button>
                 </form>
+                @endif
 
-                <div class="text-xs font-black text-slate-700 pl-2 border-l border-slate-200">
+                <div class="text-xs font-black text-slate-700 {{ auth()->user()?->canManageEliminations() ? 'pl-2 border-l border-slate-200' : '' }}">
                     Total Dieliminasi: <span class="text-rose-600 font-mono font-bold">Rp {{ number_format($bs['eliminations']['total_elimination'], 0, ',', '.') }}</span>
                 </div>
             </div>
@@ -506,6 +508,7 @@
         </div>
     </div>
 
+    @if(auth()->user()?->canManageEliminations())
     <!-- MODAL KELOLA ATURAN ELIMINASI INTERCOMPANY -->
     <div id="modalEliminationRules" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
@@ -565,6 +568,7 @@
             </div>
         </div>
     </div>
+    @endif
     @endif
 
 @if($canEdit ?? false)

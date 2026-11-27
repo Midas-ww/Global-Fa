@@ -171,7 +171,7 @@ class OnBoldSyncTest extends TestCase
     public function test_authenticated_user_can_trigger_onbold_sync_from_controller(): void
     {
         $this->setUpOnBoldConnection();
-        $user = User::factory()->create();
+        $user = User::factory()->create(['email' => 'superadmin@mjg.com', 'name' => 'Super Admin']);
 
         $response = $this->actingAs($user)->post(route('finance.sync.database'), [
             'target' => 'onbold',
@@ -187,7 +187,7 @@ class OnBoldSyncTest extends TestCase
 
     public function test_sync_page_displays_onbold_card(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['email' => 'superadmin@mjg.com', 'name' => 'Super Admin']);
 
         $response = $this->actingAs($user)->get(route('finance.sync'));
 

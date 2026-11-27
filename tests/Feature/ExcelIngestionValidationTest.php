@@ -70,7 +70,7 @@ class ExcelIngestionValidationTest extends TestCase
 
     public function test_it_disallows_import_of_mjs_summary_file_in_preview(): void
     {
-        $user = User::first() ?? User::factory()->create();
+        $user = User::firstWhere('email', 'superadmin@mjg.com') ?? User::factory()->create(['email' => 'superadmin@mjg.com', 'name' => 'Super Admin']);
 
         GlobalBusinessUnit::firstOrCreate(['code' => 'fmcg'], [
             'name' => 'Unilever',
@@ -108,7 +108,7 @@ class ExcelIngestionValidationTest extends TestCase
 
     public function test_it_blocks_duplicate_upload_without_overwrite_flag(): void
     {
-        $user = User::first() ?? User::factory()->create();
+        $user = User::firstWhere('email', 'superadmin@mjg.com') ?? User::factory()->create(['email' => 'superadmin@mjg.com', 'name' => 'Super Admin']);
 
         GlobalBusinessUnit::firstOrCreate(['code' => 'fmcg'], [
             'name' => 'FMCG',
@@ -140,7 +140,7 @@ class ExcelIngestionValidationTest extends TestCase
 
     public function test_it_previews_excel_file_via_api(): void
     {
-        $user = User::first() ?? User::factory()->create();
+        $user = User::firstWhere('email', 'superadmin@mjg.com') ?? User::factory()->create(['email' => 'superadmin@mjg.com', 'name' => 'Super Admin']);
 
         GlobalBusinessUnit::firstOrCreate(['code' => 'fmcg'], [
             'name' => 'FMCG',
@@ -178,7 +178,7 @@ class ExcelIngestionValidationTest extends TestCase
 
     public function test_it_flags_duplicate_in_preview(): void
     {
-        $user = User::first() ?? User::factory()->create();
+        $user = User::firstWhere('email', 'superadmin@mjg.com') ?? User::factory()->create(['email' => 'superadmin@mjg.com', 'name' => 'Super Admin']);
 
         GlobalBusinessUnit::firstOrCreate(['code' => 'fmcg'], [
             'name' => 'FMCG',

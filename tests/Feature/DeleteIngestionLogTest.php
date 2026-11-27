@@ -30,7 +30,7 @@ class DeleteIngestionLogTest extends TestCase
 
     public function test_authenticated_user_can_delete_excel_ingestion_log_and_its_financial_records(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['email' => 'superadmin@mjg.com', 'name' => 'Super Admin']);
 
         $log = GlobalIngestionLog::create([
             'business_unit_code' => 'fmcg',
@@ -88,7 +88,7 @@ class DeleteIngestionLogTest extends TestCase
 
     public function test_authenticated_user_can_delete_database_sync_log(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['email' => 'superadmin@mjg.com', 'name' => 'Super Admin']);
 
         $log = GlobalIngestionLog::create([
             'business_unit_code' => 'spbu',
@@ -124,7 +124,7 @@ class DeleteIngestionLogTest extends TestCase
 
     public function test_authenticated_user_can_bulk_delete_ingestion_logs_and_financial_records(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['email' => 'superadmin@mjg.com', 'name' => 'Super Admin']);
 
         $log1 = GlobalIngestionLog::create([
             'business_unit_code' => 'fmcg',
@@ -202,7 +202,7 @@ class DeleteIngestionLogTest extends TestCase
 
     public function test_bulk_delete_validation_fails_when_no_ids(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['email' => 'superadmin@mjg.com', 'name' => 'Super Admin']);
 
         $response = $this->actingAs($user)->delete(route('finance.sync.bulk-delete'), [
             'ids' => [],

@@ -31,27 +31,23 @@ class GlobalFinanceController extends Controller
     /**
      * Dashboard Konsolidasi Finansial Holding.
      */
-    public function dashboard(Request $request): View|RedirectResponse
+    public function dashboard(Request $request): View
     {
         $user = $request->user();
         $allowedCodes = $user?->accessibleBusinessUnitCodes();
 
-        // Jika user memiliki akses terbatas ke unit tertentu, arahkan langsung ke halaman P&L unit utamanya
-        if ($allowedCodes !== null) {
-            $defaultBu = $allowedCodes[0] ?? null;
-
-            return redirect()->route('finance.pnl', array_filter(['business_unit' => $defaultBu]));
-        }
-
-        $availablePeriods = $this->reportService->getAvailablePeriods();
+        $availablePeriods = $this->reportService->getAvailablePeriods($allowedCodes);
         $selectedPeriod = $request->query('period');
 
         if (! $selectedPeriod || ! in_array($selectedPeriod, $availablePeriods)) {
             $selectedPeriod = $availablePeriods[0] ?? '2026-07-01';
         }
 
-        $summary = $this->reportService->getDashboardSummary($selectedPeriod);
+        $summary = $this->reportService->getDashboardSummary($selectedPeriod, $allowedCodes);
         $businessUnits = $this->reportService->getBusinessUnitsWithEntities();
+        if ($allowedCodes !== null) {
+            $businessUnits = array_values(array_filter($businessUnits, fn ($b) => in_array($b['code'], $allowedCodes)));
+        }
 
         return view('finance.dashboard', [
             'summary' => $summary,
@@ -729,8 +725,12 @@ class GlobalFinanceController extends Controller
     /**
      * Jalankan sinkronisasi ulang seluruh jurnal eliminasi intercompany otomatis.
      */
-    public function syncEliminations(): RedirectResponse
+    public function syncEliminations(Request $request): RedirectResponse
     {
+        if (! ($request->user()?->canManageEliminations() ?? false)) {
+            abort(403, 'Akses ditolak: Hanya Super Admin yang dapat mensinkronkan aturan eliminasi.');
+        }
+
         $res = $this->eliminationService->syncAllPeriods();
 
         return back()->with('success', "Berhasil mensinkronkan {$res['total_eliminations_active']} transaksi eliminasi otomatis di {$res['periods_processed']} periode finansial.");
@@ -739,8 +739,12 @@ class GlobalFinanceController extends Controller
     /**
      * Aktifkan atau nonaktifkan aturan eliminasi intercompany tertentu.
      */
-    public function toggleEliminationRule(int $id): RedirectResponse
+    public function toggleEliminationRule(Request $request, int $id): RedirectResponse
     {
+        if (! ($request->user()?->canManageEliminations() ?? false)) {
+            abort(403, 'Akses ditolak: Hanya Super Admin yang dapat mengubah aturan eliminasi.');
+        }
+
         $isActive = $this->eliminationService->toggleRule($id);
         $statusText = $isActive ? 'diaktifkan' : 'dinonaktifkan';
 
@@ -885,7 +889,11 @@ class GlobalFinanceController extends Controller
         ]);
 
         $buCode = $validated['business_unit_code'] ?: 'all';
-        if ($buCode !== 'all' && ! ($user?->canEditBusinessUnit($buCode) ?? true)) {
+        $hasNoteAccess = $buCode === 'all'
+            ? ($user?->accessibleBusinessUnitCodes() === null)
+            : ($user?->canAccessBusinessUnit($buCode) ?? false);
+
+        if (! $hasNoteAccess) {
             $msg = 'Akses ditolak: Anda tidak memiliki wewenang untuk mengubah catatan unit ini.';
             if ($request->expectsJson()) {
                 return response()->json(['success' => false, 'message' => $msg], 403);
@@ -944,7 +952,11 @@ class GlobalFinanceController extends Controller
 
         $note = GlobalPeriodNote::findOrFail($id);
 
-        if ($note->business_unit_code !== 'all' && ! ($user?->canEditBusinessUnit($note->business_unit_code) ?? true)) {
+        $hasNoteAccess = $note->business_unit_code === 'all'
+            ? ($user?->accessibleBusinessUnitCodes() === null)
+            : ($user?->canAccessBusinessUnit($note->business_unit_code) ?? false);
+
+        if (! $hasNoteAccess) {
             $msg = 'Akses ditolak: Anda tidak memiliki wewenang untuk menghapus catatan unit ini.';
             if ($request->expectsJson()) {
                 return response()->json(['success' => false, 'message' => $msg], 403);

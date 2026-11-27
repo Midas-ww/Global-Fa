@@ -53,10 +53,33 @@ class User extends Authenticatable
     }
 
     /**
-     * Cek apakah user memiliki hak akses tak terbatas (Direktur, Superadmin, Kadiv FA, atau Holding default).
+     * Cek apakah user adalah Super Admin (akses penuh seluruh menu & fitur).
+     */
+    public function isSuperAdmin(): bool
+    {
+        return in_array(strtoupper(trim($this->role)), ['SUPER ADMIN', 'SUPERADMIN'], true);
+    }
+
+    /**
+     * Cek apakah user adalah Direksi / viewer khusus yang hanya bersifat read-only.
+     */
+    public function isReadOnlyExecutive(): bool
+    {
+        return in_array(strtolower($this->email), [
+            'adrian.devianto@mekar-jaya.com',
+            'imelda.daniel@mekar-jaya.com',
+        ], true);
+    }
+
+    /**
+     * Cek apakah user memiliki hak akses seluruh unit bisnis & konsolidasi holding.
      */
     public function isUnrestrictedFinance(): bool
     {
+        if ($this->isSuperAdmin() || $this->isReadOnlyExecutive()) {
+            return true;
+        }
+
         $lowerEmail = strtolower($this->email);
 
         // Jika email terdaftar di mapping pembagian unit atau memiliki pembatasan pivot, user berstatus restricted
@@ -69,21 +92,27 @@ class User extends Authenticatable
 
     /**
      * Cek apakah user diizinkan mengakses menu dan fitur Riwayat & Import Data (/sync).
-     * Pak Adri (adrian.devianto@mekar-jaya.com) dan Cik Imel (imelda.daniel@mekar-jaya.com) tidak diperkenankan mengakses halaman ini.
+     * Hanya Super Admin yang dapat mengakses halaman dan aksi ini.
      */
     public function canAccessSyncMenu(): bool
     {
-        $lowerEmail = strtolower($this->email);
-        $restrictedEmails = [
-            'adrian.devianto@mekar-jaya.com',
-            'imelda.daniel@mekar-jaya.com',
-        ];
+        return $this->isSuperAdmin();
+    }
 
-        if (in_array($lowerEmail, $restrictedEmails, true)) {
-            return false;
-        }
+    /**
+     * Cek apakah user diizinkan mengelola Master Unit Bisnis & Entitas.
+     */
+    public function canManageMasterUnits(): bool
+    {
+        return $this->isSuperAdmin();
+    }
 
-        return true;
+    /**
+     * Cek apakah user diizinkan mengelola & mensinkronkan aturan eliminasi intercompany.
+     */
+    public function canManageEliminations(): bool
+    {
+        return $this->isSuperAdmin();
     }
 
     /**
@@ -93,17 +122,7 @@ class User extends Authenticatable
      */
     public function canEditPeriodNotes(): bool
     {
-        $lowerEmail = strtolower($this->email);
-        $viewOnlyEmails = [
-            'adrian.devianto@mekar-jaya.com',
-            'imelda.daniel@mekar-jaya.com',
-        ];
-
-        if (in_array($lowerEmail, $viewOnlyEmails, true)) {
-            return false;
-        }
-
-        return true;
+        return ! $this->isReadOnlyExecutive();
     }
 
     /**
@@ -154,6 +173,10 @@ class User extends Authenticatable
      */
     public function canEditBusinessUnit(string $code): bool
     {
+        if ($this->isReadOnlyExecutive()) {
+            return false;
+        }
+
         if (! $this->canAccessBusinessUnit($code)) {
             return false;
         }
@@ -163,7 +186,7 @@ class User extends Authenticatable
             return false;
         }
 
-        if ($this->isUnrestrictedFinance()) {
+        if ($this->isSuperAdmin() || $this->isUnrestrictedFinance()) {
             return true;
         }
 

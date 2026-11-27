@@ -54,7 +54,7 @@
                     </div>
                 </form>
 
-                @if($selectedBu === 'spbu')
+                @if($selectedBu === 'spbu' && (auth()->user()?->canAccessSyncMenu() ?? false))
                 <form action="{{ route('finance.sync.database') }}" method="POST" class="inline">
                     @csrf
                     <input type="hidden" name="target" value="spbu">

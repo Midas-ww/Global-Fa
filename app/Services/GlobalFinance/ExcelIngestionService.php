@@ -14,6 +14,7 @@ use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class ExcelIngestionService
 {
@@ -1255,7 +1256,7 @@ class ExcelIngestionService
             ->delete();
 
         // 6. Pola Akun Leaf (Akun rincian transaksi agar tidak terjadi double counting)
-        $validLeafPattern = '/^(4000-01|4000-02|5000(\.0)?$|6000-01-01|6000-01-02|6000-01-03|6000-03-00|7000-0|9000-0|8000-0)/';
+        $validLeafPattern = '/^(4000-01|4000-02|5000(\.0)?$|6000-01-01|6000-01-02|6000-01-03|6000-03-00|6000-03-999|7000-0|9000-0|8000-0)/';
 
         $batch = [];
         $totalRecords = 0;
@@ -1264,6 +1265,10 @@ class ExcelIngestionService
             $row = $rows[$r] ?? [];
             $accCode = trim((string) ($row['A'] ?? ''));
             $desc = trim((string) ($row['B'] ?? ''));
+
+            if ($accCode === '' && stripos($desc, 'HO Cost Prorate') !== false) {
+                $accCode = '6000-03-999';
+            }
 
             if (! preg_match($validLeafPattern, $accCode)) {
                 continue;
@@ -1479,173 +1484,25 @@ class ExcelIngestionService
             // 1. PL ABC
             $sheetABC = $spreadsheet->getSheetByName($cfg['abc']);
             if ($sheetABC) {
-                $colDepoABC = [];
-                $highestColABC = Coordinate::columnIndexFromString($sheetABC->getHighestColumn());
-                for ($c = 1; $c <= $highestColABC; $c++) {
-                    $colLetter = Coordinate::stringFromColumnIndex($c);
-                    $header = trim((string) $sheetABC->getCell("{$colLetter}6")->getValue());
-                    if (isset($abcEntities[$header])) {
-                        $colDepoABC[$colLetter] = $abcEntities[$header]['code'];
-                    }
-                }
-
-                GlobalFinancialRecord::where('business_unit_code', 'abc')
-                    ->where('period', $period)
-                    ->where('report_type', 'pnl')
-                    ->delete();
-
-                $batchABC = [];
-                for ($r = 7; $r <= 112; $r++) {
-                    $accCode = trim((string) $sheetABC->getCell("A{$r}")->getValue());
-                    if ($accCode === '' || stripos($accCode, 'Total') !== false || stripos($accCode, 'GROSS') !== false || stripos($accCode, 'INCOME') !== false || stripos($accCode, 'NET') !== false) {
-                        continue;
-                    }
-
-                    $desc = '';
-                    foreach (['E', 'D', 'C', 'B'] as $cDesc) {
-                        $v = trim((string) $sheetABC->getCell("{$cDesc}{$r}")->getValue());
-                        if ($v !== '') {
-                            $desc = $v;
-                            break;
-                        }
-                    }
-                    if ($desc === '') {
-                        continue;
-                    }
-
-                    $cat = 'opex';
-                    if (str_starts_with($accCode, '4000')) {
-                        $cat = 'revenue';
-                    } elseif (str_starts_with($accCode, '5000') || str_starts_with($accCode, '5001')) {
-                        $cat = 'cogs';
-                    } elseif (str_starts_with($accCode, '6000') || str_starts_with($accCode, '7000')) {
-                        $cat = 'opex';
-                    } elseif (str_starts_with($accCode, '8000')) {
-                        $cat = 'other_expense';
-                    } elseif (str_starts_with($accCode, '9000')) {
-                        $cat = 'other_income';
-                    }
-
-                    foreach ($colDepoABC as $col => $entCode) {
-                        $val = (float) $sheetABC->getCell("{$col}{$r}")->getValue();
-                        if ($val == 0) {
-                            continue;
-                        }
-
-                        $batchABC[] = [
-                            'business_unit_code' => 'abc',
-                            'entity_code' => $entCode,
-                            'period' => $period,
-                            'report_type' => 'pnl',
-                            'category' => $cat,
-                            'sub_category' => null,
-                            'account_code' => $accCode,
-                            'account_name' => $desc,
-                            'amount' => $val,
-                            'status' => 'final',
-                            'source_type' => 'excel_upload',
-                            'notes' => "PL Depo ABC {$mKey} - {$cfg['abc']}",
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ];
-
-                        if (count($batchABC) >= 500) {
-                            GlobalFinancialRecord::insert($batchABC);
-                            $totalRecordsInserted += count($batchABC);
-                            $batchABC = [];
-                        }
-                    }
-                }
-                if (! empty($batchABC)) {
-                    GlobalFinancialRecord::insert($batchABC);
-                    $totalRecordsInserted += count($batchABC);
-                }
+                $totalRecordsInserted += $this->ingestMjsmPnlSheet(
+                    $sheetABC,
+                    'abc',
+                    $abcEntities,
+                    $period,
+                    "PL Depo ABC {$mKey} - {$cfg['abc']}"
+                );
             }
 
             // 2. PL CCOD
             $sheetCCOD = $spreadsheet->getSheetByName($cfg['ccod']);
             if ($sheetCCOD) {
-                $colDepoCCOD = [];
-                $highestColCCOD = Coordinate::columnIndexFromString($sheetCCOD->getHighestColumn());
-                for ($c = 1; $c <= $highestColCCOD; $c++) {
-                    $colLetter = Coordinate::stringFromColumnIndex($c);
-                    $header = trim((string) $sheetCCOD->getCell("{$colLetter}6")->getValue());
-                    if (isset($ccodEntities[$header])) {
-                        $colDepoCCOD[$colLetter] = $ccodEntities[$header]['code'];
-                    }
-                }
-
-                GlobalFinancialRecord::where('business_unit_code', 'ccod')
-                    ->where('period', $period)
-                    ->where('report_type', 'pnl')
-                    ->delete();
-
-                $batchCCOD = [];
-                for ($r = 7; $r <= 112; $r++) {
-                    $accCode = trim((string) $sheetCCOD->getCell("A{$r}")->getValue());
-                    if ($accCode === '' || stripos($accCode, 'Total') !== false || stripos($accCode, 'GROSS') !== false || stripos($accCode, 'INCOME') !== false || stripos($accCode, 'NET') !== false) {
-                        continue;
-                    }
-
-                    $desc = '';
-                    foreach (['E', 'D', 'C', 'B'] as $cDesc) {
-                        $v = trim((string) $sheetCCOD->getCell("{$cDesc}{$r}")->getValue());
-                        if ($v !== '') {
-                            $desc = $v;
-                            break;
-                        }
-                    }
-                    if ($desc === '') {
-                        continue;
-                    }
-
-                    $cat = 'opex';
-                    if (str_starts_with($accCode, '4000')) {
-                        $cat = 'revenue';
-                    } elseif (str_starts_with($accCode, '5000') || str_starts_with($accCode, '5001')) {
-                        $cat = 'cogs';
-                    } elseif (str_starts_with($accCode, '6000') || str_starts_with($accCode, '7000')) {
-                        $cat = 'opex';
-                    } elseif (str_starts_with($accCode, '8000')) {
-                        $cat = 'other_expense';
-                    } elseif (str_starts_with($accCode, '9000')) {
-                        $cat = 'other_income';
-                    }
-
-                    foreach ($colDepoCCOD as $col => $entCode) {
-                        $val = (float) $sheetCCOD->getCell("{$col}{$r}")->getValue();
-                        if ($val == 0) {
-                            continue;
-                        }
-
-                        $batchCCOD[] = [
-                            'business_unit_code' => 'ccod',
-                            'entity_code' => $entCode,
-                            'period' => $period,
-                            'report_type' => 'pnl',
-                            'category' => $cat,
-                            'sub_category' => null,
-                            'account_code' => $accCode,
-                            'account_name' => $desc,
-                            'amount' => $val,
-                            'status' => 'final',
-                            'source_type' => 'excel_upload',
-                            'notes' => "PL Depo CCOD {$mKey} - {$cfg['ccod']}",
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ];
-
-                        if (count($batchCCOD) >= 500) {
-                            GlobalFinancialRecord::insert($batchCCOD);
-                            $totalRecordsInserted += count($batchCCOD);
-                            $batchCCOD = [];
-                        }
-                    }
-                }
-                if (! empty($batchCCOD)) {
-                    GlobalFinancialRecord::insert($batchCCOD);
-                    $totalRecordsInserted += count($batchCCOD);
-                }
+                $totalRecordsInserted += $this->ingestMjsmPnlSheet(
+                    $sheetCCOD,
+                    'ccod',
+                    $ccodEntities,
+                    $period,
+                    "PL Depo CCOD {$mKey} - {$cfg['ccod']}"
+                );
             }
 
             // 3. BS Gabungan PT MJSM
@@ -1726,6 +1583,113 @@ class ExcelIngestionService
             'records_inserted' => $totalRecordsInserted,
             'periods_count' => count($monthMap),
         ];
+    }
+
+    /**
+     * Proses satu sheet P&L bulanan PT MJSM (ABC atau CCOD), termasuk baris HO Cost Prorate tanpa kode akun di kolom A.
+     *
+     * @param  array<string, array{code: string, name: string, location: string}>  $entityMap
+     */
+    protected function ingestMjsmPnlSheet(
+        Worksheet $sheet,
+        string $buCode,
+        array $entityMap,
+        string $period,
+        string $notes
+    ): int {
+        $colDepo = [];
+        $highestCol = Coordinate::columnIndexFromString($sheet->getHighestColumn());
+        for ($c = 1; $c <= $highestCol; $c++) {
+            $colLetter = Coordinate::stringFromColumnIndex($c);
+            $header = trim((string) $sheet->getCell("{$colLetter}6")->getValue());
+            if (isset($entityMap[$header])) {
+                $colDepo[$colLetter] = $entityMap[$header]['code'];
+            }
+        }
+
+        GlobalFinancialRecord::where('business_unit_code', $buCode)
+            ->where('period', $period)
+            ->where('report_type', 'pnl')
+            ->delete();
+
+        $batch = [];
+        $inserted = 0;
+        $now = now();
+
+        for ($r = 7; $r <= 112; $r++) {
+            $accCode = trim((string) $sheet->getCell("A{$r}")->getValue());
+            $descE = trim((string) $sheet->getCell("E{$r}")->getValue());
+
+            if ($accCode === '' && stripos($descE, 'HO Cost Prorate') !== false) {
+                $accCode = '6000-03-999';
+            }
+
+            if ($accCode === '' || stripos($accCode, 'Total') !== false || stripos($accCode, 'GROSS') !== false || stripos($accCode, 'INCOME') !== false || stripos($accCode, 'NET') !== false) {
+                continue;
+            }
+
+            $desc = '';
+            foreach (['E', 'D', 'C', 'B'] as $cDesc) {
+                $v = trim((string) $sheet->getCell("{$cDesc}{$r}")->getValue());
+                if ($v !== '') {
+                    $desc = $v;
+                    break;
+                }
+            }
+            if ($desc === '') {
+                continue;
+            }
+
+            $cat = 'opex';
+            if (str_starts_with($accCode, '4000')) {
+                $cat = 'revenue';
+            } elseif (str_starts_with($accCode, '5000') || str_starts_with($accCode, '5001')) {
+                $cat = 'cogs';
+            } elseif (str_starts_with($accCode, '6000') || str_starts_with($accCode, '7000')) {
+                $cat = 'opex';
+            } elseif (str_starts_with($accCode, '8000')) {
+                $cat = 'other_expense';
+            } elseif (str_starts_with($accCode, '9000')) {
+                $cat = 'other_income';
+            }
+
+            foreach ($colDepo as $col => $entCode) {
+                $val = (float) $sheet->getCell("{$col}{$r}")->getValue();
+                if ($val == 0) {
+                    continue;
+                }
+
+                $batch[] = [
+                    'business_unit_code' => $buCode,
+                    'entity_code' => $entCode,
+                    'period' => $period,
+                    'report_type' => 'pnl',
+                    'category' => $cat,
+                    'sub_category' => null,
+                    'account_code' => $accCode,
+                    'account_name' => $desc,
+                    'amount' => $val,
+                    'status' => 'final',
+                    'source_type' => 'excel_upload',
+                    'notes' => $notes,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+
+                if (count($batch) >= 500) {
+                    GlobalFinancialRecord::insert($batch);
+                    $inserted += count($batch);
+                    $batch = [];
+                }
+            }
+        }
+
+        if (! empty($batch)) {
+            GlobalFinancialRecord::insert($batch);
+            $inserted += count($batch);
+        }
+
+        return $inserted;
     }
 
     /**
@@ -2016,11 +1980,15 @@ class ExcelIngestionService
                 }
             }
 
-            GlobalFinancialRecord::query()
-                ->where('business_unit_code', 'aqua')
-                ->where('entity_code', 'MJS')
-                ->where('report_type', 'pnl')
-                ->delete();
+            $periodsToReplace = array_values(array_unique(array_values($dateColumns)));
+            if (! empty($periodsToReplace)) {
+                GlobalFinancialRecord::query()
+                    ->where('business_unit_code', 'aqua')
+                    ->where('entity_code', 'MJS')
+                    ->where('report_type', 'pnl')
+                    ->whereIn('period', $periodsToReplace)
+                    ->delete();
+            }
 
             $batch = [];
             $currentCategory = 'revenue';
@@ -2100,6 +2068,7 @@ class ExcelIngestionService
                 ->where('business_unit_code', 'aqua')
                 ->where('entity_code', 'MJS')
                 ->where('report_type', 'balance_sheet')
+                ->where('period', $period)
                 ->delete();
 
             $batchBs = [];
@@ -3585,7 +3554,7 @@ class ExcelIngestionService
         $totalInserted = 0;
         $now = now();
 
-        // 1. P&L Detail MJX (Total Column FM)
+        // 1. P&L Detail MJX (Sum kolom armada H s/d sebelum penanda 'x', fallback kolom FM)
         if ($sPl) {
             GlobalFinancialRecord::query()
                 ->where('business_unit_code', 'xtrans')
@@ -3594,11 +3563,38 @@ class ExcelIngestionService
                 ->where('report_type', 'pnl')
                 ->delete();
 
+            $startFleetCol = 8; // Kolom H (HO)
+            $highestColIndex = Coordinate::columnIndexFromString($sPl->getHighestColumn());
+            $endFleetCol = null;
+
+            for ($col = $startFleetCol; $col <= $highestColIndex; $col++) {
+                $colLetter = Coordinate::stringFromColumnIndex($col);
+                $markerR5 = strtolower(trim((string) $sPl->getCell("{$colLetter}5")->getValue()));
+                $markerR7 = strtolower(trim((string) $sPl->getCell("{$colLetter}7")->getValue()));
+                $markerR8 = strtolower(trim((string) $sPl->getCell("{$colLetter}8")->getValue()));
+
+                if ($markerR5 === 'x' || $markerR7 === 'x' || $markerR8 === 'x') {
+                    $endFleetCol = $col - 1;
+                    break;
+                }
+            }
+
+            $highestRow = min((int) $sPl->getHighestRow(), 250);
             $batchPnl = [];
-            for ($r = 7; $r <= 107; $r++) {
+            for ($r = 7; $r <= $highestRow; $r++) {
                 $accCode = trim((string) $sPl->getCell("A{$r}")->getValue());
-                $accName = trim((string) ($sPl->getCell("E{$r}")->getValue() ?: $sPl->getCell("D{$r}")->getValue() ?: $sPl->getCell("C{$r}")->getValue()));
-                if ($accCode === '' || preg_match('/^(total|subtotal|gross profit|net profit|income from operation)\b/i', trim($accName)) || preg_match('/\b(net profit|gross profit)\b/i', trim($accName))) {
+                $accName = trim((string) (
+                    $sPl->getCell("F{$r}")->getValue()
+                    ?: $sPl->getCell("E{$r}")->getValue()
+                    ?: $sPl->getCell("D{$r}")->getValue()
+                    ?: $sPl->getCell("C{$r}")->getValue()
+                ));
+
+                if ($accCode === '' || ! preg_match('/^(4000(?:-\d+)+|5000(?:-\d+)+|6000-\d+-\d+(?:-\d+)*|8000(?:-\d+)+|9000(?:-\d+)+|91000\d)$/', $accCode)) {
+                    continue;
+                }
+
+                if (preg_match('/^(total|subtotal|gross profit|net profit|income from operation)\b/i', $accName) || preg_match('/\b(net profit|gross profit)\b/i', $accName)) {
                     continue;
                 }
 
@@ -3615,7 +3611,25 @@ class ExcelIngestionService
                     $cat = 'other_income';
                 }
 
-                $amt = (float) $sPl->getCell("FM{$r}")->getCalculatedValue();
+                if ($endFleetCol !== null && $endFleetCol >= $startFleetCol) {
+                    $amt = 0.0;
+                    for ($col = $startFleetCol; $col <= $endFleetCol; $col++) {
+                        $colLetter = Coordinate::stringFromColumnIndex($col);
+                        $cell = $sPl->getCell("{$colLetter}{$r}");
+                        $val = $cell->getValue();
+
+                        if (is_numeric($val)) {
+                            $amt += (float) $val;
+                        } elseif (is_string($val) && str_starts_with($val, '=')) {
+                            $calc = $cell->getCalculatedValue();
+                            if (is_numeric($calc)) {
+                                $amt += (float) $calc;
+                            }
+                        }
+                    }
+                } else {
+                    $amt = (float) $sPl->getCell("FM{$r}")->getCalculatedValue();
+                }
 
                 $batchPnl[] = [
                     'business_unit_code' => 'xtrans',

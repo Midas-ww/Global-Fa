@@ -19,7 +19,10 @@ class IntercompanyEliminationTest extends TestCase
     {
         parent::setUp();
 
-        $this->user = User::factory()->create();
+        $this->user = User::factory()->create([
+            'email' => 'superadmin@mjg.com',
+            'name' => 'Super Admin',
+        ]);
     }
 
     public function test_it_seeds_default_rules_and_auto_syncs_eliminations(): void

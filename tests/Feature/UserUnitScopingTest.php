@@ -62,10 +62,10 @@ class UserUnitScopingTest extends TestCase
             ]
         );
 
-        // 1. Unrestricted Admin
+        // 1. Unrestricted Super Admin
         $this->admin = User::firstOrCreate(
-            ['email' => 'admin@mekarjaya.com'],
-            ['name' => 'Admin Holding', 'password' => bcrypt('password')]
+            ['email' => 'superadmin@mjg.com'],
+            ['name' => 'Super Admin', 'password' => bcrypt('password')]
         );
 
         // 2. Asmara (Unilever / fmcg only)
@@ -135,11 +135,18 @@ class UserUnitScopingTest extends TestCase
         $response->assertViewHas('isUnrestricted', false);
     }
 
-    public function test_scoped_user_redirected_from_dashboard_to_pnl(): void
+    public function test_scoped_user_can_view_scoped_dashboard_without_redirect(): void
     {
         $response = $this->actingAs($this->asmara)->get(route('finance.dashboard'));
 
-        $response->assertRedirect(route('finance.pnl', ['business_unit' => 'fmcg']));
+        $response->assertOk();
+        $response->assertSee('Overview');
+        $response->assertSee('Laba Rugi (P&L)', false);
+        $response->assertSee('Neraca Keuangan');
+        $response->assertDontSee('Riwayat & Import Data');
+        $response->assertDontSee('Master Unit Bisnis');
+        $response->assertDontSee('Data Ingestion');
+        $response->assertDontSee('Accounting Standards');
     }
 
     public function test_scoped_user_cannot_access_master_units(): void
@@ -221,7 +228,7 @@ class UserUnitScopingTest extends TestCase
         $this->actingAs($imel)->post(route('finance.sync.excel'), ['type' => 'fmcg'])->assertForbidden();
     }
 
-    public function test_sync_view_only_shows_assigned_unit_ingestion_logs_for_staff(): void
+    public function test_non_superadmin_staff_cannot_access_sync_page_while_superadmin_sees_all_logs(): void
     {
         GlobalIngestionLog::create([
             'business_unit_code' => 'fmcg',
@@ -247,24 +254,17 @@ class UserUnitScopingTest extends TestCase
             'status' => 'success',
         ]);
 
-        // Asmara is assigned to FMCG only
-        $response = $this->actingAs($this->asmara)->get(route('finance.sync'));
+        $this->actingAs($this->asmara)->get(route('finance.sync'))->assertForbidden();
+        $this->actingAs($this->tasya)->get(route('finance.sync'))->assertForbidden();
 
-        $response->assertOk();
-        $response->assertSee('unilever_pnl_test.xlsx');
-        $response->assertDontSee('api_air.shift_sales');
-        $response->assertDontSee('dash_onbold_db.records');
-
-        // Tasya is assigned to On Bold and Coca-Cola
-        $responseTasya = $this->actingAs($this->tasya)->get(route('finance.sync'));
-
-        $responseTasya->assertOk();
-        $responseTasya->assertSee('dash_onbold_db.records');
-        $responseTasya->assertDontSee('unilever_pnl_test.xlsx');
-        $responseTasya->assertDontSee('api_air.shift_sales');
+        $responseAdmin = $this->actingAs($this->admin)->get(route('finance.sync'));
+        $responseAdmin->assertOk();
+        $responseAdmin->assertSee('unilever_pnl_test.xlsx');
+        $responseAdmin->assertSee('api_air.shift_sales');
+        $responseAdmin->assertSee('dash_onbold_db.records');
     }
 
-    public function test_staff_cannot_delete_ingestion_log_of_unassigned_unit(): void
+    public function test_only_superadmin_can_delete_ingestion_log(): void
     {
         $spbuLog = GlobalIngestionLog::create([
             'business_unit_code' => 'spbu',
@@ -274,13 +274,8 @@ class UserUnitScopingTest extends TestCase
             'status' => 'success',
         ]);
 
-        // Asmara (FMCG) tries to delete SPBU log -> Forbidden 403
-        $response = $this->actingAs($this->asmara)->delete(route('finance.sync.delete-log', ['id' => $spbuLog->id]));
-        $response->assertForbidden();
+        $this->actingAs($this->asmara)->delete(route('finance.sync.delete-log', ['id' => $spbuLog->id]))->assertForbidden();
 
-        $this->assertDatabaseHas('global_ingestion_logs', ['id' => $spbuLog->id]);
-
-        // Fransiska (SPBU) tries to delete SPBU log -> Success
         $fransiska = User::firstOrCreate(
             ['email' => 'fransiskalia21@gmail.com'],
             ['name' => 'Fransiska Lia', 'password' => bcrypt('password')]
@@ -290,10 +285,126 @@ class UserUnitScopingTest extends TestCase
             ['can_edit' => true]
         );
 
-        $responseFransiska = $this->actingAs($fransiska)->delete(route('finance.sync.delete-log', ['id' => $spbuLog->id]));
-        $responseFransiska->assertRedirect();
+        $this->actingAs($fransiska)->delete(route('finance.sync.delete-log', ['id' => $spbuLog->id]))->assertForbidden();
+        $this->assertDatabaseHas('global_ingestion_logs', ['id' => $spbuLog->id]);
+
+        $responseAdmin = $this->actingAs($this->admin)->delete(route('finance.sync.delete-log', ['id' => $spbuLog->id]));
+        $responseAdmin->assertRedirect();
 
         $this->assertDatabaseMissing('global_ingestion_logs', ['id' => $spbuLog->id]);
+    }
+
+    public function test_pak_adri_and_bu_imel_are_strictly_read_only_with_three_menus_only(): void
+    {
+        $adri = User::firstOrCreate(
+            ['email' => 'adrian.devianto@mekar-jaya.com'],
+            ['name' => 'Adrian Devianto', 'password' => bcrypt('password')]
+        );
+        $imel = User::firstOrCreate(
+            ['email' => 'imelda.daniel@mekar-jaya.com'],
+            ['name' => 'Imelda Daniel', 'password' => bcrypt('password')]
+        );
+
+        foreach ([$adri, $imel] as $viewer) {
+            $dash = $this->actingAs($viewer)->get(route('finance.dashboard'));
+            $dash->assertOk();
+            $dash->assertSee('Overview');
+            $dash->assertSee('Laba Rugi (P&L)', false);
+            $dash->assertSee('Neraca Keuangan');
+            $dash->assertDontSee('Riwayat & Import Data');
+            $dash->assertDontSee('Master Unit Bisnis');
+            $dash->assertDontSee('Data Ingestion');
+            $dash->assertDontSee('Accounting Standards');
+
+            $pnl = $this->actingAs($viewer)->get(route('finance.pnl', ['business_unit' => 'fmcg']));
+            $pnl->assertOk();
+            $pnl->assertViewHas('canEdit', false);
+            $pnl->assertViewHas('canEditNote', false);
+            $pnl->assertDontSee('+ Isi Catatan Closing');
+            $pnl->assertDontSee('+ Tambah Akun');
+
+            $bs = $this->actingAs($viewer)->get(route('finance.balance-sheet', ['business_unit' => 'fmcg']));
+            $bs->assertOk();
+            $bs->assertViewHas('canEdit', false);
+            $bs->assertViewHas('canEditNote', false);
+            $bs->assertDontSee('Sinkronkan Ulang');
+            $bs->assertDontSee('Kelola Aturan');
+
+            $this->actingAs($viewer)->get(route('finance.sync'))->assertForbidden();
+            $this->actingAs($viewer)->get(route('finance.master.units'))->assertForbidden();
+            $this->actingAs($viewer)->post(route('finance.eliminations.sync'))->assertForbidden();
+            $this->actingAs($viewer)->postJson(route('finance.records.save'), [
+                'business_unit_code' => 'fmcg',
+                'period' => '2026-07-01',
+                'report_type' => 'pnl',
+                'category' => 'revenue',
+                'account_name' => 'Coba Edit Viewer',
+                'amount' => 1000,
+            ])->assertForbidden();
+            $this->actingAs($viewer)->postJson(route('finance.period-note.save'), [
+                'period' => '2026-07-01',
+                'business_unit_code' => 'all',
+                'report_type' => 'pnl',
+                'closing_status' => 'closed',
+                'notes' => 'Coba catatan viewer',
+            ])->assertForbidden();
+        }
+    }
+
+    public function test_other_fa_users_only_see_three_menus_and_can_save_notes_and_accounts(): void
+    {
+        $holdingFa = User::factory()->create([
+            'email' => 'kadiv_fa@mjg.com',
+            'name' => 'Kadiv FA',
+        ]);
+
+        $dash = $this->actingAs($holdingFa)->get(route('finance.dashboard'));
+        $dash->assertOk();
+        $dash->assertSee('Overview');
+        $dash->assertSee('Laba Rugi (P&L)', false);
+        $dash->assertSee('Neraca Keuangan');
+        $dash->assertDontSee('Riwayat & Import Data');
+        $dash->assertDontSee('Master Unit Bisnis');
+        $dash->assertDontSee('Accounting Standards');
+        $dash->assertDontSee('title="Portal Mekar Jaya Super App"', false);
+
+        $this->actingAs($holdingFa)->get(route('finance.sync'))->assertForbidden();
+        $this->actingAs($holdingFa)->get(route('finance.master.units'))->assertForbidden();
+        $this->actingAs($holdingFa)->post(route('finance.eliminations.sync'))->assertForbidden();
+
+        // FA can still save period notes and manual accounts
+        $this->actingAs($holdingFa)->post(route('finance.period-note.save'), [
+            'period' => '2026-07-01',
+            'business_unit_code' => 'fmcg',
+            'report_type' => 'pnl',
+            'closing_status' => 'unclosed',
+            'notes' => 'Catatan Kadiv FA',
+        ])->assertSessionHas('success');
+
+        $this->actingAs($holdingFa)->post(route('finance.records.save'), [
+            'business_unit_code' => 'fmcg',
+            'period' => '2026-07-01',
+            'report_type' => 'pnl',
+            'category' => 'revenue',
+            'account_name' => 'Akun Manual FA',
+            'amount' => 1500000,
+        ])->assertSessionHas('success');
+    }
+
+    public function test_superadmin_can_access_all_menus_and_sidebar_has_no_portal_link(): void
+    {
+        $dash = $this->actingAs($this->admin)->get(route('finance.dashboard'));
+        $dash->assertOk();
+        $dash->assertSee('Overview');
+        $dash->assertSee('Laba Rugi (P&L)', false);
+        $dash->assertSee('Neraca Keuangan');
+        $dash->assertSee('Riwayat & Import Data', false);
+        $dash->assertSee('Master Unit Bisnis');
+        $dash->assertSee('Accounting Standards');
+        $dash->assertDontSee('title="Portal Mekar Jaya Super App"', false);
+
+        $this->actingAs($this->admin)->get(route('finance.sync'))->assertOk();
+        $this->actingAs($this->admin)->get(route('finance.master.units'))->assertOk();
     }
 
     public function test_empty_period_balance_sheet_renders_account_skeleton_with_zero_amounts(): void

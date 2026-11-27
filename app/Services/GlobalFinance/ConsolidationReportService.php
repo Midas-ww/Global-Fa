@@ -15,10 +15,17 @@ class ConsolidationReportService
 
     /**
      * Ambil daftar semua periode yang tersedia dalam database, diurutkan dari terbaru.
+     *
+     * @param  array<string>|null  $allowedBuCodes
      */
-    public function getAvailablePeriods(): array
+    public function getAvailablePeriods(?array $allowedBuCodes = null): array
     {
+        if ($allowedBuCodes !== null && empty($allowedBuCodes)) {
+            return [];
+        }
+
         return GlobalFinancialRecord::query()
+            ->when($allowedBuCodes !== null, fn ($q) => $q->whereIn('business_unit_code', $allowedBuCodes))
             ->select('period')
             ->distinct()
             ->orderBy('period', 'desc')
@@ -44,17 +51,22 @@ class ConsolidationReportService
 
     /**
      * Dashboard Summary Eksekutif untuk periode tertentu.
+     *
+     * @param  array<string>|null  $allowedBuCodes
      */
-    public function getDashboardSummary(?string $period = null): array
+    public function getDashboardSummary(?string $period = null, ?array $allowedBuCodes = null): array
     {
         if (! $period) {
-            $latest = GlobalFinancialRecord::query()->max('period');
+            $latest = GlobalFinancialRecord::query()
+                ->when($allowedBuCodes !== null, fn ($q) => $q->whereIn('business_unit_code', $allowedBuCodes))
+                ->max('period');
             $period = $latest ? Carbon::parse($latest)->format('Y-m-d') : '2026-07-01';
         }
 
         $records = GlobalFinancialRecord::query()
             ->where('period', $period)
             ->where('report_type', 'pnl')
+            ->when($allowedBuCodes !== null, fn ($q) => $q->whereIn('business_unit_code', $allowedBuCodes))
             ->get();
 
         $revTotal = (float) $records->where('category', 'revenue')->sum('amount');
@@ -71,7 +83,11 @@ class ConsolidationReportService
         $opexRatio = $revTotal > 0 ? round(($opexTotal / $revTotal) * 100, 2) : 0;
 
         // Breakdown per Unit Bisnis
-        $bus = GlobalBusinessUnit::with('entities')->where('is_active', true)->orderBy('sort_order')->get();
+        $bus = GlobalBusinessUnit::with('entities')
+            ->where('is_active', true)
+            ->when($allowedBuCodes !== null, fn ($q) => $q->whereIn('code', $allowedBuCodes))
+            ->orderBy('sort_order')
+            ->get();
         $byBusinessUnit = [];
 
         foreach ($bus as $bu) {
@@ -101,6 +117,7 @@ class ConsolidationReportService
         $trendPeriods = GlobalFinancialRecord::query()
             ->where('report_type', 'pnl')
             ->where('period', '<=', $period)
+            ->when($allowedBuCodes !== null, fn ($q) => $q->whereIn('business_unit_code', $allowedBuCodes))
             ->select('period')
             ->distinct()
             ->orderBy('period', 'desc')
@@ -115,6 +132,7 @@ class ConsolidationReportService
             $mRecs = GlobalFinancialRecord::query()
                 ->where('period', $tpStr)
                 ->where('report_type', 'pnl')
+                ->when($allowedBuCodes !== null, fn ($q) => $q->whereIn('business_unit_code', $allowedBuCodes))
                 ->get();
 
             $mRev = (float) $mRecs->where('category', 'revenue')->sum('amount');
