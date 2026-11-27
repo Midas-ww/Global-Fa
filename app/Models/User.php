@@ -79,7 +79,7 @@ class User extends Authenticatable
             'imelda.daniel@mekar-jaya.com',
         ];
 
-        if (in_array($lowerEmail, $restrictedEmails, true) || in_array($this->id, [5, 10], true)) {
+        if (in_array($lowerEmail, $restrictedEmails, true)) {
             return false;
         }
 

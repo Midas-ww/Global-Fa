@@ -18,6 +18,58 @@ use PhpOffice\PhpSpreadsheet\Style\Fill;
 class ExcelIngestionService
 {
     /**
+     * Naikkan batas memori PHP sesuai kapasitas maksimal yang diizinkan server
+     * agar tidak memicu warning saat max_memory_limit server lebih rendah dari target.
+     */
+    protected function ensureMemoryLimit(int $desiredMb = 1024): void
+    {
+        $desiredBytes = $desiredMb * 1024 * 1024;
+        $currentBytes = $this->parseMemoryLimitToBytes(ini_get('memory_limit'));
+
+        if ($currentBytes === -1 || $currentBytes >= $desiredBytes) {
+            return;
+        }
+
+        $maxLimitRaw = ini_get('max_memory_limit');
+        $maxBytes = $maxLimitRaw !== false ? $this->parseMemoryLimitToBytes($maxLimitRaw) : -1;
+        $targetBytes = $maxBytes > 0 ? min($desiredBytes, $maxBytes) : $desiredBytes;
+
+        if ($targetBytes <= $currentBytes) {
+            return;
+        }
+
+        $targetMb = (int) floor($targetBytes / (1024 * 1024));
+        if ($targetMb > 0) {
+            @ini_set('memory_limit', $targetMb.'M');
+        }
+    }
+
+    /**
+     * Konversi nilai konfigurasi memori PHP (misal 512M, 1G, -1) menjadi byte.
+     */
+    protected function parseMemoryLimitToBytes(string|false $value): int
+    {
+        if ($value === false) {
+            return 0;
+        }
+
+        $trimmed = trim($value);
+        if ($trimmed === '' || $trimmed === '-1') {
+            return $trimmed === '-1' ? -1 : 0;
+        }
+
+        $unit = strtolower(substr($trimmed, -1));
+        $number = (int) $trimmed;
+
+        return match ($unit) {
+            'g' => $number * 1024 * 1024 * 1024,
+            'm' => $number * 1024 * 1024,
+            'k' => $number * 1024,
+            default => $number,
+        };
+    }
+
+    /**
      * Deteksi tipe unit bisnis dari file Excel berdasarkan lembar kerja dan teks header.
      *
      * @return array{type: string, label: string, sheets: array<string>}
@@ -314,7 +366,7 @@ class ExcelIngestionService
      */
     public function previewFile(string $filePath, string $targetType, ?string $filename = null): array
     {
-        ini_set('memory_limit', '1024M');
+        $this->ensureMemoryLimit();
         $filename = $filename ?: basename($filePath);
         $fileSize = file_exists($filePath) ? filesize($filePath) : 0;
         $fileHash = file_exists($filePath) ? hash_file('sha256', $filePath) : '';
@@ -929,7 +981,7 @@ class ExcelIngestionService
      */
     public function ingestFmcgFile(string $filePath, ?string $filename = null): array
     {
-        ini_set('memory_limit', '1024M');
+        $this->ensureMemoryLimit();
         $spreadsheet = IOFactory::load($filePath);
         $sheetNames = $spreadsheet->getSheetNames();
         $upperSheets = array_map('strtoupper', $sheetNames);
@@ -1104,7 +1156,7 @@ class ExcelIngestionService
      */
     public function ingestFmcgDepartmentFile($sheetOrRows, ?string $filename = null): array
     {
-        ini_set('memory_limit', '1024M');
+        $this->ensureMemoryLimit();
         if (is_string($sheetOrRows)) {
             $spreadsheet = IOFactory::load($sheetOrRows);
             $sheet = $spreadsheet->getActiveSheet();
@@ -1283,7 +1335,7 @@ class ExcelIngestionService
      */
     public function ingestMjsmCcodFile(string $filePath, ?string $filename = null): array
     {
-        ini_set('memory_limit', '1024M');
+        $this->ensureMemoryLimit();
 
         $buAbc = GlobalBusinessUnit::updateOrCreate(
             ['code' => 'abc'],
@@ -1681,7 +1733,7 @@ class ExcelIngestionService
      */
     public function ingestXtransFile(string $filePath, ?string $filename = null): array
     {
-        ini_set('memory_limit', '1024M');
+        $this->ensureMemoryLimit();
         $spreadsheet = IOFactory::load($filePath);
         $totalRecords = 0;
 
@@ -1901,7 +1953,7 @@ class ExcelIngestionService
      */
     public function ingestAquaFile(string $filePath, ?string $filename = null): array
     {
-        ini_set('memory_limit', '1024M');
+        $this->ensureMemoryLimit();
         $spreadsheet = IOFactory::load($filePath);
 
         return $this->ingestAquaSummaryFile($spreadsheet, $filename);
@@ -2135,7 +2187,7 @@ class ExcelIngestionService
      */
     public function ingestUniversalTemplate(string $filePath, string $businessUnitCode, ?string $filename = null): array
     {
-        ini_set('memory_limit', '1024M');
+        $this->ensureMemoryLimit();
         $spreadsheet = IOFactory::load($filePath);
 
         $sheet = $spreadsheet->getSheetByName('Laporan Keuangan') ?? $spreadsheet->getSheet(0);
@@ -2435,7 +2487,7 @@ class ExcelIngestionService
      */
     public function ingestKandangFile(string $filePath, ?string $filename = null): array
     {
-        ini_set('memory_limit', '1024M');
+        $this->ensureMemoryLimit();
         $filename = $filename ?: basename($filePath);
         $spreadsheet = IOFactory::load($filePath);
 
@@ -2956,7 +3008,7 @@ class ExcelIngestionService
      */
     public function ingestUnifiedFile(string $filePath, ?string $filename = null, bool $overwrite = false): array
     {
-        ini_set('memory_limit', '1024M');
+        $this->ensureMemoryLimit();
         $reader = IOFactory::createReaderForFile($filePath);
         $reader->setReadDataOnly(false);
         $spreadsheet = $reader->load($filePath);
