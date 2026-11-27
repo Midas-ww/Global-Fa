@@ -36,11 +36,14 @@ class GlobalFinanceController extends Controller
         $user = $request->user();
         $allowedCodes = $user?->accessibleBusinessUnitCodes();
 
-        $availablePeriods = $this->reportService->getAvailablePeriods($allowedCodes);
-        $selectedPeriod = $request->query('period');
+        $availablePeriods = $this->reportService->getAvailablePeriods($allowedCodes, 'pnl');
+        if (empty($availablePeriods)) {
+            $availablePeriods = $this->reportService->getAvailablePeriods($allowedCodes);
+        }
 
-        if (! $selectedPeriod || ! in_array($selectedPeriod, $availablePeriods)) {
-            $selectedPeriod = $availablePeriods[0] ?? '2026-07-01';
+        $selectedPeriod = $request->query('period');
+        if (! $selectedPeriod || ! in_array($selectedPeriod, $availablePeriods, true)) {
+            $selectedPeriod = $this->reportService->getDefaultConsolidatedPeriod($availablePeriods, $allowedCodes, 'pnl') ?? '2026-07-01';
         }
 
         $summary = $this->reportService->getDashboardSummary($selectedPeriod, $allowedCodes);
@@ -66,13 +69,6 @@ class GlobalFinanceController extends Controller
         $allowedCodes = $user?->accessibleBusinessUnitCodes();
         $isUnrestricted = $user?->isUnrestrictedFinance() ?? true;
 
-        $availablePeriods = $this->reportService->getAvailablePeriods();
-        $selectedPeriod = $request->query('period');
-
-        if (! $selectedPeriod || ! in_array($selectedPeriod, $availablePeriods)) {
-            $selectedPeriod = $availablePeriods[0] ?? '2026-07-01';
-        }
-
         $selectedBu = $request->query('business_unit');
         $selectedEntity = $request->query('entity');
 
@@ -85,9 +81,25 @@ class GlobalFinanceController extends Controller
             }
         }
 
+        $availablePeriods = $this->reportService->getAvailablePeriods($allowedCodes, 'pnl', $selectedBu ?: null);
+        if (empty($availablePeriods) && $selectedBu) {
+            $availablePeriods = $this->reportService->getAvailablePeriods($allowedCodes, 'pnl');
+        }
+        if (empty($availablePeriods)) {
+            $availablePeriods = $this->reportService->getAvailablePeriods($allowedCodes);
+        }
+
+        $selectedPeriod = $request->query('period');
+        if (! $selectedPeriod || ! in_array($selectedPeriod, $availablePeriods, true)) {
+            $selectedPeriod = $selectedBu
+                ? ($availablePeriods[0] ?? '2026-07-01')
+                : ($this->reportService->getDefaultConsolidatedPeriod($availablePeriods, $allowedCodes, 'pnl') ?? '2026-07-01');
+        }
+
         $canEdit = $selectedBu ? ($user?->canEditBusinessUnit($selectedBu) ?? false) : false;
 
         $pnlData = $this->reportService->getConsolidatedPnl($selectedPeriod, $selectedBu, $selectedEntity);
+        $unitsWithSelectedPeriod = $this->reportService->getUnitsWithPeriod($selectedPeriod, 'pnl', $allowedCodes);
 
         $buCode = $selectedBu ?: 'all';
         $periodDate = Carbon::parse($selectedPeriod)->format('Y-m-d');
@@ -103,6 +115,7 @@ class GlobalFinanceController extends Controller
             'selectedBu' => $selectedBu,
             'selectedEntity' => $selectedEntity,
             'availablePeriods' => $availablePeriods,
+            'unitsWithSelectedPeriod' => $unitsWithSelectedPeriod,
             'businessUnits' => $businessUnits,
             'canEdit' => $canEdit,
             'isUnrestricted' => $isUnrestricted,
@@ -119,13 +132,6 @@ class GlobalFinanceController extends Controller
         $user = $request->user();
         $allowedCodes = $user?->accessibleBusinessUnitCodes();
         $isUnrestricted = $user?->isUnrestrictedFinance() ?? true;
-
-        $availablePeriods = $this->reportService->getAvailablePeriods();
-        $selectedPeriod = $request->query('period');
-
-        if (! $selectedPeriod || ! in_array($selectedPeriod, $availablePeriods)) {
-            $selectedPeriod = $availablePeriods[0] ?? '2026-07-01';
-        }
 
         $selectedBu = $request->query('business_unit');
         $selectedEntity = $request->query('entity');
@@ -158,9 +164,32 @@ class GlobalFinanceController extends Controller
             $businessUnits[] = $bu;
         }
 
+        $availablePeriods = $this->reportService->getAvailablePeriods($allowedCodes, 'balance_sheet', $selectedBu ?: null);
+        if (empty($availablePeriods) && $selectedBu) {
+            $availablePeriods = $this->reportService->getAvailablePeriods($allowedCodes, 'balance_sheet');
+        }
+        if (empty($availablePeriods)) {
+            $availablePeriods = $this->reportService->getAvailablePeriods($allowedCodes);
+        }
+
+        $requestedPeriod = $request->query('period');
+        $isExplicitValidDate = is_string($requestedPeriod) && (bool) preg_match('/^\d{4}-\d{2}-\d{2}$/', $requestedPeriod);
+
+        if ($requestedPeriod && in_array($requestedPeriod, $availablePeriods, true)) {
+            $selectedPeriod = $requestedPeriod;
+        } elseif ($selectedBu && $isExplicitValidDate) {
+            // Tetap izinkan membuka periode kosong secara eksplisit untuk input skeleton Neraca manual
+            $selectedPeriod = $requestedPeriod;
+        } else {
+            $selectedPeriod = $selectedBu
+                ? ($availablePeriods[0] ?? '2026-07-01')
+                : ($this->reportService->getDefaultConsolidatedPeriod($availablePeriods, $allowedCodes, 'balance_sheet') ?? '2026-07-01');
+        }
+
         $canEdit = $selectedBu ? ($user?->canEditBusinessUnit($selectedBu) ?? false) : false;
 
         $balanceSheetData = $this->reportService->getConsolidatedBalanceSheet($selectedPeriod, $selectedBu, $selectedEntity);
+        $unitsWithSelectedPeriod = $this->reportService->getUnitsWithPeriod($selectedPeriod, 'balance_sheet', $allowedCodes);
 
         $hasEntitySpecificBs = false;
         if ($selectedBu && ! empty($businessUnits)) {
@@ -186,6 +215,7 @@ class GlobalFinanceController extends Controller
             'selectedBu' => $selectedBu,
             'selectedEntity' => $selectedEntity,
             'availablePeriods' => $availablePeriods,
+            'unitsWithSelectedPeriod' => $unitsWithSelectedPeriod,
             'businessUnits' => $businessUnits,
             'hasEntitySpecificBs' => $hasEntitySpecificBs,
             'canEdit' => $canEdit,

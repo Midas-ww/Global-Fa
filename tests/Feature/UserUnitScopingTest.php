@@ -580,4 +580,122 @@ class UserUnitScopingTest extends TestCase
         $response->assertSee('Coca-Cola');
         $response->assertSee('belum ada laporan');
     }
+
+    public function test_period_filter_shows_all_months_globally_with_smart_default_and_unit_scoped_periods(): void
+    {
+        GlobalBusinessUnit::firstOrCreate(['code' => 'aqua'], ['name' => 'AQUA', 'data_source' => 'excel', 'is_active' => true, 'sort_order' => 1]);
+        GlobalBusinessUnit::firstOrCreate(['code' => 'xtrans'], ['name' => 'Xtrans', 'data_source' => 'excel', 'is_active' => true, 'sort_order' => 2]);
+
+        GlobalFinancialRecord::insert([
+            // SPBU punya November 2026 (1 unit saja -> bulan berjalan yang masih sepi)
+            [
+                'business_unit_code' => 'spbu',
+                'entity_code' => 'SPBU_44',
+                'period' => '2026-11-01',
+                'report_type' => 'pnl',
+                'category' => 'revenue',
+                'account_code' => '4000-01',
+                'account_name' => 'Penjualan SPBU Nov',
+                'amount' => 100000000,
+                'source_type' => 'database',
+            ],
+            // Oktober 2026 terisi oleh 4 unit (mayoritas: fmcg, aqua, xtrans, spbu)
+            [
+                'business_unit_code' => 'fmcg',
+                'entity_code' => 'MJP',
+                'period' => '2026-10-01',
+                'report_type' => 'pnl',
+                'category' => 'revenue',
+                'account_code' => '4000-01',
+                'account_name' => 'Penjualan FMCG Okt',
+                'amount' => 300000000,
+                'source_type' => 'excel_upload',
+            ],
+            [
+                'business_unit_code' => 'aqua',
+                'entity_code' => 'MJS',
+                'period' => '2026-10-01',
+                'report_type' => 'pnl',
+                'category' => 'revenue',
+                'account_code' => '4000-01',
+                'account_name' => 'Penjualan Aqua Okt',
+                'amount' => 400000000,
+                'source_type' => 'excel_upload',
+            ],
+            [
+                'business_unit_code' => 'xtrans',
+                'entity_code' => 'XTRANS',
+                'period' => '2026-10-01',
+                'report_type' => 'pnl',
+                'category' => 'revenue',
+                'account_code' => '4000-01',
+                'account_name' => 'Penjualan Xtrans Okt',
+                'amount' => 200000000,
+                'source_type' => 'excel_upload',
+            ],
+            [
+                'business_unit_code' => 'spbu',
+                'entity_code' => 'SPBU_44',
+                'period' => '2026-10-01',
+                'report_type' => 'pnl',
+                'category' => 'revenue',
+                'account_code' => '4000-01',
+                'account_name' => 'Penjualan SPBU Okt',
+                'amount' => 150000000,
+                'source_type' => 'database',
+            ],
+            // AQUA juga punya September 2026 (dan Balance Sheet hanya Oktober 2026)
+            [
+                'business_unit_code' => 'aqua',
+                'entity_code' => 'MJS',
+                'period' => '2026-09-01',
+                'report_type' => 'pnl',
+                'category' => 'revenue',
+                'account_code' => '4000-01',
+                'account_name' => 'Penjualan Aqua Sep',
+                'amount' => 350000000,
+                'source_type' => 'excel_upload',
+            ],
+            [
+                'business_unit_code' => 'aqua',
+                'entity_code' => 'MJS',
+                'period' => '2026-10-01',
+                'report_type' => 'balance_sheet',
+                'category' => 'asset',
+                'account_code' => '1101',
+                'account_name' => 'Kas Aqua Okt',
+                'amount' => 500000000,
+                'source_type' => 'excel_upload',
+            ],
+        ]);
+
+        // 1. Overview & Global P&L: dropdown menampilkan semua bulan (termasuk Nov), tapi default mendarat di Okt 2026
+        $dash = $this->actingAs($this->admin)->get(route('finance.dashboard'));
+        $dash->assertOk();
+        $dash->assertViewHas('availablePeriods', ['2026-11-01', '2026-10-01', '2026-09-01']);
+        $dash->assertViewHas('selectedPeriod', '2026-10-01');
+
+        $globalPnl = $this->actingAs($this->admin)->get(route('finance.pnl'));
+        $globalPnl->assertOk();
+        $globalPnl->assertViewHas('availablePeriods', ['2026-11-01', '2026-10-01', '2026-09-01']);
+        $globalPnl->assertViewHas('selectedPeriod', '2026-10-01');
+
+        // 2. Per Unit (AQUA di P&L): dropdown hanya memunculkan bulan milik AQUA (Okt & Sep), default ke Okt
+        $aquaPnl = $this->actingAs($this->admin)->get(route('finance.pnl', ['business_unit' => 'aqua']));
+        $aquaPnl->assertOk();
+        $aquaPnl->assertViewHas('availablePeriods', ['2026-10-01', '2026-09-01']);
+        $aquaPnl->assertViewHas('selectedPeriod', '2026-10-01');
+
+        // 3. Per Unit (SPBU di P&L): dropdown hanya memunculkan Nov & Okt, default ke bulan terbarunya Nov 2026
+        $spbuPnl = $this->actingAs($this->admin)->get(route('finance.pnl', ['business_unit' => 'spbu']));
+        $spbuPnl->assertOk();
+        $spbuPnl->assertViewHas('availablePeriods', ['2026-11-01', '2026-10-01']);
+        $spbuPnl->assertViewHas('selectedPeriod', '2026-11-01');
+
+        // 4. Per Unit di Neraca (AQUA hanya punya Balance Sheet Okt 2026, bukan Sep 2026)
+        $aquaBs = $this->actingAs($this->admin)->get(route('finance.balance-sheet', ['business_unit' => 'aqua']));
+        $aquaBs->assertOk();
+        $aquaBs->assertViewHas('availablePeriods', ['2026-10-01']);
+        $aquaBs->assertViewHas('selectedPeriod', '2026-10-01');
+    }
 }

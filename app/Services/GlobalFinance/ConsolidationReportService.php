@@ -15,23 +15,91 @@ class ConsolidationReportService
 
     /**
      * Ambil daftar semua periode yang tersedia dalam database, diurutkan dari terbaru.
+     * Dapat difilter menurut hak akses unit, tipe laporan, atau unit bisnis spesifik.
      *
      * @param  array<string>|null  $allowedBuCodes
+     * @return array<int, string>
      */
-    public function getAvailablePeriods(?array $allowedBuCodes = null): array
+    public function getAvailablePeriods(?array $allowedBuCodes = null, ?string $reportType = null, ?string $businessUnitCode = null): array
+    {
+        if ($allowedBuCodes !== null && empty($allowedBuCodes)) {
+            return [];
+        }
+
+        if ($businessUnitCode !== null && $allowedBuCodes !== null && ! in_array($businessUnitCode, $allowedBuCodes, true)) {
+            return [];
+        }
+
+        return GlobalFinancialRecord::query()
+            ->when($businessUnitCode !== null, fn ($q) => $q->where('business_unit_code', $businessUnitCode))
+            ->when($businessUnitCode === null && $allowedBuCodes !== null, fn ($q) => $q->whereIn('business_unit_code', $allowedBuCodes))
+            ->when($reportType !== null, fn ($q) => $q->where('report_type', $reportType))
+            ->select('period')
+            ->distinct()
+            ->orderBy('period', 'desc')
+            ->pluck('period')
+            ->map(fn ($d) => Carbon::parse($d)->format('Y-m-d'))
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Pilih periode default terbaik untuk tampilan Global/Konsolidasi:
+     * menghindari bulan berjalan yang baru terisi sebagian kecil unit (mis. 1-2 unit DB).
+     *
+     * @param  array<int, string>  $availablePeriods
+     * @param  array<string>|null  $allowedBuCodes
+     */
+    public function getDefaultConsolidatedPeriod(array $availablePeriods, ?array $allowedBuCodes = null, ?string $reportType = null): ?string
+    {
+        if (empty($availablePeriods)) {
+            return null;
+        }
+
+        if (count($availablePeriods) === 1) {
+            return $availablePeriods[0];
+        }
+
+        $countsByPeriod = GlobalFinancialRecord::query()
+            ->when($reportType !== null, fn ($q) => $q->where('report_type', $reportType))
+            ->when($allowedBuCodes !== null, fn ($q) => $q->whereIn('business_unit_code', $allowedBuCodes))
+            ->whereIn('period', $availablePeriods)
+            ->selectRaw('period, COUNT(DISTINCT business_unit_code) as unit_count')
+            ->groupBy('period')
+            ->pluck('unit_count', 'period')
+            ->mapWithKeys(fn ($count, $p) => [Carbon::parse($p)->format('Y-m-d') => (int) $count]);
+
+        $maxUnits = $countsByPeriod->max() ?: 0;
+        $threshold = max(1, (int) ceil($maxUnits * 0.5));
+
+        foreach ($availablePeriods as $period) {
+            if (($countsByPeriod->get($period) ?? 0) >= $threshold) {
+                return $period;
+            }
+        }
+
+        return $availablePeriods[0];
+    }
+
+    /**
+     * Ambil daftar kode unit bisnis yang memiliki data pada periode dan tipe laporan tertentu.
+     *
+     * @param  array<string>|null  $allowedBuCodes
+     * @return array<int, string>
+     */
+    public function getUnitsWithPeriod(string $period, string $reportType, ?array $allowedBuCodes = null): array
     {
         if ($allowedBuCodes !== null && empty($allowedBuCodes)) {
             return [];
         }
 
         return GlobalFinancialRecord::query()
+            ->where('period', $period)
+            ->where('report_type', $reportType)
             ->when($allowedBuCodes !== null, fn ($q) => $q->whereIn('business_unit_code', $allowedBuCodes))
-            ->select('period')
             ->distinct()
-            ->orderBy('period', 'desc')
-            ->pluck('period')
-            ->map(fn ($d) => Carbon::parse($d)->format('Y-m-d'))
-            ->values()
+            ->pluck('business_unit_code')
             ->all();
     }
 

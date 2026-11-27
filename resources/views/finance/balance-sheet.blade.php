@@ -52,7 +52,13 @@
                 @endif
 
                 @foreach($businessUnits as $bu)
-                <a href="{{ route('finance.balance-sheet', ['period' => $selectedPeriod, 'business_unit' => $bu['code']]) }}"
+                @php
+                    $tabParams = ['business_unit' => $bu['code']];
+                    if (in_array($bu['code'], $unitsWithSelectedPeriod ?? [], true)) {
+                        $tabParams['period'] = $selectedPeriod;
+                    }
+                @endphp
+                <a href="{{ route('finance.balance-sheet', $tabParams) }}"
                    class="px-3.5 py-1.5 rounded-tl-[1rem] rounded-br-[1rem] rounded-tr-none rounded-bl-none hover:rounded-tr-[1rem] hover:rounded-bl-[1rem] hover:rounded-tl-none hover:rounded-br-none text-xs font-bold transition-all duration-300 cursor-pointer {{ $selectedBu === $bu['code'] ? 'bg-[#ca8a04]/10 text-[#713f12] border border-[#fde047] shadow-2xs' : 'bg-white hover:bg-[#fef9c3] text-slate-700 hover:text-[#713f12] border border-slate-200' }}">
                     <span class="flex items-center gap-1.5">
                         <span class="w-2 h-2 rounded-full shrink-0" style="background-color: {{ $bu['color'] }}"></span>
