@@ -408,7 +408,7 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-[#e9e5d6] font-medium text-slate-700">
-                    @foreach($summary['by_business_unit'] as $idx => $bu)
+                    @forelse($summary['by_business_unit'] as $idx => $bu)
                     @php $tableTone = $cornPalette[$idx % count($cornPalette)]; @endphp
                     <tr class="hover:bg-[#fef9c3]/40 transition-colors">
                         <td class="p-4 pl-6 font-bold text-slate-900 flex items-center gap-2.5">
@@ -428,7 +428,13 @@
                             </span>
                         </td>
                     </tr>
-                    @endforeach
+                    @empty
+                    <tr>
+                        <td colspan="7" class="p-6 text-center text-slate-400">
+                            Belum ada unit bisnis yang memiliki data P&L pada periode ini.
+                        </td>
+                    </tr>
+                    @endforelse
 
                     <!-- TOTAL ROW -->
                     <tr class="bg-[#fef9c3]/70 font-black text-slate-900 border-t-2 border-[#fde047]">
@@ -449,6 +455,20 @@
                 </tbody>
             </table>
         </div>
+
+        @if(!empty($summary['missing_business_units']))
+        <div class="px-5 py-3.5 bg-[#faf8f0] border-t border-[#e9e5d6] flex flex-wrap items-center gap-2 text-xs text-slate-600">
+            <span class="font-semibold text-slate-700">
+                Belum ada data P&amp;L {{ $summary['period_label'] }} ({{ count($summary['missing_business_units']) }} unit):
+            </span>
+            @foreach($summary['missing_business_units'] as $missing)
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-[#e9e5d6] text-[11px]">
+                    <span class="font-bold text-slate-800">{{ $missing['name'] }}</span>
+                    <span class="text-slate-400">({{ $missing['status_label'] }})</span>
+                </span>
+            @endforeach
+        </div>
+        @endif
     </div>
 
 </div>

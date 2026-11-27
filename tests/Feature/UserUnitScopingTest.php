@@ -528,4 +528,56 @@ class UserUnitScopingTest extends TestCase
         $this->assertArrayNotHasKey('asmarawildha@gmail.com', User::DEFAULT_EMAIL_ASSIGNMENTS);
         $this->assertArrayNotHasKey('laraspujiastuti156@gmail.com', User::DEFAULT_EMAIL_ASSIGNMENTS);
     }
+
+    public function test_overview_hides_units_without_period_pnl_and_lists_missing_status_note(): void
+    {
+        GlobalBusinessUnit::firstOrCreate(['code' => 'aqua'], ['name' => 'AQUA', 'data_source' => 'excel', 'is_active' => true, 'sort_order' => 1]);
+        GlobalBusinessUnit::firstOrCreate(['code' => 'ccod'], ['name' => 'CCOD', 'data_source' => 'excel', 'is_active' => true, 'sort_order' => 2]);
+        GlobalBusinessUnit::firstOrCreate(['code' => 'cocacola'], ['name' => 'Coca-Cola', 'data_source' => 'excel', 'is_active' => true, 'sort_order' => 3]);
+
+        // AQUA punya data Oktober 2026
+        GlobalFinancialRecord::insert([
+            [
+                'business_unit_code' => 'aqua',
+                'entity_code' => 'MJS',
+                'period' => '2026-10-01',
+                'report_type' => 'pnl',
+                'category' => 'revenue',
+                'account_code' => '4000-01',
+                'account_name' => 'Penjualan Aqua',
+                'amount' => 500000000,
+                'source_type' => 'excel_upload',
+            ],
+            // CCOD hanya punya data September 2026 (Oktober kosong)
+            [
+                'business_unit_code' => 'ccod',
+                'entity_code' => 'CCOD_HO',
+                'period' => '2026-09-01',
+                'report_type' => 'pnl',
+                'category' => 'revenue',
+                'account_code' => '4000-01',
+                'account_name' => 'Penjualan CCOD',
+                'amount' => 250000000,
+                'source_type' => 'excel_upload',
+            ],
+        ]);
+
+        $service = app(ConsolidationReportService::class);
+        $summary = $service->getDashboardSummary('2026-10-01');
+
+        $this->assertEquals(['aqua'], array_column($summary['by_business_unit'], 'code'));
+
+        $missingByCode = collect($summary['missing_business_units'])->keyBy('code');
+        $this->assertTrue($missingByCode->has('ccod'));
+        $this->assertTrue($missingByCode->has('cocacola'));
+        $this->assertStringStartsWith('terakhir ', $missingByCode['ccod']['status_label']);
+        $this->assertEquals('belum ada laporan', $missingByCode['cocacola']['status_label']);
+
+        $response = $this->actingAs($this->admin)->get(route('finance.dashboard', ['period' => '2026-10-01']));
+        $response->assertOk();
+        $response->assertSee('Belum ada data P&amp;L', false);
+        $response->assertSee('CCOD');
+        $response->assertSee('Coca-Cola');
+        $response->assertSee('belum ada laporan');
+    }
 }

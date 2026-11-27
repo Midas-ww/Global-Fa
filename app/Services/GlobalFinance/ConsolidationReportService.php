@@ -82,16 +82,38 @@ class ConsolidationReportService
         $netMargin = $revTotal > 0 ? round(($netProfit / $revTotal) * 100, 2) : 0;
         $opexRatio = $revTotal > 0 ? round(($opexTotal / $revTotal) * 100, 2) : 0;
 
-        // Breakdown per Unit Bisnis
+        // Breakdown per Unit Bisnis (sembunyikan unit yang belum punya data P&L di periode ini, catat ke missing_business_units)
         $bus = GlobalBusinessUnit::with('entities')
             ->where('is_active', true)
             ->when($allowedBuCodes !== null, fn ($q) => $q->whereIn('code', $allowedBuCodes))
             ->orderBy('sort_order')
             ->get();
+        $latestPeriodsByBu = GlobalFinancialRecord::query()
+            ->where('report_type', 'pnl')
+            ->when($allowedBuCodes !== null, fn ($q) => $q->whereIn('business_unit_code', $allowedBuCodes))
+            ->selectRaw('business_unit_code, MAX(period) as latest_period')
+            ->groupBy('business_unit_code')
+            ->pluck('latest_period', 'business_unit_code');
         $byBusinessUnit = [];
+        $missingBusinessUnits = [];
 
         foreach ($bus as $bu) {
             $buRecs = $records->where('business_unit_code', $bu->code);
+            if ($buRecs->isEmpty()) {
+                $latestBuPeriod = $latestPeriodsByBu->get($bu->code);
+                $missingBusinessUnits[] = [
+                    'code' => $bu->code,
+                    'name' => $bu->name,
+                    'latest_period' => $latestBuPeriod ? Carbon::parse($latestBuPeriod)->format('Y-m-d') : null,
+                    'latest_period_label' => $latestBuPeriod ? Carbon::parse($latestBuPeriod)->translatedFormat('M Y') : null,
+                    'status_label' => $latestBuPeriod
+                        ? 'terakhir '.Carbon::parse($latestBuPeriod)->translatedFormat('M Y')
+                        : 'belum ada laporan',
+                ];
+
+                continue;
+            }
+
             $bRev = (float) $buRecs->where('category', 'revenue')->sum('amount');
             $bCogs = (float) $buRecs->where('category', 'cogs')->sum('amount');
             $bGp = $bRev - $bCogs;
@@ -199,6 +221,7 @@ class ConsolidationReportService
                 'net_margin_percentage' => $netMargin,
             ],
             'by_business_unit' => $byBusinessUnit,
+            'missing_business_units' => $missingBusinessUnits,
             'monthly_trends' => $monthlyTrends,
             'entity_rankings' => $entityRankings,
         ];
