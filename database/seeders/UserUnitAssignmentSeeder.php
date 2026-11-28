@@ -34,7 +34,7 @@ class UserUnitAssignmentSeeder extends Seeder
             ],
             'tasya.laisafi1@mekar-jaya.com' => [
                 'name' => 'Tasya Laisafi',
-                'units' => ['onbold', 'cocacola'],
+                'units' => ['onbold'],
             ],
             'vionadelian@gmail.com' => [
                 'name' => 'Viona Delian',

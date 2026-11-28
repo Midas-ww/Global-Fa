@@ -21,7 +21,7 @@ class User extends Authenticatable
 
     public const DEFAULT_EMAIL_ASSIGNMENTS = [
         'ferdinand.winoto@gmail.com' => ['abc', 'aqua', 'ccod', 'fmcg', 'xtrans'],
-        'tasya.laisafi1@mekar-jaya.com' => ['onbold', 'cocacola'],
+        'tasya.laisafi1@mekar-jaya.com' => ['onbold'],
         'vionadelian@gmail.com' => ['sangria', 'mohala', 'iqos'],
         'fa.vionaa@gmail.com' => ['sangria', 'mohala', 'iqos'],
         'fransiskalia21@gmail.com' => ['spbu', 'kandang'],

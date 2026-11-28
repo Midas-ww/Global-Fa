@@ -122,19 +122,6 @@ class GlobalFinanceSeeder extends Seeder
             ]
         );
 
-        $buCocaCola = GlobalBusinessUnit::updateOrCreate(
-            ['code' => 'cocacola'],
-            [
-                'name' => 'Coca-Cola',
-                'description' => 'Distribusi dan operasional produk Coca-Cola.',
-                'icon' => 'cup-soda',
-                'color' => '#DC2626',
-                'data_source' => 'excel',
-                'sort_order' => 8,
-                'is_active' => true,
-            ]
-        );
-
         $buSangria = GlobalBusinessUnit::updateOrCreate(
             ['code' => 'sangria'],
             [
@@ -143,7 +130,7 @@ class GlobalFinanceSeeder extends Seeder
                 'icon' => 'coffee',
                 'color' => '#9333EA',
                 'data_source' => 'excel',
-                'sort_order' => 9,
+                'sort_order' => 8,
                 'is_active' => true,
             ]
         );
@@ -156,7 +143,7 @@ class GlobalFinanceSeeder extends Seeder
                 'icon' => 'sun',
                 'color' => '#F59E0B',
                 'data_source' => 'excel',
-                'sort_order' => 10,
+                'sort_order' => 9,
                 'is_active' => true,
             ]
         );
@@ -165,11 +152,11 @@ class GlobalFinanceSeeder extends Seeder
             ['code' => 'ccod'],
             [
                 'name' => 'CCOD',
-                'description' => 'PT Mekar Jaya Sentosa Multikarya - Jasa dan distribusi Cash Collection on Delivery (CCOD) Heinz ABC 12 cabang.',
+                'description' => 'PT Mekar Jaya Sentosa Multikarya - Distribusi Coca-Cola (CCOD).',
                 'icon' => 'shopping-bag',
                 'color' => '#6366F1',
                 'data_source' => 'excel',
-                'sort_order' => 11,
+                'sort_order' => 10,
                 'is_active' => true,
             ]
         );
@@ -182,7 +169,7 @@ class GlobalFinanceSeeder extends Seeder
                 'icon' => 'shopping-bag',
                 'color' => '#EA580C',
                 'data_source' => 'excel',
-                'sort_order' => 12,
+                'sort_order' => 11,
                 'is_active' => true,
             ]
         );
