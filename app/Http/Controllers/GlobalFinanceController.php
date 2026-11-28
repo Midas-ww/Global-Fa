@@ -81,19 +81,14 @@ class GlobalFinanceController extends Controller
             }
         }
 
-        $availablePeriods = $this->reportService->getAvailablePeriods($allowedCodes, 'pnl', $selectedBu ?: null);
-        if (empty($availablePeriods) && $selectedBu) {
-            $availablePeriods = $this->reportService->getAvailablePeriods($allowedCodes, 'pnl');
-        }
-        if (empty($availablePeriods)) {
-            $availablePeriods = $this->reportService->getAvailablePeriods($allowedCodes);
-        }
+        $includeEmptyDrafts = $user?->canEditPeriodNotes() ?? false;
+        $periodInfo = $this->reportService->getSelectablePeriodOptions($allowedCodes, 'pnl', $selectedBu ?: null, $includeEmptyDrafts);
+        $availablePeriods = $periodInfo['periods'];
+        $periodOptions = $periodInfo['options'];
 
         $selectedPeriod = $request->query('period');
         if (! $selectedPeriod || ! in_array($selectedPeriod, $availablePeriods, true)) {
-            $selectedPeriod = $selectedBu
-                ? ($availablePeriods[0] ?? '2026-07-01')
-                : ($this->reportService->getDefaultConsolidatedPeriod($availablePeriods, $allowedCodes, 'pnl') ?? '2026-07-01');
+            $selectedPeriod = $periodInfo['default_period'] ?? '2026-07-01';
         }
 
         $canEdit = $selectedBu ? ($user?->canEditBusinessUnit($selectedBu) ?? false) : false;
@@ -115,6 +110,7 @@ class GlobalFinanceController extends Controller
             'selectedBu' => $selectedBu,
             'selectedEntity' => $selectedEntity,
             'availablePeriods' => $availablePeriods,
+            'periodOptions' => $periodOptions,
             'unitsWithSelectedPeriod' => $unitsWithSelectedPeriod,
             'businessUnits' => $businessUnits,
             'canEdit' => $canEdit,
@@ -164,13 +160,10 @@ class GlobalFinanceController extends Controller
             $businessUnits[] = $bu;
         }
 
-        $availablePeriods = $this->reportService->getAvailablePeriods($allowedCodes, 'balance_sheet', $selectedBu ?: null);
-        if (empty($availablePeriods) && $selectedBu) {
-            $availablePeriods = $this->reportService->getAvailablePeriods($allowedCodes, 'balance_sheet');
-        }
-        if (empty($availablePeriods)) {
-            $availablePeriods = $this->reportService->getAvailablePeriods($allowedCodes);
-        }
+        $includeEmptyDrafts = $user?->canEditPeriodNotes() ?? false;
+        $periodInfo = $this->reportService->getSelectablePeriodOptions($allowedCodes, 'balance_sheet', $selectedBu ?: null, $includeEmptyDrafts);
+        $availablePeriods = $periodInfo['periods'];
+        $periodOptions = $periodInfo['options'];
 
         $requestedPeriod = $request->query('period');
         $isExplicitValidDate = is_string($requestedPeriod) && (bool) preg_match('/^\d{4}-\d{2}-\d{2}$/', $requestedPeriod);
@@ -181,9 +174,7 @@ class GlobalFinanceController extends Controller
             // Tetap izinkan membuka periode kosong secara eksplisit untuk input skeleton Neraca manual
             $selectedPeriod = $requestedPeriod;
         } else {
-            $selectedPeriod = $selectedBu
-                ? ($availablePeriods[0] ?? '2026-07-01')
-                : ($this->reportService->getDefaultConsolidatedPeriod($availablePeriods, $allowedCodes, 'balance_sheet') ?? '2026-07-01');
+            $selectedPeriod = $periodInfo['default_period'] ?? '2026-07-01';
         }
 
         $canEdit = $selectedBu ? ($user?->canEditBusinessUnit($selectedBu) ?? false) : false;
@@ -215,6 +206,7 @@ class GlobalFinanceController extends Controller
             'selectedBu' => $selectedBu,
             'selectedEntity' => $selectedEntity,
             'availablePeriods' => $availablePeriods,
+            'periodOptions' => $periodOptions,
             'unitsWithSelectedPeriod' => $unitsWithSelectedPeriod,
             'businessUnits' => $businessUnits,
             'hasEntitySpecificBs' => $hasEntitySpecificBs,
@@ -563,6 +555,18 @@ class GlobalFinanceController extends Controller
             } elseif ($type === 'kandang') {
                 $res = $service->ingestKandangFile($fullPath, $filename);
                 $msg = "Kandang: Berhasil mengimpor {$res['records_inserted']} data P&L dan Neraca PT Mekar Jaya Kurnia Bersama.";
+            } elseif (in_array($detected['type'] ?? '', ['mohala_pnl', 'sangria_pnl', 'mohala_bs', 'sangria_bs'], true)) {
+                $detectedType = $detected['type'];
+                $unitCode = str_starts_with($detectedType, 'mohala') ? 'mohala' : 'sangria';
+                $unitLabel = $unitCode === 'mohala' ? 'Mohala Bakery' : 'Sangria Resto';
+
+                if (str_ends_with($detectedType, '_pnl')) {
+                    $res = $service->ingestSangriaMohalaPnlFile($fullPath, $unitCode, $filename);
+                    $msg = "{$unitLabel}: Berhasil mengimpor {$res['records_inserted']} baris data Laba Rugi (P&L).";
+                } else {
+                    $res = $service->ingestSangriaMohalaBalanceSheetFile($fullPath, $unitCode, $filename);
+                    $msg = "{$unitLabel}: Berhasil mengimpor {$res['records_inserted']} baris data Neraca (Balance Sheet).";
+                }
             } else {
                 $res = $service->ingestUniversalTemplate($fullPath, $type, $filename);
                 $unitName = GlobalBusinessUnit::where('code', $type)->value('name') ?? strtoupper($type);
@@ -598,6 +602,7 @@ class GlobalFinanceController extends Controller
                     GlobalFinancialRecord::query()
                         ->where('business_unit_code', $lu)
                         ->whereIn('period', $insertedPeriods)
+                        ->when(! empty($res['report_type']), fn ($q) => $q->where('report_type', $res['report_type']))
                         ->where('source_type', 'manual')
                         ->delete();
                 }

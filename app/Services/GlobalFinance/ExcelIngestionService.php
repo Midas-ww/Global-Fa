@@ -155,6 +155,50 @@ class ExcelIngestionService
             ];
         }
 
+        // 0. Deteksi Mohala Bakery & Sangria Resto (PNL & Neraca)
+        $isMohalaBrand = str_contains($upperHeader, 'MOHALA BAKERY')
+            || in_array('INVESTASI AWAL MOHALA', $upperSheets, true)
+            || str_contains($upperHeader, 'OMSET TO SANGRIA');
+        $isSangriaBrand = str_contains($upperHeader, 'SANGRIA RESTO')
+            || in_array('INVESTASI AWAL SANGRIA', $upperSheets, true)
+            || str_contains($upperHeader, 'OMSET LAIN-LAIN DARI MOHALA');
+
+        if ($isMohalaBrand) {
+            if (in_array('PNL', $upperSheets, true) && ! str_contains($upperHeader, 'NERACA')) {
+                return [
+                    'type' => 'mohala_pnl',
+                    'label' => 'Mohala Bakery — Laba Rugi (PNL)',
+                    'sheets' => $sheetNames,
+                ];
+            }
+
+            if (str_contains($upperHeader, 'NERACA') || str_contains($upperHeader, 'AKTIVA')) {
+                return [
+                    'type' => 'mohala_bs',
+                    'label' => 'Mohala Bakery — Neraca (Balance Sheet)',
+                    'sheets' => $sheetNames,
+                ];
+            }
+        }
+
+        if ($isSangriaBrand) {
+            if (in_array('PNL', $upperSheets, true) && ! str_contains($upperHeader, 'NERACA')) {
+                return [
+                    'type' => 'sangria_pnl',
+                    'label' => 'Sangria Resto — Laba Rugi (PNL)',
+                    'sheets' => $sheetNames,
+                ];
+            }
+
+            if (str_contains($upperHeader, 'NERACA') || str_contains($upperHeader, 'AKTIVA')) {
+                return [
+                    'type' => 'sangria_bs',
+                    'label' => 'Sangria Resto — Neraca (Balance Sheet)',
+                    'sheets' => $sheetNames,
+                ];
+            }
+        }
+
         // 1. Deteksi Xtrans (PT Mekar Jaya Xtrans Jaya)
         if (
             str_contains($upperHeader, 'XTRANS') ||
@@ -308,6 +352,14 @@ class ExcelIngestionService
             return;
         }
 
+        if (in_array($detected['type'], ['mohala_pnl', 'mohala_bs'], true) && $selectedType === 'mohala') {
+            return;
+        }
+
+        if (in_array($detected['type'], ['sangria_pnl', 'sangria_bs'], true) && $selectedType === 'sangria') {
+            return;
+        }
+
         $selectedLabel = match ($selectedType) {
             'fmcg' => 'Unilever (9 Depo Cabang)',
             'aqua' => 'AQUA (CV Mekar Jaya Sentosa)',
@@ -385,7 +437,13 @@ class ExcelIngestionService
         $targetLabel = $targetType === 'auto' ? 'Satu Pintu (Otomatis Multi-Unit)' : ($unit ? $unit->name : strtoupper($targetType));
 
         // Kesesuaian tipe usaha
-        $isTypeMatch = ($targetType === 'auto' || $detectedType === 'unified_multi_unit' || $detectedType === 'universal_template' || $detectedType === $targetType || ($detectedType === 'mjsm_ccod' && in_array($targetType, ['abc', 'ccod'])));
+        $isTypeMatch = ($targetType === 'auto'
+            || $detectedType === 'unified_multi_unit'
+            || $detectedType === 'universal_template'
+            || $detectedType === $targetType
+            || ($detectedType === 'mjsm_ccod' && in_array($targetType, ['abc', 'ccod'], true))
+            || (in_array($detectedType, ['mohala_pnl', 'mohala_bs'], true) && $targetType === 'mohala')
+            || (in_array($detectedType, ['sangria_pnl', 'sangria_bs'], true) && $targetType === 'sangria'));
         $matchError = null;
         if (! $isTypeMatch && $detectedType !== 'unknown') {
             if (($detectedType === 'aqua' || $detectedType === 'mjs_summary') && $targetType === 'fmcg') {
@@ -717,6 +775,52 @@ class ExcelIngestionService
                         }
                     }
                     $estimatedRecords = 3700;
+                }
+            }
+            // Kasus 3b: Format Horizontal P&L / Multi-Sheet Neraca Mohala Bakery & Sangria Resto
+            elseif (in_array($type, ['mohala_pnl', 'sangria_pnl'], true)) {
+                $unitCode = $type === 'mohala_pnl' ? 'mohala' : 'sangria';
+                $parsed = $this->parseSangriaMohalaPnlSpreadsheet($spreadsheet, $unitCode);
+                $periods = $parsed['periods'];
+                $latestPeriod = $periods !== [] ? max($periods) : null;
+                $estimatedRecords = count($parsed['records']);
+
+                foreach ($parsed['records'] as $rec) {
+                    if ($rec['period'] === $latestPeriod) {
+                        if ($rec['category'] === 'revenue') {
+                            $totalRevenueLatest += (float) $rec['amount'];
+                        }
+                        if (count($sampleRows) < 5) {
+                            $sampleRows[] = [
+                                'category' => strtoupper($rec['category']),
+                                'code' => $rec['account_code'],
+                                'name' => $rec['account_name'],
+                                'amount' => (float) $rec['amount'],
+                            ];
+                        }
+                    }
+                }
+            } elseif (in_array($type, ['mohala_bs', 'sangria_bs'], true)) {
+                $unitCode = $type === 'mohala_bs' ? 'mohala' : 'sangria';
+                $parsed = $this->parseSangriaMohalaBalanceSheetSpreadsheet($spreadsheet, $unitCode);
+                $periods = $parsed['periods'];
+                $latestPeriod = $periods !== [] ? max($periods) : null;
+                $estimatedRecords = count($parsed['records']);
+
+                foreach ($parsed['records'] as $rec) {
+                    if ($rec['period'] === $latestPeriod) {
+                        if ($rec['category'] === 'asset') {
+                            $totalRevenueLatest += (float) $rec['amount'];
+                        }
+                        if (count($sampleRows) < 5) {
+                            $sampleRows[] = [
+                                'category' => strtoupper($rec['category']),
+                                'code' => $rec['account_code'],
+                                'name' => $rec['account_name'],
+                                'amount' => (float) $rec['amount'],
+                            ];
+                        }
+                    }
                 }
             }
             // Kasus 4: File Lain (General Reader)
@@ -3058,6 +3162,21 @@ class ExcelIngestionService
                 $unitsSummary['mjsm_ccod'] = $resMjsm;
             }
 
+            $detectedStandalone = $this->detectFileType($filePath);
+            $standaloneType = $detectedStandalone['type'] ?? '';
+            if (in_array($standaloneType, ['mohala_pnl', 'sangria_pnl', 'mohala_bs', 'sangria_bs'], true) && $totalInserted === 0) {
+                $unitCode = str_starts_with($standaloneType, 'mohala') ? 'mohala' : 'sangria';
+                $resStandalone = str_ends_with($standaloneType, '_pnl')
+                    ? $this->ingestSangriaMohalaPnlFile($filePath, $unitCode, $filename)
+                    : $this->ingestSangriaMohalaBalanceSheetFile($filePath, $unitCode, $filename);
+
+                DB::commit();
+
+                return array_merge($resStandalone, [
+                    'summary' => strtoupper($unitCode).": Berhasil mengimpor {$resStandalone['records_inserted']} baris data ".($resStandalone['report_type'] === 'pnl' ? 'Laba Rugi (P&L)' : 'Neraca').'.',
+                ]);
+            }
+
             DB::commit();
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -3788,6 +3907,400 @@ class ExcelIngestionService
         return [
             'records_inserted' => $totalInserted,
             'period' => $period,
+        ];
+    }
+
+    /**
+     * Ingest file Laporan Laba Rugi (P&L) horizontal 10-bulanan Mohala Bakery atau Sangria Resto.
+     *
+     * @return array<string, mixed>
+     */
+    public function ingestSangriaMohalaPnlFile(string $filePath, string $unitCode, ?string $filename = null): array
+    {
+        $this->ensureMemoryLimit();
+        $reader = IOFactory::createReaderForFile($filePath);
+        if (method_exists($reader, 'setLoadSheetsOnly')) {
+            $reader->setLoadSheetsOnly(['PNL', 'pnl']);
+        }
+        $spreadsheet = $reader->load($filePath);
+        $parsed = $this->parseSangriaMohalaPnlSpreadsheet($spreadsheet, $unitCode, $filename);
+
+        return $this->persistSangriaMohalaRecords($parsed, $unitCode, 'pnl');
+    }
+
+    /**
+     * Ingest file Laporan Neraca (Balance Sheet) multi-sheet bulanan Mohala Bakery atau Sangria Resto.
+     *
+     * @return array<string, mixed>
+     */
+    public function ingestSangriaMohalaBalanceSheetFile(string $filePath, string $unitCode, ?string $filename = null): array
+    {
+        $this->ensureMemoryLimit();
+        $spreadsheet = IOFactory::load($filePath);
+        $parsed = $this->parseSangriaMohalaBalanceSheetSpreadsheet($spreadsheet, $unitCode, $filename);
+
+        return $this->persistSangriaMohalaRecords($parsed, $unitCode, 'balance_sheet');
+    }
+
+    /**
+     * Parse label bulan-tahun berbahasa Indonesia/Inggris (contoh: "JANUARI 2026", "OKT 26") ke YYYY-MM-01.
+     */
+    public function parseIndonesianMonthYearLabel(string $text): ?string
+    {
+        $map = [
+            'JANUARI' => '01', 'JANUARY' => '01', 'JAN' => '01',
+            'FEBRUARI' => '02', 'FEBRUARY' => '02', 'FEB' => '02',
+            'MARET' => '03', 'MARCH' => '03', 'MAR' => '03',
+            'APRIL' => '04', 'APR' => '04',
+            'MEI' => '05', 'MAY' => '05',
+            'JUNI' => '06', 'JUNE' => '06', 'JUN' => '06',
+            'JULI' => '07', 'JULY' => '07', 'JUL' => '07',
+            'AGUSTUS' => '08', 'AGUST' => '08', 'AUGUST' => '08', 'AGT' => '08', 'AGU' => '08', 'AUG' => '08',
+            'SEPTEMBER' => '09', 'SEPT' => '09', 'SEP' => '09',
+            'OKTOBER' => '10', 'OCTOBER' => '10', 'OKT' => '10', 'OCT' => '10',
+            'NOVEMBER' => '11', 'NOV' => '11',
+            'DESEMBER' => '12', 'DECEMBER' => '12', 'DES' => '12', 'DEC' => '12',
+        ];
+
+        if (preg_match('/\b([A-Z]+)\s+(\d{2,4})\b/i', trim($text), $matches)) {
+            $month = $map[strtoupper($matches[1])] ?? null;
+            if ($month !== null) {
+                $year = strlen($matches[2]) === 2 ? '20'.$matches[2] : $matches[2];
+
+                return "{$year}-{$month}-01";
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Ekstrak seluruh blok bulanan dari sheet PNL horizontal Mohala Bakery / Sangria Resto.
+     *
+     * @return array{periods: array<int, string>, records: array<int, array<string, mixed>>}
+     */
+    protected function parseSangriaMohalaPnlSpreadsheet(Spreadsheet $spreadsheet, string $unitCode, ?string $filename = null): array
+    {
+        $sheet = $spreadsheet->getSheetByName('PNL') ?? $spreadsheet->getSheetByName('pnl') ?? $spreadsheet->getSheet(0);
+        $meta = $this->getSangriaMohalaMeta($unitCode);
+        $maxCol = min(Coordinate::columnIndexFromString($sheet->getHighestColumn()), 300);
+        $maxRow = min($sheet->getHighestRow(), 65);
+        $now = now();
+        $sourceNote = $filename ?: "PNL {$meta['entity_name']}";
+
+        $recordsByPeriod = [];
+
+        for ($col = 1; $col <= $maxCol; $col++) {
+            $period = null;
+            for ($mr = 2; $mr <= 5; $mr++) {
+                $headerVal = trim((string) $sheet->getCell([$col, $mr])->getValue());
+                if ($headerVal !== '') {
+                    $period = $this->parseIndonesianMonthYearLabel($headerVal);
+                    if ($period !== null) {
+                        break;
+                    }
+                }
+            }
+
+            if ($period === null) {
+                continue;
+            }
+
+            $blockRecords = [];
+            $inOpex = false;
+            $opexSeq = 1;
+
+            $pushRow = function (string $category, string $subCategory, string $accountCode, string $accountName, float $amount) use (&$blockRecords, $unitCode, $meta, $period, $sourceNote, $now): void {
+                $rounded = round($amount, 2);
+                if (abs($rounded) < 0.005) {
+                    return;
+                }
+
+                $blockRecords[] = [
+                    'business_unit_code' => $unitCode,
+                    'entity_code' => $meta['entity_code'],
+                    'period' => $period,
+                    'report_type' => 'pnl',
+                    'category' => $category,
+                    'sub_category' => $subCategory,
+                    'account_code' => $accountCode,
+                    'account_name' => $accountName,
+                    'amount' => $rounded,
+                    'status' => 'final',
+                    'source_type' => 'excel_upload',
+                    'notes' => $sourceNote,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            };
+
+            for ($row = 5; $row <= $maxRow; $row++) {
+                $label = trim((string) $sheet->getCell([$col, $row])->getValue());
+                $upper = strtoupper($label);
+                if ($upper === '') {
+                    continue;
+                }
+
+                $valTotal = $sheet->getCell([$col + 4, $row])->getCalculatedValue();
+                $valSummary = $sheet->getCell([$col + 5, $row])->getCalculatedValue();
+                $numTotal = is_numeric($valTotal) ? (float) $valTotal : 0.0;
+                $numSummary = is_numeric($valSummary) ? (float) $valSummary : 0.0;
+
+                if ($upper === 'OMSET') {
+                    $pushRow('revenue', 'Pendapatan Usaha', '4001', 'Omset', $numTotal);
+                } elseif ($upper === 'OMSET TO SANGRIA') {
+                    // Dalam rumus Excel Mohala Laba Kotor = E7 - E8 + E9 - E18, sehingga dicatat negatif.
+                    $pushRow('revenue', 'Pengurang Pendapatan Antar Unit', '4002', 'Omset to Sangria', -$numTotal);
+                } elseif (str_starts_with($upper, 'OMSET LAIN-LAIN DARI MOHALA')) {
+                    $pushRow('revenue', 'Pendapatan Antar Unit', '4003', $label, $numTotal);
+                } elseif (str_starts_with($upper, 'OMSET LAIN')) {
+                    $code = $unitCode === 'sangria' ? '4002' : '4003';
+                    $pushRow('revenue', 'Pendapatan Lain Usaha', $code, $label, $numTotal);
+                } elseif ($upper === 'HPP') {
+                    $hppAmount = (is_numeric($valSummary) && abs($numSummary) > abs($numTotal)) ? $numSummary : $numTotal;
+                    $pushRow('cogs', 'Harga Pokok Penjualan', '5001', 'HPP', $hppAmount);
+                } elseif ($upper === 'BIAYA') {
+                    $inOpex = true;
+                } elseif ($upper === 'TOTAL BIAYA') {
+                    $inOpex = false;
+                } elseif ($inOpex) {
+                    $accountCode = '6'.str_pad((string) $opexSeq++, 3, '0', STR_PAD_LEFT);
+                    $pushRow('opex', 'Biaya Operasional', $accountCode, $label, $numTotal);
+                } elseif (str_contains($upper, 'BIAYA PACKING')) {
+                    $pushRow('opex', 'Biaya Packing & Perlengkapan', '6090', $label, $numTotal);
+                } elseif (str_contains($upper, 'PENGAMBILAN MOHALA DARI GUDANG MASUK BIAYA')) {
+                    $pushRow('other_income', 'Koreksi Pengambilan Antar Unit', '9001', $label, $numTotal);
+                } elseif (str_starts_with($upper, 'PENDAPATAN LAIN-LAIN')) {
+                    $pushRow('other_income', 'Pendapatan Lain-lain', '9002', 'Pendapatan Lain-lain', $numTotal);
+                } elseif ($upper === 'LABA BERSIH') {
+                    break;
+                }
+            }
+
+            if ($blockRecords !== []) {
+                $recordsByPeriod[$period] = $blockRecords;
+            }
+        }
+
+        ksort($recordsByPeriod);
+        $records = [];
+        foreach ($recordsByPeriod as $items) {
+            foreach ($items as $item) {
+                $records[] = $item;
+            }
+        }
+
+        return [
+            'periods' => array_keys($recordsByPeriod),
+            'records' => $records,
+        ];
+    }
+
+    /**
+     * Ekstrak seluruh sheet bulanan dari workbook Neraca Mohala Bakery / Sangria Resto.
+     *
+     * @return array{periods: array<int, string>, records: array<int, array<string, mixed>>}
+     */
+    protected function parseSangriaMohalaBalanceSheetSpreadsheet(Spreadsheet $spreadsheet, string $unitCode, ?string $filename = null): array
+    {
+        $meta = $this->getSangriaMohalaMeta($unitCode);
+        $now = now();
+        $sourceNote = $filename ?: "Neraca {$meta['entity_name']}";
+        $recordsByPeriod = [];
+
+        foreach ($spreadsheet->getAllSheets() as $sheet) {
+            $period = $this->parseIndonesianMonthYearLabel((string) $sheet->getCell('B3')->getValue())
+                ?? $this->parseIndonesianMonthYearLabel($sheet->getTitle());
+
+            if ($period === null) {
+                continue;
+            }
+
+            $maxRow = min($sheet->getHighestRow(), 200);
+            $sheetRecords = [];
+            $assetSeq = 1;
+            $liabSeq = 1;
+            $equitySeq = 1;
+
+            $pushBsRow = function (string $category, string $subCategory, string $accountCode, string $accountName, float $amount) use (&$sheetRecords, $unitCode, $meta, $period, $sourceNote, $now): void {
+                $rounded = round($amount, 2);
+                if (abs($rounded) < 0.005) {
+                    return;
+                }
+
+                $sheetRecords[] = [
+                    'business_unit_code' => $unitCode,
+                    'entity_code' => $meta['entity_code'],
+                    'period' => $period,
+                    'report_type' => 'balance_sheet',
+                    'category' => $category,
+                    'sub_category' => $subCategory,
+                    'account_code' => $accountCode,
+                    'account_name' => $accountName,
+                    'amount' => $rounded,
+                    'status' => 'final',
+                    'source_type' => 'excel_upload',
+                    'notes' => $sourceNote,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            };
+
+            for ($row = 5; $row <= $maxRow; $row++) {
+                $assetName = trim((string) $sheet->getCell("B{$row}")->getValue());
+                $assetVal = $sheet->getCell("D{$row}")->getCalculatedValue();
+                if ($assetName !== '' && is_numeric($assetVal) && ! str_contains(strtoupper($assetName), 'TOTAL')) {
+                    $code = '1'.str_pad((string) $assetSeq++, 3, '0', STR_PAD_LEFT);
+                    $pushBsRow('asset', 'Aktiva', $code, $assetName, (float) $assetVal);
+                }
+
+                $pasivaName = trim((string) $sheet->getCell("F{$row}")->getValue());
+                $pasivaVal = $sheet->getCell("H{$row}")->getCalculatedValue();
+                if ($pasivaName !== '' && is_numeric($pasivaVal)) {
+                    $upperPasiva = strtoupper($pasivaName);
+                    if (str_contains($upperPasiva, 'TOTAL')) {
+                        continue;
+                    }
+
+                    $isEquity = $upperPasiva === 'MODAL'
+                        || str_starts_with($upperPasiva, 'LABA ')
+                        || str_starts_with($upperPasiva, 'RUGI ');
+
+                    if ($isEquity) {
+                        $code = '3'.str_pad((string) $equitySeq++, 3, '0', STR_PAD_LEFT);
+                        $pushBsRow('equity', 'Modal & Laba', $code, $pasivaName, (float) $pasivaVal);
+                    } else {
+                        $code = '2'.str_pad((string) $liabSeq++, 3, '0', STR_PAD_LEFT);
+                        $pushBsRow('liability', 'Kewajiban', $code, $pasivaName, (float) $pasivaVal);
+                    }
+                }
+            }
+
+            if ($sheetRecords !== []) {
+                $recordsByPeriod[$period] = $sheetRecords;
+            }
+        }
+
+        ksort($recordsByPeriod);
+        $records = [];
+        foreach ($recordsByPeriod as $items) {
+            foreach ($items as $item) {
+                $records[] = $item;
+            }
+        }
+
+        return [
+            'periods' => array_keys($recordsByPeriod),
+            'records' => $records,
+        ];
+    }
+
+    /**
+     * Metadata entitas dan unit untuk Mohala Bakery & Sangria Resto.
+     *
+     * @return array{unit_name: string, entity_code: string, entity_name: string, icon: string, color: string, sort_order: int}
+     */
+    protected function getSangriaMohalaMeta(string $unitCode): array
+    {
+        if ($unitCode === 'mohala') {
+            return [
+                'unit_name' => 'Mohala',
+                'entity_code' => 'MOHALA',
+                'entity_name' => 'Mohala Bakery',
+                'icon' => 'sun',
+                'color' => '#F59E0B',
+                'sort_order' => 9,
+            ];
+        }
+
+        return [
+            'unit_name' => 'Sangria',
+            'entity_code' => 'SANGRIA',
+            'entity_name' => 'Sangria Resto',
+            'icon' => 'coffee',
+            'color' => '#9333EA',
+            'sort_order' => 8,
+        ];
+    }
+
+    /**
+     * Simpan hasil parsing Mohala/Sangria secara idempoten per unit, tipe laporan, dan daftar periode.
+     *
+     * @param  array{periods: array<int, string>, records: array<int, array<string, mixed>>}  $parsed
+     * @return array<string, mixed>
+     */
+    protected function persistSangriaMohalaRecords(array $parsed, string $unitCode, string $reportType): array
+    {
+        $periods = $parsed['periods'];
+        $records = $parsed['records'];
+
+        if ($periods === [] || $records === []) {
+            return [
+                'records_inserted' => 0,
+                'period' => null,
+                'periods' => [],
+                'report_type' => $reportType,
+                'business_unit' => $unitCode,
+                'units_processed' => [
+                    $unitCode => [
+                        'records_inserted' => 0,
+                        'periods' => [],
+                    ],
+                ],
+            ];
+        }
+
+        $meta = $this->getSangriaMohalaMeta($unitCode);
+
+        DB::transaction(function () use ($unitCode, $reportType, $periods, $records, $meta): void {
+            $businessUnit = GlobalBusinessUnit::firstOrCreate(
+                ['code' => $unitCode],
+                [
+                    'name' => $meta['unit_name'],
+                    'description' => "Unit Bisnis {$meta['unit_name']}.",
+                    'icon' => $meta['icon'],
+                    'color' => $meta['color'],
+                    'data_source' => 'excel',
+                    'sort_order' => $meta['sort_order'],
+                    'is_active' => true,
+                ]
+            );
+
+            GlobalEntity::firstOrCreate(
+                ['code' => $meta['entity_code']],
+                [
+                    'business_unit_id' => $businessUnit->id,
+                    'name' => $meta['entity_name'],
+                    'sort_order' => 1,
+                    'is_active' => true,
+                ]
+            );
+
+            GlobalFinancialRecord::query()
+                ->where('business_unit_code', $unitCode)
+                ->where('report_type', $reportType)
+                ->whereIn('period', $periods)
+                ->delete();
+
+            foreach (array_chunk($records, 500) as $chunk) {
+                GlobalFinancialRecord::insert($chunk);
+            }
+        });
+
+        $latestPeriod = $periods[count($periods) - 1] ?? null;
+
+        return [
+            'records_inserted' => count($records),
+            'period' => $latestPeriod,
+            'periods' => $periods,
+            'report_type' => $reportType,
+            'business_unit' => $unitCode,
+            'units_processed' => [
+                $unitCode => [
+                    'records_inserted' => count($records),
+                    'periods' => $periods,
+                ],
+            ],
         ];
     }
 }

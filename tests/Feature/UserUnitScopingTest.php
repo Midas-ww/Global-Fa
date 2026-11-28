@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\GlobalBusinessUnit;
 use App\Models\GlobalFinancialRecord;
 use App\Models\GlobalIngestionLog;
+use App\Models\GlobalPeriodNote;
 use App\Models\User;
 use App\Models\UserBusinessUnit;
 use App\Services\GlobalFinance\ConsolidationReportService;
@@ -53,9 +54,9 @@ class UserUnitScopingTest extends TestCase
             ]
         );
         GlobalBusinessUnit::firstOrCreate(
-            ['code' => 'cocacola'],
+            ['code' => 'sangria'],
             [
-                'name' => 'Coca-Cola',
+                'name' => 'Sangria',
                 'data_source' => 'excel',
                 'sort_order' => 4,
                 'is_active' => true,
@@ -78,7 +79,7 @@ class UserUnitScopingTest extends TestCase
             ['can_edit' => true]
         );
 
-        // 3. Tasya (On Bold - database & Coca-Cola - excel)
+        // 3. Tasya (On Bold - database & Sangria - excel)
         $this->tasya = User::firstOrCreate(
             ['email' => 'tasya.laisafi1@mekar-jaya.com'],
             ['name' => 'Tasya Laisafi', 'password' => bcrypt('password')]
@@ -88,7 +89,7 @@ class UserUnitScopingTest extends TestCase
             ['can_edit' => true]
         );
         UserBusinessUnit::updateOrCreate(
-            ['user_id' => $this->tasya->id, 'business_unit_code' => 'cocacola'],
+            ['user_id' => $this->tasya->id, 'business_unit_code' => 'sangria'],
             ['can_edit' => true]
         );
     }
@@ -119,9 +120,9 @@ class UserUnitScopingTest extends TestCase
         $this->assertTrue($this->tasya->canAccessBusinessUnit('onbold'));
         $this->assertFalse($this->tasya->canEditBusinessUnit('onbold'));
 
-        // Coca-Cola has data_source = excel -> can be edited
-        $this->assertTrue($this->tasya->canAccessBusinessUnit('cocacola'));
-        $this->assertTrue($this->tasya->canEditBusinessUnit('cocacola'));
+        // Sangria has data_source = excel -> can be edited
+        $this->assertTrue($this->tasya->canAccessBusinessUnit('sangria'));
+        $this->assertTrue($this->tasya->canEditBusinessUnit('sangria'));
     }
 
     public function test_scoped_user_is_restricted_in_pnl_view(): void
@@ -533,7 +534,7 @@ class UserUnitScopingTest extends TestCase
     {
         GlobalBusinessUnit::firstOrCreate(['code' => 'aqua'], ['name' => 'AQUA', 'data_source' => 'excel', 'is_active' => true, 'sort_order' => 1]);
         GlobalBusinessUnit::firstOrCreate(['code' => 'ccod'], ['name' => 'CCOD', 'data_source' => 'excel', 'is_active' => true, 'sort_order' => 2]);
-        GlobalBusinessUnit::firstOrCreate(['code' => 'cocacola'], ['name' => 'Coca-Cola', 'data_source' => 'excel', 'is_active' => true, 'sort_order' => 3]);
+        GlobalBusinessUnit::firstOrCreate(['code' => 'sangria'], ['name' => 'Sangria', 'data_source' => 'excel', 'is_active' => true, 'sort_order' => 3]);
 
         // AQUA punya data Oktober 2026
         GlobalFinancialRecord::insert([
@@ -569,15 +570,15 @@ class UserUnitScopingTest extends TestCase
 
         $missingByCode = collect($summary['missing_business_units'])->keyBy('code');
         $this->assertTrue($missingByCode->has('ccod'));
-        $this->assertTrue($missingByCode->has('cocacola'));
+        $this->assertTrue($missingByCode->has('sangria'));
         $this->assertStringStartsWith('terakhir ', $missingByCode['ccod']['status_label']);
-        $this->assertEquals('belum ada laporan', $missingByCode['cocacola']['status_label']);
+        $this->assertEquals('belum ada laporan', $missingByCode['sangria']['status_label']);
 
         $response = $this->actingAs($this->admin)->get(route('finance.dashboard', ['period' => '2026-10-01']));
         $response->assertOk();
         $response->assertSee('Belum ada data P&amp;L', false);
         $response->assertSee('CCOD');
-        $response->assertSee('Coca-Cola');
+        $response->assertSee('Sangria');
         $response->assertSee('belum ada laporan');
     }
 
@@ -680,20 +681,51 @@ class UserUnitScopingTest extends TestCase
         $globalPnl->assertViewHas('availablePeriods', ['2026-11-01', '2026-10-01', '2026-09-01']);
         $globalPnl->assertViewHas('selectedPeriod', '2026-10-01');
 
-        // 2. Per Unit (AQUA di P&L): dropdown hanya memunculkan bulan milik AQUA (Okt & Sep), default ke Okt
-        $aquaPnl = $this->actingAs($this->admin)->get(route('finance.pnl', ['business_unit' => 'aqua']));
-        $aquaPnl->assertOk();
-        $aquaPnl->assertViewHas('availablePeriods', ['2026-10-01', '2026-09-01']);
-        $aquaPnl->assertViewHas('selectedPeriod', '2026-10-01');
+        // 2. Per Unit (AQUA di P&L) untuk Admin/FA: menyertakan Nov 2026 (Kosong / Catatan) agar bisa isi catatan/data, namun default tetap Okt 2026
+        $aquaPnlAdmin = $this->actingAs($this->admin)->get(route('finance.pnl', ['business_unit' => 'aqua']));
+        $aquaPnlAdmin->assertOk();
+        $aquaPnlAdmin->assertViewHas('availablePeriods', ['2026-11-01', '2026-10-01', '2026-09-01']);
+        $aquaPnlAdmin->assertViewHas('selectedPeriod', '2026-10-01');
+        $aquaPnlAdmin->assertSee('(Kosong / Catatan)');
 
-        // 3. Per Unit (SPBU di P&L): dropdown hanya memunculkan Nov & Okt, default ke bulan terbarunya Nov 2026
+        // 3. Per Unit (AQUA di P&L) untuk Pak Adrian (Read-Only): bulan kosong tanpa catatan TIDAK tampil
+        $pakAdrian = User::factory()->create(['email' => 'adrian.devianto@mekar-jaya.com', 'name' => 'Adrian Devianto']);
+        $aquaPnlAdrian = $this->actingAs($pakAdrian)->get(route('finance.pnl', ['business_unit' => 'aqua']));
+        $aquaPnlAdrian->assertOk();
+        $aquaPnlAdrian->assertViewHas('availablePeriods', ['2026-10-01', '2026-09-01']);
+        $aquaPnlAdrian->assertViewHas('selectedPeriod', '2026-10-01');
+
+        // Setelah ada catatan periode untuk AQUA Nov 2026, Pak Adrian & Bu Imel bisa melihatnya di dropdown
+        GlobalPeriodNote::create([
+            'period' => '2026-11-01',
+            'business_unit_code' => 'aqua',
+            'report_type' => 'pnl',
+            'closing_status' => 'unclosed',
+            'notes' => 'AQUA November belum closing',
+            'user_id' => $this->admin->id,
+            'user_name' => $this->admin->name,
+        ]);
+
+        $buImel = User::factory()->create(['email' => 'imelda.daniel@mekar-jaya.com', 'name' => 'Imelda Daniel']);
+        $aquaPnlImel = $this->actingAs($buImel)->get(route('finance.pnl', ['business_unit' => 'aqua']));
+        $aquaPnlImel->assertOk();
+        $aquaPnlImel->assertViewHas('availablePeriods', ['2026-11-01', '2026-10-01', '2026-09-01']);
+        $aquaPnlImel->assertViewHas('selectedPeriod', '2026-10-01');
+        $aquaPnlImel->assertSee('(Ada Catatan)');
+
+        // Buka periode Nov yang ada catatannya
+        $aquaPnlImelNov = $this->actingAs($buImel)->get(route('finance.pnl', ['business_unit' => 'aqua', 'period' => '2026-11-01']));
+        $aquaPnlImelNov->assertOk();
+        $aquaPnlImelNov->assertSee('AQUA November belum closing');
+
+        // 4. Per Unit (SPBU di P&L): dropdown hanya memunculkan Nov & Okt, default ke bulan terbarunya Nov 2026
         $spbuPnl = $this->actingAs($this->admin)->get(route('finance.pnl', ['business_unit' => 'spbu']));
         $spbuPnl->assertOk();
         $spbuPnl->assertViewHas('availablePeriods', ['2026-11-01', '2026-10-01']);
         $spbuPnl->assertViewHas('selectedPeriod', '2026-11-01');
 
-        // 4. Per Unit di Neraca (AQUA hanya punya Balance Sheet Okt 2026, bukan Sep 2026)
-        $aquaBs = $this->actingAs($this->admin)->get(route('finance.balance-sheet', ['business_unit' => 'aqua']));
+        // 5. Per Unit di Neraca (AQUA hanya punya Balance Sheet Okt 2026) untuk Admin dan Pak Adrian
+        $aquaBs = $this->actingAs($pakAdrian)->get(route('finance.balance-sheet', ['business_unit' => 'aqua']));
         $aquaBs->assertOk();
         $aquaBs->assertViewHas('availablePeriods', ['2026-10-01']);
         $aquaBs->assertViewHas('selectedPeriod', '2026-10-01');

@@ -5,6 +5,7 @@ namespace App\Services\GlobalFinance;
 use App\Models\GlobalBusinessUnit;
 use App\Models\GlobalEntity;
 use App\Models\GlobalFinancialRecord;
+use App\Models\GlobalPeriodNote;
 use Carbon\Carbon;
 
 class ConsolidationReportService
@@ -101,6 +102,100 @@ class ConsolidationReportService
             ->distinct()
             ->pluck('business_unit_code')
             ->all();
+    }
+
+    /**
+     * Susun opsi dropdown periode per konteks unit & role user:
+     * - Bulan yang memiliki data finansial selalu tampil dan menjadi default terpilih.
+     * - Bulan kosong yang sudah memiliki catatan periode (GlobalPeriodNote) tampil untuk semua user (termasuk Direksi).
+     * - Bulan terbaru Global yang masih kosong tanpa catatan hanya tampil untuk FA & Super Admin agar dapat mengisi catatan/data manual.
+     *
+     * @param  array<string>|null  $allowedBuCodes
+     * @return array{
+     *     options: array<int, array{period: string, label: string, has_data: bool, has_note: bool}>,
+     *     periods: array<int, string>,
+     *     default_period: ?string
+     * }
+     */
+    public function getSelectablePeriodOptions(?array $allowedBuCodes, string $reportType, ?string $businessUnitCode, bool $includeEmptyDrafts): array
+    {
+        $populatedPeriods = $this->getAvailablePeriods($allowedBuCodes, $reportType, $businessUnitCode);
+        if (empty($populatedPeriods) && $businessUnitCode === null) {
+            $populatedPeriods = $this->getAvailablePeriods($allowedBuCodes);
+        }
+
+        $noteBuCode = $businessUnitCode ?: 'all';
+        $notedPeriods = GlobalPeriodNote::query()
+            ->where('business_unit_code', $noteBuCode)
+            ->whereIn('report_type', [$reportType, 'all'])
+            ->pluck('period')
+            ->map(fn ($d) => Carbon::parse($d)->format('Y-m-d'))
+            ->unique()
+            ->values()
+            ->all();
+
+        $draftPeriods = [];
+        if ($includeEmptyDrafts && $businessUnitCode !== null) {
+            $globalPeriods = $this->getAvailablePeriods(null, $reportType, null);
+            if (empty($globalPeriods)) {
+                $globalPeriods = $this->getAvailablePeriods(null);
+            }
+
+            if (! empty($populatedPeriods)) {
+                $newestPopulated = $populatedPeriods[0];
+                $draftPeriods = array_values(array_filter(
+                    $globalPeriods,
+                    fn (string $p): bool => $p > $newestPopulated
+                ));
+            } else {
+                $draftPeriods = array_slice($globalPeriods, 0, 3);
+            }
+        }
+
+        $allPeriods = collect($populatedPeriods)
+            ->merge($notedPeriods)
+            ->merge($draftPeriods)
+            ->unique()
+            ->sortDesc()
+            ->values()
+            ->all();
+
+        $populatedLookup = array_flip($populatedPeriods);
+        $notedLookup = array_flip($notedPeriods);
+
+        $options = array_map(function (string $period) use ($populatedLookup, $notedLookup): array {
+            $hasData = isset($populatedLookup[$period]);
+            $hasNote = isset($notedLookup[$period]);
+            $baseLabel = Carbon::parse($period)->translatedFormat('F Y');
+
+            if ($hasData) {
+                $label = $baseLabel;
+            } elseif ($hasNote) {
+                $label = $baseLabel.' (Ada Catatan)';
+            } else {
+                $label = $baseLabel.' (Kosong / Catatan)';
+            }
+
+            return [
+                'period' => $period,
+                'label' => $label,
+                'has_data' => $hasData,
+                'has_note' => $hasNote,
+            ];
+        }, $allPeriods);
+
+        if ($businessUnitCode !== null) {
+            $defaultPeriod = $populatedPeriods[0] ?? ($notedPeriods[0] ?? ($allPeriods[0] ?? null));
+        } else {
+            $defaultPeriod = $this->getDefaultConsolidatedPeriod($populatedPeriods, $allowedBuCodes, $reportType)
+                ?? ($allPeriods[0] ?? null);
+        }
+
+        return [
+            'options' => $options,
+            'periods' => $allPeriods,
+            'default_period' => $defaultPeriod,
+        ];
     }
 
     /**

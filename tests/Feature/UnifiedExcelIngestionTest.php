@@ -394,4 +394,138 @@ class UnifiedExcelIngestionTest extends TestCase
             'amount' => 20,
         ]);
     }
+
+    public function test_it_parses_and_reimports_mohala_and_sangria_pnl_and_neraca_idempotently(): void
+    {
+        $service = new ExcelIngestionService;
+
+        // 1. Uji format sintetis Mohala PNL (termasuk Omset to Sangria negatif & Biaya THR negatif)
+        $mohalaPnl = new Spreadsheet;
+        $shM = $mohalaPnl->getActiveSheet();
+        $shM->setTitle('PNL');
+        $shM->setCellValue('A2', 'PNL');
+        $shM->setCellValue('A3', 'MOHALA BAKERY');
+        $shM->setCellValue('A4', 'JANUARI 2026');
+        $shM->setCellValue('A7', 'Omset');
+        $shM->setCellValue('E7', 1000000);
+        $shM->setCellValue('A8', 'Omset to Sangria');
+        $shM->setCellValue('E8', 250000);
+        $shM->setCellValue('A9', 'Omset Lain-lain');
+        $shM->setCellValue('E9', 50000);
+        $shM->setCellValue('A18', 'HPP');
+        $shM->setCellValue('F18', 300000);
+        $shM->setCellValue('A21', 'BIAYA');
+        $shM->setCellValue('A22', 'Biaya Gaji');
+        $shM->setCellValue('E22', 120000);
+        $shM->setCellValue('A23', 'Biaya THR 2026');
+        $shM->setCellValue('E23', -20000);
+        $shM->setCellValue('A24', 'TOTAL BIAYA');
+        $shM->setCellValue('A25', 'Biaya Packing dan Perlengkapan Resto');
+        $shM->setCellValue('E25', -5000);
+        $shM->setCellValue('A27', 'Laba Bersih');
+        $shM->setCellValue('F27', 405000);
+        $shM->setCellValue('A35', 'Pendapatan Lain-lain:');
+        $shM->setCellValue('E35', 999999); // Detail di bawah Laba Bersih harus diabaikan
+
+        $tmpMohalaPnl = tempnam(sys_get_temp_dir(), 'mohala_pnl_').'.xlsx';
+        (new Xlsx($mohalaPnl))->save($tmpMohalaPnl);
+
+        $detectedMohalaPnl = $service->detectFileType($tmpMohalaPnl);
+        $this->assertEquals('mohala_pnl', $detectedMohalaPnl['type']);
+
+        $resM = $service->ingestSangriaMohalaPnlFile($tmpMohalaPnl, 'mohala', 'test_mohala_pnl.xlsx');
+        $service->ingestSangriaMohalaPnlFile($tmpMohalaPnl, 'mohala', 'test_mohala_pnl.xlsx');
+
+        $revM = (float) GlobalFinancialRecord::where('business_unit_code', 'mohala')->where('period', '2026-01-01')->where('category', 'revenue')->sum('amount');
+        $cogsM = (float) GlobalFinancialRecord::where('business_unit_code', 'mohala')->where('period', '2026-01-01')->where('category', 'cogs')->sum('amount');
+        $opexM = (float) GlobalFinancialRecord::where('business_unit_code', 'mohala')->where('period', '2026-01-01')->where('category', 'opex')->sum('amount');
+        $oiM = (float) GlobalFinancialRecord::where('business_unit_code', 'mohala')->where('period', '2026-01-01')->where('category', 'other_income')->sum('amount');
+
+        $this->assertEquals(['2026-01-01'], $resM['periods']);
+        $this->assertEquals(800000.0, $revM);
+        $this->assertEquals(300000.0, $cogsM);
+        $this->assertEquals(95000.0, $opexM);
+        $this->assertEquals(0.0, $oiM);
+        $this->assertEquals(405000.0, ($revM - $cogsM - $opexM + $oiM));
+        $this->assertEquals(7, GlobalFinancialRecord::where('business_unit_code', 'mohala')->where('report_type', 'pnl')->count());
+
+        @unlink($tmpMohalaPnl);
+
+        // 2. Uji format sintetis Sangria Neraca multi-sheet
+        $sangriaBs = new Spreadsheet;
+        $shS1 = $sangriaBs->getActiveSheet();
+        $shS1->setTitle('OKT 26');
+        $shS1->setCellValue('B1', 'NERACA');
+        $shS1->setCellValue('B2', 'SANGRIA RESTO');
+        $shS1->setCellValue('B3', 'OKTOBER 2026');
+        $shS1->setCellValue('B5', 'Kas');
+        $shS1->setCellValue('D5', 1500000);
+        $shS1->setCellValue('B6', 'TOTAL AKTIVA');
+        $shS1->setCellValue('D6', 1500000);
+        $shS1->setCellValue('F5', 'Hutang Supplier');
+        $shS1->setCellValue('H5', 500000);
+        $shS1->setCellValue('F6', 'Modal');
+        $shS1->setCellValue('H6', 800000);
+        $shS1->setCellValue('F7', 'Laba 2026');
+        $shS1->setCellValue('H7', 200000);
+        $shS1->setCellValue('F8', 'TOTAL PASIVA');
+        $shS1->setCellValue('H8', 1500000);
+
+        $tmpSangriaBs = tempnam(sys_get_temp_dir(), 'sangria_bs_').'.xlsx';
+        (new Xlsx($sangriaBs))->save($tmpSangriaBs);
+
+        $detectedSangriaBs = $service->detectFileType($tmpSangriaBs);
+        $this->assertEquals('sangria_bs', $detectedSangriaBs['type']);
+
+        $resS = $service->ingestUnifiedFile($tmpSangriaBs, 'test_sangria_neraca.xlsx', true);
+        $this->assertEquals(['2026-10-01'], $resS['periods']);
+        $this->assertEquals(1500000.0, (float) GlobalFinancialRecord::where('business_unit_code', 'sangria')->where('report_type', 'balance_sheet')->where('category', 'asset')->sum('amount'));
+        $this->assertEquals(500000.0, (float) GlobalFinancialRecord::where('business_unit_code', 'sangria')->where('report_type', 'balance_sheet')->where('category', 'liability')->sum('amount'));
+        $this->assertEquals(1000000.0, (float) GlobalFinancialRecord::where('business_unit_code', 'sangria')->where('report_type', 'balance_sheet')->where('category', 'equity')->sum('amount'));
+
+        @unlink($tmpSangriaBs);
+    }
+
+    public function test_it_ingests_real_mohala_and_sangria_pnl_workbooks_with_zero_discrepancy(): void
+    {
+        $mohalaPath = 'D:/Excel Global Fa/2026 10 PNL MOHALA BAKERY.xlsx';
+        $sangriaPath = 'D:/Excel Global Fa/2026 10 PNL SANGRIA RESTO.xlsx';
+
+        if (! file_exists($mohalaPath) || ! file_exists($sangriaPath)) {
+            $this->markTestSkipped('Real Mohala/Sangria PNL workbooks not found.');
+        }
+
+        $service = new ExcelIngestionService;
+
+        $this->assertEquals('mohala_pnl', $service->detectFileType($mohalaPath)['type']);
+        $this->assertEquals('sangria_pnl', $service->detectFileType($sangriaPath)['type']);
+
+        $resM = $service->ingestSangriaMohalaPnlFile($mohalaPath, 'mohala');
+        $resS = $service->ingestSangriaMohalaPnlFile($sangriaPath, 'sangria');
+
+        $this->assertCount(10, $resM['periods']);
+        $this->assertCount(10, $resS['periods']);
+
+        $octMohalaRev = (float) GlobalFinancialRecord::where('business_unit_code', 'mohala')->where('period', '2026-10-01')->where('category', 'revenue')->sum('amount');
+        $octMohalaCogs = (float) GlobalFinancialRecord::where('business_unit_code', 'mohala')->where('period', '2026-10-01')->where('category', 'cogs')->sum('amount');
+        $octMohalaOpex = (float) GlobalFinancialRecord::where('business_unit_code', 'mohala')->where('period', '2026-10-01')->where('category', 'opex')->sum('amount');
+        $octMohalaOi = (float) GlobalFinancialRecord::where('business_unit_code', 'mohala')->where('period', '2026-10-01')->where('category', 'other_income')->sum('amount');
+
+        $this->assertEqualsWithDelta(31556095.00, $octMohalaRev, 0.01);
+        $this->assertEqualsWithDelta(9991488.00, $octMohalaCogs, 0.01);
+        $this->assertEqualsWithDelta(22377108.75, $octMohalaOpex, 0.01);
+        $this->assertEqualsWithDelta(0.00, $octMohalaOi, 0.01);
+        $this->assertEqualsWithDelta(-812501.75, ($octMohalaRev - $octMohalaCogs - $octMohalaOpex + $octMohalaOi), 0.01);
+
+        $octSangriaRev = (float) GlobalFinancialRecord::where('business_unit_code', 'sangria')->where('period', '2026-10-01')->where('category', 'revenue')->sum('amount');
+        $octSangriaCogs = (float) GlobalFinancialRecord::where('business_unit_code', 'sangria')->where('period', '2026-10-01')->where('category', 'cogs')->sum('amount');
+        $octSangriaOpex = (float) GlobalFinancialRecord::where('business_unit_code', 'sangria')->where('period', '2026-10-01')->where('category', 'opex')->sum('amount');
+        $octSangriaOi = (float) GlobalFinancialRecord::where('business_unit_code', 'sangria')->where('period', '2026-10-01')->where('category', 'other_income')->sum('amount');
+
+        $this->assertEqualsWithDelta(112359500.00, $octSangriaRev, 0.01);
+        $this->assertEqualsWithDelta(51035060.00, $octSangriaCogs, 0.01);
+        $this->assertEqualsWithDelta(107843701.55, $octSangriaOpex, 0.01);
+        $this->assertEqualsWithDelta(2186074.00, $octSangriaOi, 0.01);
+        $this->assertEqualsWithDelta(-44333187.55, ($octSangriaRev - $octSangriaCogs - $octSangriaOpex + $octSangriaOi), 0.01);
+    }
 }

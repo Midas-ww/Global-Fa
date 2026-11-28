@@ -51,11 +51,19 @@
                         <i data-lucide="calendar" class="w-3.5 h-3.5 text-[#ca8a04] shrink-0"></i>
                         <label for="periodSelectPnl" class="text-xs font-semibold text-slate-500">Periode:</label>
                         <select name="period" id="periodSelectPnl" onchange="this.form.submit()" class="text-xs font-bold font-mono bg-transparent text-slate-900 focus:outline-none cursor-pointer">
-                            @foreach($availablePeriods as $p)
-                                <option value="{{ $p }}" {{ $selectedPeriod === $p ? 'selected' : '' }}>
-                                    {{ \Carbon\Carbon::parse($p)->translatedFormat('F Y') }}
-                                </option>
-                            @endforeach
+                            @if(! empty($periodOptions))
+                                @foreach($periodOptions as $opt)
+                                    <option value="{{ $opt['period'] }}" {{ $selectedPeriod === $opt['period'] ? 'selected' : '' }}>
+                                        {{ $opt['label'] }}
+                                    </option>
+                                @endforeach
+                            @else
+                                @foreach($availablePeriods as $p)
+                                    <option value="{{ $p }}" {{ $selectedPeriod === $p ? 'selected' : '' }}>
+                                        {{ \Carbon\Carbon::parse($p)->translatedFormat('F Y') }}
+                                    </option>
+                                @endforeach
+                            @endif
                         </select>
                     </div>
                 </form>
