@@ -598,13 +598,31 @@ $pnl = $mPnl->invoke($ctrl, $period, ['period' => $period], null, true);
 
 $neraca = $ctrl->getNeracaData($period);
 
+$kewajibanItems = $neraca['pasiva']['kewajiban_iqos']['items'] ?? [];
+$debtIqosOfficial = 0.0;
+$debtPaymentIqos = 0.0;
+
+if (! empty($kewajibanItems)) {
+    foreach ($kewajibanItems as $kItem) {
+        $kName = strtolower((string) ($kItem['name'] ?? ''));
+        $kAmt = (float) ($kItem['amount'] ?? 0);
+        if (str_contains($kName, 'payment')) {
+            $debtPaymentIqos += $kAmt;
+        } else {
+            $debtIqosOfficial += $kAmt;
+        }
+    }
+} else {
+    $debtIqosOfficial = (float) ($neraca['debt_iqos'] ?? 0);
+}
+
 $neracaFlat = [
     'bank_bri' => $neraca['bank_bri'] ?? 0,
     'bank_bca' => $neraca['bank_bca'] ?? 0,
     'kas_cash' => $neraca['kas_cash'] ?? 0,
     'stock_value' => $neraca['stock_value'] ?? 0,
-    'debt_iqos' => $neraca['debt_iqos'] ?? 0,
-    'debt_payment_iqos' => 0,
+    'debt_iqos' => round($debtIqosOfficial, 2),
+    'debt_payment_iqos' => round($debtPaymentIqos, 2),
     'total_assets' => $neraca['total_assets'] ?? 0,
     'total_liabilities' => $neraca['total_liabilities'] ?? 0,
     'inflow_pending_items' => $neraca['aktiva']['penerimaan_berjalan']['items'] ?? [],
