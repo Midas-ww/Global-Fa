@@ -114,6 +114,23 @@ class UnifiedExcelIngestionTest extends TestCase
             - (float) ($xtransTotals['other_expense'] ?? 0);
 
         $this->assertEqualsWithDelta(-193376202.27, $netProfit, 1.0);
+
+        // Verify AQUA October 2026 P&L excludes 'a Head Office Cost adjustment' (-375.23M) so OPEX & Net Profit match Excel (AF116)
+        $aquaTotals = GlobalFinancialRecord::where('business_unit_code', 'aqua')
+            ->where('period', '2026-10-01')
+            ->where('report_type', 'pnl')
+            ->selectRaw('category, SUM(amount) as total')
+            ->groupBy('category')
+            ->pluck('total', 'category');
+
+        $aquaNetProfit = (float) ($aquaTotals['revenue'] ?? 0)
+            - (float) ($aquaTotals['cogs'] ?? 0)
+            - (float) ($aquaTotals['opex'] ?? 0)
+            + (float) ($aquaTotals['other_income'] ?? 0)
+            - (float) ($aquaTotals['other_expense'] ?? 0);
+
+        $this->assertEqualsWithDelta(8236196161.93, (float) ($aquaTotals['opex'] ?? 0), 0.05);
+        $this->assertEqualsWithDelta(2431733305.89, $aquaNetProfit, 0.05);
     }
 
     public function test_it_allows_upload_via_controller_endpoint(): void

@@ -3512,11 +3512,11 @@ class ExcelIngestionService
             for ($r = 8; $r <= 114; $r++) {
                 $accCode = trim((string) $sPl->getCell("A{$r}")->getValue());
                 $accName = trim((string) ($sPl->getCell("E{$r}")->getValue() ?: $sPl->getCell("D{$r}")->getValue() ?: $sPl->getCell("B{$r}")->getValue()));
-                if ($accCode === '' || preg_match('/^(total|subtotal|gross profit|net profit|income from operation)\b/i', trim($accName)) || preg_match('/\b(net profit|gross profit)\b/i', trim($accName))) {
+                if ($accCode === '' || strtolower($accCode) === 'a' || str_contains(strtolower($accName), 'head office cost adjustment') || preg_match('/^(total|subtotal|gross profit|net profit|income from operation)\b/i', trim($accName)) || preg_match('/\b(net profit|gross profit)\b/i', trim($accName))) {
                     continue;
                 }
 
-                $cat = 'opex';
+                $cat = null;
                 if (str_starts_with($accCode, '4')) {
                     $cat = 'revenue';
                 } elseif (str_starts_with($accCode, '5')) {
@@ -3527,6 +3527,10 @@ class ExcelIngestionService
                     $cat = 'other_expense';
                 } elseif (str_starts_with($accCode, '9')) {
                     $cat = 'other_income';
+                }
+
+                if ($cat === null) {
+                    continue;
                 }
 
                 $amt = (float) $sPl->getCell("AF{$r}")->getCalculatedValue();
