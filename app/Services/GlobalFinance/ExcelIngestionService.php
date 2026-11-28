@@ -360,12 +360,29 @@ class ExcelIngestionService
             return;
         }
 
+        if (in_array($detected['type'], ['mohala_pnl', 'mohala_bs', 'sangria_pnl', 'sangria_bs'], true) && $selectedType === 'mohala_sangria') {
+            return;
+        }
+
+        if ($selectedType === 'ferdinand_satu_pintu') {
+            $ferdinandAllowed = ['unified_multi_unit', 'universal_template', 'fmcg', 'fmcg_bs', 'aqua', 'mjs_summary', 'xtrans', 'mjsm_ccod', 'ccod'];
+            if (in_array($detected['type'], $ferdinandAllowed, true)) {
+                return;
+            }
+
+            throw new \InvalidArgumentException(
+                "Validasi Format Gagal: File ini terdeteksi sebagai {$detected['label']}, bukan bagian dari 5 unit Ferdinand Winoto (Unilever, AQUA, Xtrans, ABC, CCOD)."
+            );
+        }
+
         $selectedLabel = match ($selectedType) {
             'fmcg' => 'Unilever (9 Depo Cabang)',
             'aqua' => 'AQUA (CV Mekar Jaya Sentosa)',
             'xtrans' => 'Xtrans (PT Mekar Jaya Xtrans Jaya)',
             'ccod' => 'CCOD (12 Cabang)',
             'kandang' => 'Kandang (PT Mekar Jaya Kurnia Bersama)',
+            'mohala_sangria' => 'Satu Pintu Viona — Mohala Bakery x Sangria Resto',
+            'ferdinand_satu_pintu' => 'Satu Pintu Ferdinand Winoto (Unilever, AQUA, Xtrans, ABC, CCOD)',
             default => strtoupper($selectedType),
         };
 
@@ -433,17 +450,30 @@ class ExcelIngestionService
         $detectedLabel = $detected['label'];
         $sheets = $detected['sheets'] ?? [];
 
-        $unit = $targetType !== 'auto' ? GlobalBusinessUnit::where('code', $targetType)->first() : null;
-        $targetLabel = $targetType === 'auto' ? 'Satu Pintu (Otomatis Multi-Unit)' : ($unit ? $unit->name : strtoupper($targetType));
+        $unit = ! in_array($targetType, ['auto', 'mohala_sangria', 'ferdinand_satu_pintu'], true)
+            ? GlobalBusinessUnit::where('code', $targetType)->first()
+            : null;
+        $targetLabel = match ($targetType) {
+            'auto' => 'Satu Pintu (Otomatis Multi-Unit)',
+            'mohala_sangria' => 'Satu Pintu — Viona Delian (Mohala Bakery x Sangria Resto)',
+            'ferdinand_satu_pintu' => 'Satu Pintu — Ferdinand Winoto (Unilever, AQUA, Xtrans, ABC, CCOD)',
+            default => $unit ? $unit->name : strtoupper($targetType),
+        };
+
+        $ferdinandAllowedTypes = ['unified_multi_unit', 'universal_template', 'fmcg', 'fmcg_bs', 'aqua', 'mjs_summary', 'xtrans', 'mjsm_ccod', 'ccod'];
 
         // Kesesuaian tipe usaha
         $isTypeMatch = ($targetType === 'auto'
-            || $detectedType === 'unified_multi_unit'
-            || $detectedType === 'universal_template'
-            || $detectedType === $targetType
-            || ($detectedType === 'mjsm_ccod' && in_array($targetType, ['abc', 'ccod'], true))
-            || (in_array($detectedType, ['mohala_pnl', 'mohala_bs'], true) && $targetType === 'mohala')
-            || (in_array($detectedType, ['sangria_pnl', 'sangria_bs'], true) && $targetType === 'sangria'));
+            || ($targetType === 'ferdinand_satu_pintu' && in_array($detectedType, $ferdinandAllowedTypes, true))
+            || ($targetType !== 'ferdinand_satu_pintu' && $targetType !== 'mohala_sangria' && (
+                $detectedType === 'unified_multi_unit'
+                || $detectedType === 'universal_template'
+                || $detectedType === $targetType
+                || ($detectedType === 'mjsm_ccod' && in_array($targetType, ['abc', 'ccod'], true))
+                || (in_array($detectedType, ['mohala_pnl', 'mohala_bs'], true) && $targetType === 'mohala')
+                || (in_array($detectedType, ['sangria_pnl', 'sangria_bs'], true) && $targetType === 'sangria')
+            ))
+            || (in_array($detectedType, ['mohala_pnl', 'mohala_bs', 'sangria_pnl', 'sangria_bs'], true) && $targetType === 'mohala_sangria'));
         $matchError = null;
         if (! $isTypeMatch && $detectedType !== 'unknown') {
             if (($detectedType === 'aqua' || $detectedType === 'mjs_summary') && $targetType === 'fmcg') {
@@ -456,8 +486,13 @@ class ExcelIngestionService
         }
 
         // Cek duplikasi di log ingestion
+        $logTargetCodes = match ($targetType) {
+            'mohala_sangria' => ['mohala', 'sangria', 'mohala_sangria'],
+            'ferdinand_satu_pintu' => ['fmcg', 'aqua', 'xtrans', 'abc', 'ccod', 'mjsm_ccod', 'ferdinand_satu_pintu'],
+            default => [$targetType],
+        };
         $existingLog = GlobalIngestionLog::query()
-            ->where('business_unit_code', $targetType)
+            ->whereIn('business_unit_code', $logTargetCodes)
             ->where('source_type', 'excel_upload')
             ->where('status', 'success')
             ->where(function ($q) use ($filename, $fileHash) {

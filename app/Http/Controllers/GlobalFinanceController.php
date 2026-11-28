@@ -434,6 +434,26 @@ class GlobalFinanceController extends Controller
                     'message' => 'Anda tidak memiliki hak akses untuk unit bisnis ini.',
                 ], 403);
             }
+        } elseif ($type === 'mohala_sangria') {
+            $hasAccess = ($request->user()?->canAccessBusinessUnit('mohala') ?? false) || ($request->user()?->canAccessBusinessUnit('sangria') ?? false);
+            if (! $hasAccess) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki hak akses untuk unit Mohala maupun Sangria.',
+                ], 403);
+            }
+        } elseif ($type === 'ferdinand_satu_pintu') {
+            $hasAccess = ($request->user()?->canAccessBusinessUnit('fmcg') ?? false)
+                || ($request->user()?->canAccessBusinessUnit('aqua') ?? false)
+                || ($request->user()?->canAccessBusinessUnit('xtrans') ?? false)
+                || ($request->user()?->canAccessBusinessUnit('abc') ?? false)
+                || ($request->user()?->canAccessBusinessUnit('ccod') ?? false);
+            if (! $hasAccess) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki hak akses untuk unit Ferdinand Winoto.',
+                ], 403);
+            }
         } elseif (! ($request->user()?->canAccessBusinessUnit($type) ?? false)) {
             return response()->json([
                 'success' => false,
@@ -481,6 +501,20 @@ class GlobalFinanceController extends Controller
             if (! $hasAccess) {
                 return back()->with('error', 'Akses ditolak: Anda tidak memiliki izin edit untuk unit CCOD x ABC.');
             }
+        } elseif ($type === 'mohala_sangria') {
+            $hasAccess = ($request->user()?->canEditBusinessUnit('mohala') ?? false) || ($request->user()?->canEditBusinessUnit('sangria') ?? false);
+            if (! $hasAccess) {
+                return back()->with('error', 'Akses ditolak: Anda tidak memiliki izin edit untuk unit Mohala x Sangria.');
+            }
+        } elseif ($type === 'ferdinand_satu_pintu') {
+            $hasAccess = ($request->user()?->canEditBusinessUnit('fmcg') ?? false)
+                || ($request->user()?->canEditBusinessUnit('aqua') ?? false)
+                || ($request->user()?->canEditBusinessUnit('xtrans') ?? false)
+                || ($request->user()?->canEditBusinessUnit('abc') ?? false)
+                || ($request->user()?->canEditBusinessUnit('ccod') ?? false);
+            if (! $hasAccess) {
+                return back()->with('error', 'Akses ditolak: Anda tidak memiliki izin edit untuk unit Ferdinand Winoto.');
+            }
         } elseif (! ($request->user()?->canEditBusinessUnit($type) ?? false)) {
             return back()->with('error', 'Akses ditolak: Unit usaha ini bersumber dari database otomatis atau Anda tidak memiliki izin edit.');
         }
@@ -491,8 +525,13 @@ class GlobalFinanceController extends Controller
 
         // 1. Deteksi apakah file Excel ini sudah pernah diimpor sebelumnya
         if (! $overwrite) {
+            $logTargetCodes = match ($type) {
+                'mohala_sangria' => ['mohala', 'sangria', 'mohala_sangria'],
+                'ferdinand_satu_pintu' => ['fmcg', 'aqua', 'xtrans', 'abc', 'ccod', 'mjsm_ccod', 'ferdinand_satu_pintu'],
+                default => [$type],
+            };
             $existingLog = GlobalIngestionLog::query()
-                ->where('business_unit_code', $type)
+                ->whereIn('business_unit_code', $logTargetCodes)
                 ->where('source_type', 'excel_upload')
                 ->where('status', 'success')
                 ->where(function ($q) use ($filename, $fileHash) {
@@ -520,10 +559,31 @@ class GlobalFinanceController extends Controller
 
             // 3. Proses Ingest Data
             $detected = $service->detectFileType($fullPath);
-            if (($detected['type'] ?? '') === 'unified_multi_unit' || $type === 'auto') {
+            $detectedType = $detected['type'] ?? '';
+            if ($detectedType === 'unified_multi_unit' || $type === 'auto') {
                 $res = $service->ingestUnifiedFile($fullPath, $filename, $overwrite);
                 $msg = $res['summary'] ?? "Satu Pintu: Berhasil mengimpor {$res['records_inserted']} data transaksi dari berkas gabungan multi-unit.";
-            } elseif ($detected['type'] === 'universal_template') {
+            } elseif ($type === 'ferdinand_satu_pintu') {
+                if ($detectedType === 'fmcg_bs') {
+                    $res = $service->ingestFmcgBalanceSheetFile($fullPath, $filename);
+                    $msg = "Ferdinand — Unilever: Berhasil mengimpor {$res['records_inserted']} data Neraca Konsolidasi CV MJP ({$res['periods_count']} periode).";
+                } elseif ($detectedType === 'fmcg') {
+                    $res = $service->ingestFmcgFile($fullPath, $filename);
+                    $msg = "Ferdinand — Unilever: Berhasil mengimpor {$res['records_inserted']} data transaksi finansial.";
+                } elseif (in_array($detectedType, ['aqua', 'mjs_summary'], true)) {
+                    $res = $service->ingestAquaFile($fullPath, $filename);
+                    $msg = "Ferdinand — AQUA: Berhasil mengimpor {$res['records_inserted']} data transaksi finansial.";
+                } elseif ($detectedType === 'xtrans') {
+                    $res = $service->ingestXtransFile($fullPath, $filename);
+                    $msg = "Ferdinand — Xtrans: Berhasil mengimpor {$res['records_inserted']} data transaksi finansial.";
+                } elseif (in_array($detectedType, ['mjsm_ccod', 'ccod'], true)) {
+                    $res = $service->ingestMjsmCcodFile($fullPath, $filename);
+                    $msg = "Ferdinand — CCOD x ABC: Berhasil mengimpor {$res['records_inserted']} data P&L termasuk {$res['prorate_count']} baris HO Cost Prorate.";
+                } else {
+                    $res = $service->ingestUnifiedFile($fullPath, $filename, $overwrite);
+                    $msg = $res['summary'] ?? "Ferdinand — Satu Pintu: Berhasil mengimpor {$res['records_inserted']} data transaksi.";
+                }
+            } elseif ($detectedType === 'universal_template') {
                 $res = $service->ingestUniversalTemplate($fullPath, $type, $filename);
                 $unitName = GlobalBusinessUnit::where('code', $type)->value('name') ?? strtoupper($type);
                 $msg = "{$unitName}: Berhasil mengimpor {$res['records_inserted']} data transaksi via Template Universal Holding.";
@@ -558,6 +618,9 @@ class GlobalFinanceController extends Controller
             } elseif (in_array($detected['type'] ?? '', ['mohala_pnl', 'sangria_pnl', 'mohala_bs', 'sangria_bs'], true)) {
                 $detectedType = $detected['type'];
                 $unitCode = str_starts_with($detectedType, 'mohala') ? 'mohala' : 'sangria';
+                if (! ($request->user()?->canEditBusinessUnit($unitCode) ?? true)) {
+                    throw new \InvalidArgumentException("Anda tidak memiliki izin edit untuk unit usaha {$unitCode}.");
+                }
                 $unitLabel = $unitCode === 'mohala' ? 'Mohala Bakery' : 'Sangria Resto';
 
                 if (str_ends_with($detectedType, '_pnl')) {

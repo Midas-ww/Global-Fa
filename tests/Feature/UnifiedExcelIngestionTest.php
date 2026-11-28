@@ -528,4 +528,102 @@ class UnifiedExcelIngestionTest extends TestCase
         $this->assertEqualsWithDelta(2186074.00, $octSangriaOi, 0.01);
         $this->assertEqualsWithDelta(-44333187.55, ($octSangriaRev - $octSangriaCogs - $octSangriaOpex + $octSangriaOi), 0.01);
     }
+
+    public function test_it_shows_mohala_sangria_satu_pintu_and_processes_preview_and_upload(): void
+    {
+        $admin = User::factory()->create([
+            'email' => 'superadmin@mjg.com',
+            'name' => 'Super Admin',
+        ]);
+        GlobalBusinessUnit::firstOrCreate(['code' => 'mohala'], ['name' => 'Mohala', 'data_source' => 'excel', 'is_active' => true]);
+        GlobalBusinessUnit::firstOrCreate(['code' => 'sangria'], ['name' => 'Sangria', 'data_source' => 'excel', 'is_active' => true]);
+
+        $syncResp = $this->actingAs($admin)->get(route('finance.sync'));
+        $syncResp->assertOk();
+        $syncResp->assertSee('Satu Pintu — Ferdinand Winoto');
+        $syncResp->assertSee('Satu Pintu — Viona Delian (Mohala Bakery x Sangria Resto)');
+        $syncResp->assertSee('Satu Pintu — Fransiska Lia (Kandang PT MJKB)');
+
+        $spreadsheet = new Spreadsheet;
+        $sh = $spreadsheet->getActiveSheet();
+        $sh->setTitle('PNL');
+        $sh->setCellValue('A2', 'PNL');
+        $sh->setCellValue('A3', 'MOHALA BAKERY');
+        $sh->setCellValue('A4', 'OKTOBER 2026');
+        $sh->setCellValue('A7', 'Omset');
+        $sh->setCellValue('E7', 500000);
+        $sh->setCellValue('A18', 'HPP');
+        $sh->setCellValue('F18', 200000);
+        $sh->setCellValue('A27', 'Laba Bersih');
+        $sh->setCellValue('F27', 300000);
+
+        $tmpFile = tempnam(sys_get_temp_dir(), 'ms_pintu_').'.xlsx';
+        (new Xlsx($spreadsheet))->save($tmpFile);
+
+        // File Mohala harus cocok di kotak Satu Pintu Viona, dan ditolak di kotak Satu Pintu Ferdinand
+        $previewFerdinandMismatch = $this->actingAs($admin)->postJson(route('finance.sync.preview'), [
+            'file' => new UploadedFile($tmpFile, '2026 10 PNL MOHALA BAKERY.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', null, true),
+            'type' => 'ferdinand_satu_pintu',
+        ]);
+        $previewFerdinandMismatch->assertOk();
+        $previewFerdinandMismatch->assertJson([
+            'is_type_match' => false,
+            'detected_type' => 'mohala_pnl',
+        ]);
+
+        $previewResp = $this->actingAs($admin)->postJson(route('finance.sync.preview'), [
+            'file' => new UploadedFile($tmpFile, '2026 10 PNL MOHALA BAKERY.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', null, true),
+            'type' => 'mohala_sangria',
+        ]);
+        $previewResp->assertOk();
+        $previewResp->assertJson([
+            'is_type_match' => true,
+            'detected_type' => 'mohala_pnl',
+        ]);
+
+        $uploadResp = $this->actingAs($admin)->post(route('finance.sync.excel'), [
+            'file' => new UploadedFile($tmpFile, '2026 10 PNL MOHALA BAKERY.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', null, true),
+            'type' => 'mohala_sangria',
+        ]);
+        $uploadResp->assertRedirect();
+        $uploadResp->assertSessionHas('success');
+
+        $this->assertDatabaseHas('global_financial_records', [
+            'business_unit_code' => 'mohala',
+            'period' => '2026-10-01',
+            'account_code' => '4001',
+            'amount' => 500000,
+        ]);
+
+        @unlink($tmpFile);
+
+        // Uji juga upload lewat Satu Pintu Ferdinand & Viona untuk berkas real jika tersedia
+        $ferdinandFile = 'D:/Excel Global Fa/PL & BS Oct 26 MJP,MJX,dan MJS.xlsx';
+        if (file_exists($ferdinandFile)) {
+            $respFerdinand = $this->actingAs($admin)->post(route('finance.sync.excel'), [
+                'file' => new UploadedFile($ferdinandFile, 'PL & BS Oct 26 MJP,MJX,dan MJS.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', null, true),
+                'type' => 'ferdinand_satu_pintu',
+                'overwrite' => '1',
+            ]);
+            $respFerdinand->assertRedirect();
+            $respFerdinand->assertSessionHas('success');
+        }
+
+        $sangriaPnlFile = 'D:/Excel Global Fa/2026 10 PNL SANGRIA RESTO.xlsx';
+        if (file_exists($sangriaPnlFile)) {
+            $respViona = $this->actingAs($admin)->post(route('finance.sync.excel'), [
+                'file' => new UploadedFile($sangriaPnlFile, '2026 10 PNL SANGRIA RESTO.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', null, true),
+                'type' => 'mohala_sangria',
+                'overwrite' => '1',
+            ]);
+            $respViona->assertRedirect();
+            $respViona->assertSessionHas('success');
+            $this->assertDatabaseHas('global_financial_records', [
+                'business_unit_code' => 'sangria',
+                'period' => '2026-10-01',
+                'report_type' => 'pnl',
+                'account_code' => '4001',
+            ]);
+        }
+    }
 }

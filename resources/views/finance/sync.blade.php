@@ -16,6 +16,8 @@
     $hasXtransAccess = $isUnres || ($user?->canAccessBusinessUnit('xtrans') ?? false);
     $hasCcodAccess = $isUnres || ($user?->canAccessBusinessUnit('ccod') ?? false) || ($user?->canAccessBusinessUnit('abc') ?? false);
     $hasKandangAccess = $isUnres || ($user?->canAccessBusinessUnit('kandang') ?? false);
+    $hasMohalaAccess = $isUnres || ($user?->canAccessBusinessUnit('mohala') ?? false);
+    $hasSangriaAccess = $isUnres || ($user?->canAccessBusinessUnit('sangria') ?? false);
 @endphp
 <div class="space-y-6 pb-12">
 
@@ -246,68 +248,165 @@
                 </div>
             </div>
 
-            <!-- SMART UNIFIED UPLOADER (PORTAL SATU PINTU) -->
+            <!-- 1. SATU PINTU FERDINAND WINOTO (UNILEVER, AQUA, XTRANS, ABC, CCOD) -->
+            @if($hasFmcgAccess || $hasAquaAccess || $hasXtransAccess || $hasCcodAccess)
             <div class="p-5 rounded-2xl border-2 border-dashed border-[#ca8a04]/60 bg-linear-to-br from-[#fefce8]/60 via-white to-amber-50/40 hover:border-[#ca8a04] transition shadow-xs group">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-[#ca8a04] text-white flex items-center justify-center shadow-xs">
-                            <i data-lucide="sparkles" class="w-5 h-5 text-amber-100"></i>
+                        <div class="w-10 h-10 rounded-xl bg-[#ca8a04] text-white flex items-center justify-center shadow-xs font-black text-xs">
+                            FW
                         </div>
                         <div>
                             <div class="flex items-center gap-2 flex-wrap">
-                                <h4 class="text-sm font-black text-slate-900">Portal Satu Pintu (Smart Multi-Unit Uploader)</h4>
+                                <h4 class="text-sm font-black text-slate-900">Satu Pintu — Ferdinand Winoto</h4>
                                 <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
                                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                    Auto-Detect Semua Format Unit
+                                    Khusus Unit Ferdinand (5 Unit)
                                 </span>
                             </div>
                             <p class="text-xs text-slate-500 mt-0.5">
-                                Cukup pilih / drop berkas Excel laporan keuangan di sini. Sistem otomatis mendeteksi apakah berkas berisi 1 unit, 3 unit (MJP + MJS + MJX), CCOD x ABC, atau seluruh holding sekaligus.
+                                Khusus laporan keuangan milik Ferdinand: gabungan MJP + MJX + MJS, CCOD x ABC (PT MJSM), maupun file satuan Unilever / AQUA / Xtrans. Berkas unit PIC lain akan ditolak otomatis.
                             </p>
                         </div>
                     </div>
                 </div>
 
-                <form id="formUnifiedUpload" action="{{ route('finance.sync.excel') }}" method="POST" enctype="multipart/form-data" class="space-y-3" onsubmit="return handleExcelImportSubmit(event, this)">
+                <form id="formFerdinandSatuPintu" action="{{ route('finance.sync.excel') }}" method="POST" enctype="multipart/form-data" class="space-y-3" onsubmit="return handleExcelImportSubmit(event, this)">
                     @csrf
-                    <input type="hidden" name="type" value="auto">
+                    <input type="hidden" name="type" value="ferdinand_satu_pintu">
                     <div class="relative flex items-center justify-center border-2 border-dashed border-amber-300 hover:border-[#ca8a04] rounded-xl p-4 bg-white/90 hover:bg-white transition cursor-pointer group/drop">
-                        <input type="file" name="file" accept=".xlsx,.xls,.csv" required class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" onchange="this.nextElementSibling.querySelector('.file-label').innerText = this.files[0]?.name || 'Pilih berkas Excel apa saja...'">
+                        <input type="file" name="file" accept=".xlsx,.xls,.csv" required class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" onchange="this.nextElementSibling.querySelector('.file-label').innerText = this.files[0]?.name || 'Pilih berkas Excel milik Ferdinand...'">
                         <div class="text-center text-xs text-slate-600 flex flex-col sm:flex-row items-center gap-2 pointer-events-none group-hover/drop:text-[#713f12]">
                             <i data-lucide="upload-cloud" class="w-5 h-5 text-[#ca8a04]"></i>
-                            <span class="font-bold file-label text-slate-800">Pilih atau Drag & Drop Berkas Excel ke Sini (.xlsx / .xls / .csv)</span>
+                            <span class="font-bold file-label text-slate-800">Pilih atau Drag & Drop Berkas Ferdinand ke Sini (.xlsx / .xls / .csv)</span>
                             <span class="text-slate-400 hidden sm:inline">•</span>
-                            <span class="text-[11px] text-slate-400">Otomatis dipilah ke unit masing-masing</span>
+                            <span class="text-[11px] text-slate-400">Otomatis dipilah ke 5 unit Ferdinand</span>
                         </div>
                     </div>
 
                     <div class="flex items-center justify-between flex-wrap gap-2 pt-1">
-                        <div class="flex items-center gap-3">
-                            <div class="flex items-center gap-2">
-                                <input type="checkbox" name="overwrite" id="overwriteAuto" value="1" class="w-4 h-4 rounded border-slate-300 text-[#ca8a04] focus:ring-[#ca8a04] cursor-pointer">
-                                <label for="overwriteAuto" class="text-xs text-slate-600 font-medium cursor-pointer select-none">
-                                    Timpa data jika file sudah ada (<span class="font-mono text-slate-400">Overwrite</span>)
-                                </label>
-                            </div>
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" name="overwrite" id="overwriteFerdinand" value="1" class="w-4 h-4 rounded border-slate-300 text-[#ca8a04] focus:ring-[#ca8a04] cursor-pointer">
+                            <label for="overwriteFerdinand" class="text-xs text-slate-600 font-medium cursor-pointer select-none">
+                                Timpa data jika file sudah ada (<span class="font-mono text-slate-400">Overwrite</span>)
+                            </label>
                         </div>
 
                         <button type="submit" class="px-4 py-2 rounded-xl bg-[#ca8a04] hover:bg-[#a16207] text-white text-xs font-bold transition flex items-center gap-2 shadow-xs cursor-pointer">
                             <i data-lucide="zap" class="w-4 h-4 text-amber-200"></i>
-                            Cek & Import Otomatis (Satu Pintu)
+                            Cek & Import (Ferdinand)
                         </button>
                     </div>
 
                     <div class="flex items-center gap-1.5 flex-wrap pt-2 text-[11px] text-slate-400 border-t border-amber-100/60">
-                        <span class="font-semibold text-slate-500">Mendukung otomatis:</span>
-                        <span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-medium border border-emerald-200">Unilever (10 Depo)</span>
-                        <span class="px-2 py-0.5 rounded-md bg-sky-50 text-sky-700 font-medium border border-sky-200">Danone AQUA (24 Depo)</span>
-                        <span class="px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 font-medium border border-amber-200">Xtrans (160+ Armada)</span>
-                        <span class="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-medium border border-indigo-200">CCOD x ABC (PT MJSM)</span>
-                        <span class="px-2 py-0.5 rounded-md bg-orange-50 text-orange-700 font-medium border border-orange-200">Kandang (PT MJKB)</span>
-                        <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 font-medium border border-slate-200">Template Universal</span>
+                        <span class="font-semibold text-slate-500">Unit Ferdinand:</span>
+                        <span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-medium border border-emerald-200">Unilever (MJP)</span>
+                        <span class="px-2 py-0.5 rounded-md bg-sky-50 text-sky-700 font-medium border border-sky-200">Danone AQUA (MJS)</span>
+                        <span class="px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 font-medium border border-amber-200">Xtrans (MJX)</span>
+                        <span class="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-medium border border-indigo-200">ABC & CCOD (PT MJSM)</span>
                     </div>
                 </form>
             </div>
+            @endif
+
+            <!-- 2. SATU PINTU VIONA DELIAN (MOHALA BAKERY & SANGRIA RESTO) -->
+            @if($hasMohalaAccess || $hasSangriaAccess)
+            <div class="p-5 rounded-2xl border-2 border-dashed border-purple-300 bg-linear-to-br from-purple-50/40 via-white to-amber-50/30 hover:border-purple-500 transition shadow-xs">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-xs font-black text-xs">
+                            VD
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <h4 class="text-sm font-black text-slate-900">Satu Pintu — Viona Delian (Mohala Bakery x Sangria Resto)</h4>
+                                <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-purple-100 text-purple-800 border border-purple-200">Khusus Unit Viona (P&L & Neraca)</span>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-0.5">
+                                Khusus laporan keuangan milik Viona: P&L dan Neraca Mohala Bakery maupun Sangria Resto (khusus file Neraca pastikan sudah dibuka passwordnya terlebih dahulu).
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="formMohalaSangriaUpload" action="{{ route('finance.sync.excel') }}" method="POST" enctype="multipart/form-data" class="space-y-3" onsubmit="return handleExcelImportSubmit(event, this)">
+                    @csrf
+                    <input type="hidden" name="type" value="mohala_sangria">
+                    <div class="relative flex items-center justify-center border-2 border-dashed border-purple-200 hover:border-purple-500 rounded-xl p-4 bg-white/90 hover:bg-white transition cursor-pointer group/drop">
+                        <input type="file" name="file" accept=".xlsx,.xls" required class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" onchange="this.nextElementSibling.querySelector('.file-label').innerText = this.files[0]?.name || 'Pilih file PNL / Neraca Mohala atau Sangria...'">
+                        <div class="text-center text-xs text-slate-600 flex flex-col sm:flex-row items-center gap-2 pointer-events-none group-hover/drop:text-purple-800">
+                            <i data-lucide="upload-cloud" class="w-5 h-5 text-purple-600"></i>
+                            <span class="font-bold file-label text-slate-800">Pilih atau Drag & Drop Berkas Viona ke Sini (.xlsx)</span>
+                            <span class="text-slate-400 hidden sm:inline">•</span>
+                            <span class="text-[11px] text-slate-400">Otomatis ke Mohala / Sangria</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between flex-wrap gap-2 pt-1">
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" name="overwrite" id="overwriteMohalaSangria" value="1" class="w-4 h-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500 cursor-pointer">
+                            <label for="overwriteMohalaSangria" class="text-xs text-slate-600 font-medium cursor-pointer select-none">
+                                Timpa data jika file sudah ada (<span class="font-mono text-slate-400">Overwrite</span>)
+                            </label>
+                        </div>
+                        <button type="submit" class="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition flex items-center gap-2 shadow-xs cursor-pointer">
+                            <i data-lucide="zap" class="w-4 h-4 text-purple-200"></i>
+                            Cek & Import (Viona)
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-1.5 flex-wrap pt-2 text-[11px] text-slate-400 border-t border-purple-100/70">
+                        <span class="font-semibold text-slate-500">Unit Viona (Excel):</span>
+                        <span class="px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 font-medium border border-amber-200">Mohala Bakery (P&L & Neraca)</span>
+                        <span class="px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 font-medium border border-purple-200">Sangria Resto (P&L & Neraca)</span>
+                    </div>
+                </form>
+            </div>
+            @endif
+
+            <!-- 3. SATU PINTU FRANSISKA LIA (KANDANG / PT MJKB) -->
+            @if($hasKandangAccess)
+            <div class="p-5 rounded-2xl border-2 border-dashed border-amber-300 bg-linear-to-br from-amber-50/40 via-white to-orange-50/30 hover:border-amber-500 transition shadow-xs">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-amber-600 text-white flex items-center justify-center shadow-xs font-black text-xs">
+                            FL
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <h4 class="text-sm font-black text-slate-900">Satu Pintu — Fransiska Lia (Kandang PT MJKB)</h4>
+                                <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-100 text-amber-800 border border-amber-200">Khusus Unit Fransiska</span>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-0.5">
+                                Khusus laporan keuangan milik Fransiska: P&L Operasional Kandang Pemalang & Kebumen serta Neraca Konsolidasi PT Mekar Jaya Kurnia Bersama.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="formKandangUpload" action="{{ route('finance.sync.excel') }}" method="POST" enctype="multipart/form-data" class="space-y-3" onsubmit="return handleExcelImportSubmit(event, this)">
+                    @csrf
+                    <input type="hidden" name="type" value="kandang">
+                    <div class="relative flex items-center justify-center border-2 border-dashed border-amber-200 hover:border-amber-500 rounded-xl p-4 bg-white/90 hover:bg-white transition cursor-pointer group/drop">
+                        <input type="file" name="file" accept=".xlsx,.xls,.csv" required class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" onchange="this.nextElementSibling.querySelector('.file-label').innerText = this.files[0]?.name || 'Pilih file Excel Kandang PT MJKB...'">
+                        <div class="text-center text-xs text-slate-600 flex flex-col sm:flex-row items-center gap-2 pointer-events-none group-hover/drop:text-amber-800">
+                            <i data-lucide="upload-cloud" class="w-5 h-5 text-amber-600"></i>
+                            <span class="font-bold file-label text-slate-800">Pilih atau Drag & Drop Berkas Fransiska ke Sini (.xlsx / .xls)</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between flex-wrap gap-2 pt-1">
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" name="overwrite" id="overwriteKandang" value="1" class="w-4 h-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500 cursor-pointer">
+                            <label for="overwriteKandang" class="text-xs text-slate-600 font-medium cursor-pointer select-none">
+                                Timpa data jika file sudah ada (<span class="font-mono text-slate-400">Overwrite</span>)
+                            </label>
+                        </div>
+                        <button type="submit" class="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition flex items-center gap-2 shadow-xs cursor-pointer">
+                            <i data-lucide="zap" class="w-4 h-4 text-amber-200"></i>
+                            Cek & Import (Fransiska)
+                        </button>
+                    </div>
+                </form>
+            </div>
+            @endif
 
             <!-- PEMISAH OPSI UPLOAD SATUAN -->
             <div class="relative py-1">
@@ -479,47 +578,6 @@
                         <button type="submit" class="px-4 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer">
                             <i data-lucide="search-check" class="w-3.5 h-3.5 text-indigo-600"></i>
                             Cek & Import CCOD x ABC
-                        </button>
-                    </div>
-                </form>
-            </div>
-            @endif
-
-            @if($hasKandangAccess)
-            <!-- KANDANG (PT MEKAR JAYA KURNIA BERSAMA) UPLOAD BOX -->
-            <div class="p-4 rounded-xl border border-dashed border-amber-300 bg-[#fbfdfa] hover:bg-white transition">
-                <div class="flex items-center justify-between mb-2">
-                    <div class="flex items-center gap-2">
-                        <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-700 border border-amber-200 font-black text-xs flex items-center justify-center">
-                            MJKB
-                        </div>
-                        <div>
-                            <h4 class="text-sm font-bold text-slate-900">Kandang - PT Mekar Jaya Kurnia Bersama</h4>
-                            <p class="text-[11px] text-slate-400">Laporan Laba Rugi Operasional Kandang Pemalang & Kebumen, serta Neraca Konsolidasi MJKB</p>
-                        </div>
-                    </div>
-                </div>
-
-                <form id="formKandangUpload" action="{{ route('finance.sync.excel') }}" method="POST" enctype="multipart/form-data" class="mt-3 space-y-3" onsubmit="return handleExcelImportSubmit(event, this)">
-                    @csrf
-                    <input type="hidden" name="type" value="kandang">
-                    <div class="relative flex items-center justify-center border-2 border-dashed border-slate-200 hover:border-amber-400 rounded-xl p-3 bg-white transition cursor-pointer group">
-                        <input type="file" name="file" accept=".xlsx,.xls,.csv" required class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" onchange="this.nextElementSibling.innerText = this.files[0]?.name || 'Pilih file Excel Kandang...'">
-                        <div class="text-center text-xs text-slate-500 flex items-center gap-2 pointer-events-none group-hover:text-amber-700">
-                            <i data-lucide="upload-cloud" class="w-4 h-4 text-amber-500"></i>
-                            <span class="font-medium text-slate-600">Pilih file Excel Kandang PT MJKB (.xlsx / .xls)</span>
-                        </div>
-                    </div>
-                    <div class="flex items-center justify-between flex-wrap gap-2 pt-1">
-                        <div class="flex items-center gap-2">
-                            <input type="checkbox" name="overwrite" id="overwriteKandang" value="1" class="w-4 h-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500 cursor-pointer">
-                            <label for="overwriteKandang" class="text-xs text-slate-600 font-medium cursor-pointer select-none">
-                                Timpa data jika file sudah ada (<span class="font-mono text-slate-400">Overwrite</span>)
-                            </label>
-                        </div>
-                        <button type="submit" class="px-4 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer">
-                            <i data-lucide="search-check" class="w-3.5 h-3.5 text-amber-600"></i>
-                            Cek & Import Kandang
                         </button>
                     </div>
                 </form>
